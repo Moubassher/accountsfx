@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<Accordion maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@../my_vibrant_blue_theme.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.17">
+  <panes>
+    <TitledPane animated="false" contentDisplay="GRAPHIC_ONLY" text="untitled 1">
+         <graphic>
+            <HBox maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="51.0" prefWidth="563.0" spacing="5.0" styleClass="translucent" stylesheets="@../my_vibrant_blue_theme.css">
+               <children>
+                  <Label fx:id="msgCounterDisplay" styleClass="notification-label" text="99" />
+                  <VBox maxWidth="1.7976931348623157E308" minWidth="-Infinity" spacing="5.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label fx:id="titleDisplay" style="-fx-font-size: 16; -fx-font-weight: bold;" text="عنوان الرسالة" />
+                        <Label fx:id="messageDisplay" style="-fx-font-size: 12;" text="هذا هو مضمون الرسالة" />
+                     </children>
+                  </VBox>
+                  <VBox maxHeight="-Infinity" maxWidth="-Infinity" minWidth="-Infinity" HBox.hgrow="ALWAYS">
+                     <children>
+                        <HBox maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="5.0" VBox.vgrow="ALWAYS">
+                           <children>
+                              <Label text="من:" />
+                              <Label fx:id="senderDisplay" text="اسم المرسل" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  <Label fx:id="dateDisplay" maxWidth="1.7976931348623157E308" minWidth="-Infinity" text="التاريخ" HBox.hgrow="ALWAYS" />
+               </children>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </HBox>
+         </graphic></TitledPane>
+    <TitledPane animated="false" text="untitled 2" />
+  </panes>
+</Accordion>

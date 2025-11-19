@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="400.0" prefWidth="600.0" styleClass="root" stylesheets="@../my_vibrant_blue_theme.css" xmlns="http://javafx.com/javafx/17.0.17" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <HBox prefHeight="100.0" prefWidth="200.0" styleClass="sensible_pane" stylesheets="@../my_vibrant_blue_theme.css">
+         <children>
+            <Button contentDisplay="RIGHT" mnemonicParsing="false" text="بحث" />
+            <TextField HBox.hgrow="ALWAYS" />
+         </children>
+      </HBox>
+      <HBox nodeOrientation="RIGHT_TO_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" VBox.vgrow="ALWAYS">
+         <children>
+            <VBox minWidth="-Infinity" prefHeight="200.0" prefWidth="200.0" styleClass="side_pane">
+               <children>
+                  <Button fx:id="inboxBtn" contentDisplay="RIGHT" mnemonicParsing="false" styleClass="wide-button" text="صندوق الوارد">
+                     <graphic>
+                        <FontAwesomeIconView glyphName="INBOX" />
+                     </graphic>
+                  </Button>
+                  <Button fx:id="sentMessagesBtn" contentDisplay="RIGHT" mnemonicParsing="false" styleClass="wide-button" text="الرسائل المرسلة">
+                     <graphic>
+                        <FontAwesomeIconView glyphName="UPLOAD" />
+                     </graphic></Button>
+               </children>
+            </VBox>
+            <ScrollPane fitToHeight="true" fitToWidth="true" maxWidth="-Infinity" pannable="true" prefHeight="200.0" prefWidth="700.0">
+               <content>
+                  <VBox fx:id="conversationsPane" spacing="5.0" styleClass="background_image">
+                     <children>
+                        <fx:include source="message_pane.fxml" />
+                        <fx:include source="message_pane.fxml" />
+                     </children>
+                  </VBox>
+               </content>
+            </ScrollPane>
+         </children>
+      </HBox>
+      <Label text="نظام (Pharma-net) البريدي خاص بشبكة النظام ولا يمكن إرسال أو استقبال رسائل من خارج النظام لأحد مستخدمين الشبكة.">
+         <font>
+            <Font size="10.0" />
+         </font>
+      </Label>
+   </children>
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+</VBox>

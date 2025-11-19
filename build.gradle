@@ -1,0 +1,63 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'application'
+
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+
+}
+
+group = 'com.moubassher'
+version = '1.0.0'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+def javafxVersion = '23.0.2'
+
+javafx {
+    version = javafxVersion
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.media', 'javafx.graphics']
+}
+
+
+application {
+    mainClass = 'com.moubassher.accountsfx.AccountsFxMain'
+}
+
+
+dependencies {
+
+    implementation 'org.xerial:sqlite-jdbc:3.40.1.0'
+
+    implementation "org.json:json:20250107"
+
+    implementation 'org.controlsfx:controlsfx:11.2.2'
+
+    implementation "at.favre.lib:bcrypt:0.10.2"
+    implementation 'com.jfoenix:jfoenix:9.0.1'
+
+    implementation 'com.context:our-utilities:2.1.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+
+
+test {
+    useJUnitPlatform()
+}
