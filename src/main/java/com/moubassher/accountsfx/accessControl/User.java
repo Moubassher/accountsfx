@@ -8,23 +8,23 @@ package com.moubassher.accountsfx.accessControl;
 import java.time.LocalTime;
 import java.util.Objects;
 
-public  class Employee {
+public  class User {
     private String name;
     private String hashedPassword;
     private  String department;
     private int userId, salary;
     private LocalTime shiftStart, shiftEnd;
 
-    public Employee() {
+    public User() {
 
     }
 
-    public Employee(String employeeName) {
+    public User(String employeeName) {
         this.name = employeeName;
     }
 
-    public Employee(int userId, String name, String hashedPassword, String department, int salary, LocalTime shiftStart,
-                    LocalTime shiftEnd) {
+    public User(int userId, String name, String hashedPassword, String department, int salary, LocalTime shiftStart,
+                LocalTime shiftEnd) {
         this.userId = userId;
         this.name = name;
         this.hashedPassword = hashedPassword;
@@ -50,7 +50,7 @@ public  class Employee {
         return (shiftStart != null && shiftEnd != null);
     }
 
-    public Employee(String name, String hashedPassword, String department) {
+    public User(String name, String hashedPassword, String department) {
         this.name = name;
         this.hashedPassword = hashedPassword;
         this.department = department;
@@ -88,7 +88,7 @@ public  class Employee {
     public boolean equals(Object obj) {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (Employee) obj;
+        var that = (User) obj;
         return Objects.equals(this.name, that.name) &&
                 Objects.equals(this.department, that.department) &&
                 Objects.equals(this.shiftStart, that.shiftStart) &&
@@ -102,7 +102,7 @@ public  class Employee {
 
     @Override
     public String toString() {
-        return "Employee[" +
+        return "User[" +
                 "name=" + name + ", " +
                 "department=" + department + ", " +
                 "workStart=" + shiftStart + ", " +

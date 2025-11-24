@@ -48,7 +48,7 @@ public class LoginCtrl implements Initializable {
 	private ChoiceBox<String> accountTypeSelector;
 
 	@FXML
-	private ChoiceBox<Employee> registeredUsersSelector;
+	private ChoiceBox<User> registeredUsersSelector;
 
 	@FXML
 	private PasswordField passwordField;
@@ -150,9 +150,9 @@ public class LoginCtrl implements Initializable {
 	}
 
 	private void getRegisteredUsersInDepartment(String department) {
-		Map<String, List<Employee>> deptEmployeeMap = userDao.getDepartment_EmployeeMap();
-		List<Employee> employees = deptEmployeeMap.get(department);
-		registeredUsersSelector.setItems(FXCollections.observableList(employees));
+		Map<String, List<User>> deptEmployeeMap = userDao.getDepartment_EmployeeMap();
+		List<User> users = deptEmployeeMap.get(department);
+		registeredUsersSelector.setItems(FXCollections.observableList(users));
 	}
 
 
@@ -160,10 +160,10 @@ public class LoginCtrl implements Initializable {
 	private boolean login() {
 
 
-        Employee employee = registeredUsersSelector.getSelectionModel().getSelectedItem();
+        User user = registeredUsersSelector.getSelectionModel().getSelectedItem();
         BCrypt.Result result = null;
-        if (employee != null) {
-            String name = employee.getName();
+        if (user != null) {
+            String name = user.getName();
             String password = passwordField.getText();
 
             String hashedPassword = BCrypt.withDefaults()

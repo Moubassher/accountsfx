@@ -169,8 +169,8 @@ public abstract class BaseAdminPrivileges implements Initializable {
 					
 			LocalTime shiftFinish= shiftEndPane.setTimestamp(finishHour, finishMinutes, finishTimeOfDay);
 
-			Employee employee = new Employee(-1, name, defaultPassword, dpt, salary, shiftStart, shiftFinish);
-			boolean success = empDatabase.addNewEmployee(employee);
+			User user = new User(-1, name, defaultPassword, dpt, salary, shiftStart, shiftFinish);
+			boolean success = empDatabase.addNewEmployee(user);
 			
 			Alert employeeAdded = new Alert(AlertType.INFORMATION);
 			

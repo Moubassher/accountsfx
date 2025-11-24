@@ -70,9 +70,9 @@ public class AccountTests {
     @Test
     @DisplayName("Can read employees")
     void testReadingEmployees() {
-        ObservableList<Employee> employees = UserDao.getInstance().getAllEmployees();
-        assertNotNull(employees, "Employees is null");
-        assertFalse(employees.isEmpty());
+        ObservableList<User> users = UserDao.getInstance().getAllEmployees();
+        assertNotNull(users, "Employees is null");
+        assertFalse(users.isEmpty());
     }
 
     @Test
@@ -87,17 +87,17 @@ public class AccountTests {
         LocalTime workStart = LocalTime.of(8, 0);
         LocalTime workFinish = workStart.plusHours(8);
         int userId = 1234567;
-        Employee employee = new Employee(userId, "Mohammed Ahmed", hashedPassword,
+        User user = new User(userId, "Mohammed Ahmed", hashedPassword,
                 department, salary,  workStart, workFinish);
-        assertThrows(UnsupportedOperationException.class, () -> UserDao.getInstance().addNewEmployee(employee));
+        assertThrows(UnsupportedOperationException.class, () -> UserDao.getInstance().addNewEmployee(user));
     }
 
     @Test
     @DisplayName("Cannot add a nameless employee")
     void testAddingNamelessEmployee() {
-        Employee employee = new Employee();
+        User user = new User();
         assertThrows(IllegalArgumentException.class,
-                () -> UserDao.getInstance().addNewEmployee(employee));
+                () -> UserDao.getInstance().addNewEmployee(user));
 
     }
 
@@ -115,7 +115,7 @@ public class AccountTests {
         LocalTime illogicalWorkfinish = illogicalWorkstart.minusHours(8);
         int userId = 1234557543;
 
-        assertThrows(IllegalArgumentException.class, () -> new Employee(userId, "Ahmed Adam", hashedPassword,
+        assertThrows(IllegalArgumentException.class, () -> new User(userId, "Ahmed Adam", hashedPassword,
                 department, salary,  illogicalWorkstart, illogicalWorkfinish));
     }
 
@@ -126,7 +126,7 @@ public class AccountTests {
     void testCreatingEmployeeAfterManager() {
     }*/
 
-    private Employee createTestEmployee() {
+    private User createTestEmployee() {
         String password = "abc123";
         String hashedPassword = accountValidator.hashPassword(password);
         String department = "مبيعات";
@@ -135,9 +135,9 @@ public class AccountTests {
         LocalTime workStart = LocalTime.of(8, 0);
         LocalTime workFinish = workStart.plusHours(8);
         int userId = 1234567;
-        Employee employee = new Employee(userId, "Mohammed Ahmed", hashedPassword,
+        User user = new User(userId, "Mohammed Ahmed", hashedPassword,
                 department, salary,  workStart, workFinish);
-        return employee;
+        return user;
     }
 
     //TODO: implement adding a manager account:

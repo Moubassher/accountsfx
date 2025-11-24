@@ -13,17 +13,17 @@ import javafx.scene.text.Text;
 
 import java.time.LocalTime;
 
-public class EmployeeTable extends TableView<Employee>{
+public class EmployeeTable extends TableView<User>{
 
-	TableColumn<Employee, String> nameColumn = new TableColumn<>("إسم الموظف");
+	TableColumn<User, String> nameColumn = new TableColumn<>("إسم الموظف");
 	
-	TableColumn<Employee, String> departmentColumn = new TableColumn<>("القسم");
+	TableColumn<User, String> departmentColumn = new TableColumn<>("القسم");
 	
-	TableColumn<Employee, LocalTime> workStartCol = new TableColumn<>("زمن الحضور");
+	TableColumn<User, LocalTime> workStartCol = new TableColumn<>("زمن الحضور");
 	
-	TableColumn<Employee, LocalTime> workFinishCol = new TableColumn<>("زمن الإنصراف");
-	TableColumn<Employee, Integer> salaryColumn = new TableColumn<>("المرتب");
-	TableColumn<Employee, String> optionsColumn = new TableColumn<>("الخيارات");
+	TableColumn<User, LocalTime> workFinishCol = new TableColumn<>("زمن الإنصراف");
+	TableColumn<User, Integer> salaryColumn = new TableColumn<>("المرتب");
+	TableColumn<User, String> optionsColumn = new TableColumn<>("الخيارات");
 
 	UserDao empDatabase = UserDao.getInstance();
 
@@ -67,8 +67,8 @@ public class EmployeeTable extends TableView<Employee>{
 		this.setItems(empDatabase.getAllEmployees());
 	}
 	
-	private TableCell<Employee, String> createCell() {
-		TableCell<Employee, String> cell = new TableCell<>();
+	private TableCell<User, String> createCell() {
+		TableCell<User, String> cell = new TableCell<>();
 	
 		Text text = new Text();
 		cell.setGraphic(text);
@@ -91,7 +91,7 @@ public class EmployeeTable extends TableView<Employee>{
 	}
 
 
-	private void initiateEditingCell(TableCell<Employee, String> cell, Text text) {
+	private void initiateEditingCell(TableCell<User, String> cell, Text text) {
 		//values to update in the database are obtained this way:
 		int index = cell.getIndex();
 		String name = nameColumn.getCellData(index);
@@ -108,7 +108,7 @@ public class EmployeeTable extends TableView<Employee>{
 		
 		Button OK = new Button("تعديل");
 		OK.setOnAction(x -> {
-			TableColumn<Employee, String> col = cell.getTableColumn();
+			TableColumn<User, String> col = cell.getTableColumn();
 			String attr = "";
 			
 			String attrValue = textArea.getText();

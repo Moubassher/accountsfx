@@ -50,8 +50,8 @@ public class UserDao {
 		return accountType;
 	}
 
-	public Map<String, List<Employee>> getDepartment_EmployeeMap() {
-		Map<String, List<Employee>> obMap = getAllEmployees().stream().collect(
+	public Map<String, List<User>> getDepartment_EmployeeMap() {
+		Map<String, List<User>> obMap = getAllEmployees().stream().collect(
 				Collectors.groupingBy(employee -> employee.getDepartment()));
 		return obMap;
 	}
@@ -78,7 +78,7 @@ public class UserDao {
 
 			ResultSet results = stmt.getResultSet();
 			while(results.next()) {
-				String employee = results.getString("Employee"); //$NON-NLS-1$
+				String employee = results.getString("User"); //$NON-NLS-1$
 				String loginDate = results.getString("loginDate"); //$NON-NLS-1$
 				String loginTime = results.getString("loginTime"); //$NON-NLS-1$
 				String logoutDate = results.getString("logoutDate"); //$NON-NLS-1$
@@ -200,9 +200,9 @@ public class UserDao {
 		}
 	}
 
-	public ObservableList<Employee> getAllEmployees() {
+	public ObservableList<User> getAllEmployees() {
 
-		ObservableList<Employee> allEmployees = FXCollections.observableArrayList();
+		ObservableList<User> allUsers = FXCollections.observableArrayList();
 
 		String command = "SELECT userId, name, password, department, salary, workStart, workFinish FROM users;"; //$NON-NLS-1$
 		try(Connection conn = DriverManager.getConnection(database)) {
@@ -226,19 +226,19 @@ public class UserDao {
 				if(workFinishRaw != null) {
 					workFinish = LocalTime.parse(workStartRaw, localTimeformat);
 				}
-				Employee employee = new Employee(userId, name, password, department, salary, workStart, workFinish);
+				User user = new User(userId, name, password, department, salary, workStart, workFinish);
 
-				allEmployees.add(employee);
+				allUsers.add(user);
 			}
 
 		} catch (SQLException e) {
 			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
 		}
-		return allEmployees;
+		return allUsers;
 	}
 
 	private void registerLogoutTime(String name, LocalDateTime logoutTime) {
-		String command = "UPDATE logins SET logoutTime = ?, logoutDate = ? WHERE Employee = ? AND loginDate = ?"; //$NON-NLS-1$
+		String command = "UPDATE logins SET logoutTime = ?, logoutDate = ? WHERE User = ? AND loginDate = ?"; //$NON-NLS-1$
 
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
@@ -264,7 +264,7 @@ public class UserDao {
 	}
 
 	private void registerLoginTime(String name, LocalDateTime loginTime) {
-		String command = "INSERT into logins (Employee, loginDate, loginTime) values (?, ?, ?)"; //$NON-NLS-1$
+		String command = "INSERT into logins (User, loginDate, loginTime) values (?, ?, ?)"; //$NON-NLS-1$
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
 			stmt.setString(1, name);
@@ -407,11 +407,11 @@ public class UserDao {
 		return name;
 	}
 
-	public boolean addNewEmployee(Employee employee) {
+	public boolean addNewEmployee(User user) {
 		boolean added = false;
 
-		if(employee.getName() == null || employee.getName().isBlank()) {
-			throw new IllegalArgumentException("Cannot add a nameless employee");
+		if(user.getName() == null || user.getName().isBlank()) {
+			throw new IllegalArgumentException("Cannot add a nameless user");
 		}
 
 		if(!isManagerExists()) {
@@ -423,14 +423,14 @@ public class UserDao {
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
 
-			stmt.setString(1, employee.getName());
-			stmt.setString(2, employee.getHashedPassword());
-			stmt.setString(3, employee.getDepartment());
-			stmt.setInt(4, employee.getSalary());
+			stmt.setString(1, user.getName());
+			stmt.setString(2, user.getHashedPassword());
+			stmt.setString(3, user.getDepartment());
+			stmt.setInt(4, user.getSalary());
 
 
-			String shiftStart = employee.getShiftStart().format(localTimeformat);
-			String shiftFinish = employee.getShiftEnd().format(localTimeformat);
+			String shiftStart = user.getShiftStart().format(localTimeformat);
+			String shiftFinish = user.getShiftEnd().format(localTimeformat);
 			stmt.setString(4, shiftStart);
 			stmt.setString(5, shiftFinish);
 
