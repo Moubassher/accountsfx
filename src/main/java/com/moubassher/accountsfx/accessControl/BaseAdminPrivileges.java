@@ -42,16 +42,16 @@ import java.util.ResourceBundle;
 
 public abstract class BaseAdminPrivileges implements Initializable {
 
-	static UserDao empDatabase = UserDao.getInstance();
-	EmployeeTable employeeTable = EmployeeTable.getInstance();
+	static AccountDao empDatabase = AccountDao.getInstance();
+	AccountTable accountTable = AccountTable.getInstance();
 	
-	private Button addNewEmployee, modifyEmployee, deleteEmployee;
+	private Button addNewUser, modifyUser, deleteUser;
 
 	@FXML
 	private TabPane tabPane;
 
 	@FXML
-	private Tab pharmacyTab, employeeTab, attendanceTab;
+	private Tab pharmacyTab, userTab, attendanceTab;
 
 	private List<Tab> tabs;
 
@@ -60,8 +60,8 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		VBox box = Pharmacy.getInstance().pharmacyInfoPane();
 		pharmacyTab.setContent(box);
 
-		VBox employeeTabPane = this.createEmployeePane();
-		employeeTab.setContent(employeeTabPane);
+		VBox employeeTabPane = this.createUserPane();
+		userTab.setContent(employeeTabPane);
 
 		this.installAttendanceTableTab();
 
@@ -70,13 +70,13 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		}
 	}
 
-	private VBox createEmployeePane() {
+	private VBox createUserPane() {
 
 		HBox actionPane= this.installActionPane();
 
 		VBox employeeTabPane = new VBox(20);
 		employeeTabPane.setPadding(new Insets(20));
-		employeeTabPane.getChildren().addAll(actionPane, employeeTable);
+		employeeTabPane.getChildren().addAll(actionPane, accountTable);
 		return employeeTabPane;
 	}
 
@@ -84,20 +84,20 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		HBox actionsPane = new HBox(10);
 		ChoiceBox<String> employees = new ChoiceBox<>();
 		employees.setItems(empDatabase.readAllUserNames());
-		addNewEmployee = new Button("إضافة موظف");
-		modifyEmployee = new Button("تعديل");
+		addNewUser = new Button("إضافة موظف");
+		modifyUser = new Button("تعديل");
 		Button resetPasswordBtn = new Button("اعادة ضبط كلمة المرور");
 		resetPasswordBtn.setOnAction(x -> {
 			confirmResettingEmployeePassword();
 		});
-		deleteEmployee = new Button("حذف موظف");
+		deleteUser = new Button("حذف موظف");
 
-		addNewEmployee.setOnAction(x -> createEmployeeAccount());
+		addNewUser.setOnAction(x -> createEmployeeAccount());
 
-		deleteEmployee.setOnAction(x -> confirmDeletingEmployee(employees));
+		deleteUser.setOnAction(x -> confirmDeletingEmployee(employees));
 
-		actionsPane.getChildren().addAll(employees, addNewEmployee, modifyEmployee,
-				resetPasswordBtn, deleteEmployee);
+		actionsPane.getChildren().addAll(employees, addNewUser, modifyUser,
+				resetPasswordBtn, deleteUser);
 		return actionsPane;
 	}
 
@@ -123,7 +123,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		Optional<ButtonType> result = alert.showAndWait();
 		if(result.isPresent() && result.get() == yes) {
 			empDatabase.deleteEmployee(employeeToDelete);
-			employeeTable.reloadTable();
+			accountTable.reloadTable();
 		} else if(result.isPresent() && result.get() == no) {
 			alert.close();
 		}
@@ -169,8 +169,8 @@ public abstract class BaseAdminPrivileges implements Initializable {
 					
 			LocalTime shiftFinish= shiftEndPane.setTimestamp(finishHour, finishMinutes, finishTimeOfDay);
 
-			User user = new User(-1, name, defaultPassword, dpt, salary, shiftStart, shiftFinish);
-			boolean success = empDatabase.addNewEmployee(user);
+			Account account = new Account(-1, name, defaultPassword, dpt, salary, shiftStart, shiftFinish);
+			boolean success = empDatabase.addNewAccount(account);
 			
 			Alert employeeAdded = new Alert(AlertType.INFORMATION);
 			

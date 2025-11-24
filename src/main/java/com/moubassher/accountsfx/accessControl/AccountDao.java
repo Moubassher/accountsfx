@@ -29,7 +29,7 @@ import javax.crypto.NoSuchPaddingException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-public class UserDao {
+public class AccountDao {
 
 	private String driverPrefix = "jdbc:sqlite:"; //$NON-NLS-1$
 
@@ -50,9 +50,9 @@ public class UserDao {
 		return accountType;
 	}
 
-	public Map<String, List<User>> getuserType_EmployeeMap() {
-		Map<String, List<User>> obMap = getAllEmployees().stream().collect(
-				Collectors.groupingBy(employee -> employee.getUserType()));
+	public Map<String, List<Account>> getuserType_EmployeeMap() {
+		Map<String, List<Account>> obMap = readUsers().stream().collect(
+				Collectors.groupingBy(employee -> employee.getAccountType()));
 		return obMap;
 	}
 
@@ -78,7 +78,7 @@ public class UserDao {
 
 			ResultSet results = stmt.getResultSet();
 			while(results.next()) {
-				String employee = results.getString("User"); //$NON-NLS-1$
+				String employee = results.getString("Account"); //$NON-NLS-1$
 				String loginDate = results.getString("loginDate"); //$NON-NLS-1$
 				String loginTime = results.getString("loginTime"); //$NON-NLS-1$
 				String logoutDate = results.getString("logoutDate"); //$NON-NLS-1$
@@ -200,9 +200,9 @@ public class UserDao {
 		}
 	}
 
-	public ObservableList<User> getAllEmployees() {
+	public ObservableList<Account> readUsers() {
 
-		ObservableList<User> allUsers = FXCollections.observableArrayList();
+		ObservableList<Account> allAccounts = FXCollections.observableArrayList();
 
 		String command = "SELECT userId, name, password, userType, salary, workStart, workFinish FROM users;"; //$NON-NLS-1$
 		try(Connection conn = DriverManager.getConnection(database)) {
@@ -226,19 +226,19 @@ public class UserDao {
 				if(workFinishRaw != null) {
 					workFinish = LocalTime.parse(workStartRaw, localTimeformat);
 				}
-				User user = new User(userId, name, password, userType, salary, workStart, workFinish);
+				Account account = new Account(userId, name, password, userType, salary, workStart, workFinish);
 
-				allUsers.add(user);
+				allAccounts.add(account);
 			}
 
 		} catch (SQLException e) {
 			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
 		}
-		return allUsers;
+		return allAccounts;
 	}
 
 	private void registerLogoutTime(String name, LocalDateTime logoutTime) {
-		String command = "UPDATE logins SET logoutTime = ?, logoutDate = ? WHERE User = ? AND loginDate = ?"; //$NON-NLS-1$
+		String command = "UPDATE logins SET logoutTime = ?, logoutDate = ? WHERE Account = ? AND loginDate = ?"; //$NON-NLS-1$
 
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
@@ -264,7 +264,7 @@ public class UserDao {
 	}
 
 	private void registerLoginTime(String name, LocalDateTime loginTime) {
-		String command = "INSERT into logins (User, loginDate, loginTime) values (?, ?, ?)"; //$NON-NLS-1$
+		String command = "INSERT into logins (Account, loginDate, loginTime) values (?, ?, ?)"; //$NON-NLS-1$
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
 			stmt.setString(1, name);
@@ -322,8 +322,8 @@ public class UserDao {
 	}
 
 	public boolean isAdminRequired() {
-		return getAllEmployees().stream()
-				.noneMatch(employee -> employee.isManager());
+		return readUsers().stream()
+				.noneMatch(employee -> employee.isAdmin());
 	}
 
 	public List<String> readuserTypes() {
@@ -407,11 +407,11 @@ public class UserDao {
 		return name;
 	}
 
-	public boolean addNewEmployee(User user) {
+	public boolean addNewAccount(Account account) {
 		boolean added = false;
 
-		if(user.getName() == null || user.getName().isBlank()) {
-			throw new IllegalArgumentException("Cannot add a nameless user");
+		if(account.getName() == null || account.getName().isBlank()) {
+			throw new IllegalArgumentException("Cannot add a nameless account");
 		}
 
 		if(isAdminRequired()) {
@@ -423,13 +423,13 @@ public class UserDao {
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
 
-			stmt.setString(1, user.getName());
-			stmt.setString(2, user.getHashedPassword());
-			stmt.setString(3, user.getUserType());
-			stmt.setInt(4, user.getSalary());
+			stmt.setString(1, account.getName());
+			stmt.setString(2, account.getHashedPassword());
+			stmt.setString(3, account.getAccountType());
+			stmt.setInt(4, account.getSalary());
 
-			String shiftStart = user.getShiftStart().format(localTimeformat);
-			String shiftFinish = user.getShiftEnd().format(localTimeformat);
+			String shiftStart = account.getShiftStart().format(localTimeformat);
+			String shiftFinish = account.getShiftEnd().format(localTimeformat);
 			stmt.setString(4, shiftStart);
 			stmt.setString(5, shiftFinish);
 
@@ -449,7 +449,7 @@ public class UserDao {
 			PreparedStatement stmt = connection.prepareStatement(sql);
 			stmt.setString(1, manager.getName());
 			stmt.setString(2, manager.getHashedPassword());
-			stmt.setString(3, manager.getUserType());
+			stmt.setString(3, manager.getAccountType());
 			int affectedRows = stmt.executeUpdate();
 			created = affectedRows > 0;
 		} catch (SQLException e) {
@@ -458,16 +458,16 @@ public class UserDao {
 		return created;
 	}
 
-	private UserDao() {
+	private AccountDao() {
 
 		//encryptDatabase();
 	}
 
-	private static UserDao instance = null;
+	private static AccountDao instance = null;
 
-	public static UserDao getInstance() {
+	public static AccountDao getInstance() {
 		if (instance == null) {
-			instance = new UserDao();
+			instance = new AccountDao();
 		}
 		return instance;
 	}

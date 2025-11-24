@@ -57,7 +57,7 @@ public class AccountCreateCtrl implements Initializable {
 
     private Tooltip passwordMismatch;
 
-    private UserDao userDao;
+    private AccountDao accountDao;
 
     private AccountValidator accountValidator;
 
@@ -71,11 +71,11 @@ public class AccountCreateCtrl implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        userDao = UserDao.getInstance();
+        accountDao = AccountDao.getInstance();
 
         accountValidator = new AccountValidator();
 
-        accountTypeSelector.getItems().setAll(userDao.readuserTypes());
+        accountTypeSelector.getItems().setAll(accountDao.readuserTypes());
 
         visiblePasswordField.managedProperty().bind(visiblePasswordField.visibleProperty());
 
@@ -209,13 +209,25 @@ public class AccountCreateCtrl implements Initializable {
         createAccountBtn.setDisable(true);
         createAccountProgress.setVisible(true);
 
-        Task<String> hashingTask = runHashingTask(password, userName, userType);
+        Task<String> hashingTask = new Task<>() {
+            @Override
+            protected String call() {
+                return accountValidator.hashPassword(password);
+            }
+        };
 
         Future<?> result = executor.submit(hashingTask);
         boolean accountCreated = false;
         try {
             result.get();
-            accountCreated = true;
+
+            String hashedPassword = hashingTask.getValue();
+            Account account = new Account(userName, hashedPassword, userType);
+            accountCreated = accountDao.addNewAccount(account);
+
+            createAccountProgress.setVisible(false);
+            createAccountBtn.setDisable(false);
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -224,29 +236,6 @@ public class AccountCreateCtrl implements Initializable {
         return accountCreated;
     }
 
-    private Task<String> runHashingTask(String password, String userName, String userType) {
-        Task<String> hashingTask = new Task<>() {
-            @Override
-            protected String call() {
-                return accountValidator.hashPassword(password);
-            }
-        };
-
-        // When task completes
-        hashingTask.setOnSucceeded(e -> {
-            String hashedPassword = hashingTask.getValue();
-            accountValidator.createAccount(userName, hashedPassword, userType);
-
-            createAccountProgress.setVisible(false);
-            createAccountBtn.setDisable(false);
-        });
-
-        hashingTask.setOnFailed(e -> {
-            createAccountProgress.setVisible(false);
-            createAccountBtn.setDisable(false);
-        });
-        return hashingTask;
-    }
 
 
 }

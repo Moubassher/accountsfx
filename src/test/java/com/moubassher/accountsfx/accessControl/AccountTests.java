@@ -4,6 +4,8 @@ import javafx.collections.ObservableList;
 import org.junit.jupiter.api.*;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -11,9 +13,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Account (Sign up/sign-in) tests")
 public class AccountTests {
 
+    private List<Account> testAccounts;
     AccountValidator accountValidator;
     @BeforeAll
     void setUp() {
+        testAccounts = new ArrayList<>();
         accountValidator  = new AccountValidator();
     }
 
@@ -67,11 +71,11 @@ public class AccountTests {
     }
 
     @Test
-    @DisplayName("Can read employees")
-    void testReadingEmployees() {
-        ObservableList<User> users = UserDao.getInstance().getAllEmployees();
-        assertNotNull(users, "Employees is null");
-        assertFalse(users.isEmpty());
+    @DisplayName("Can read users")
+    void testReadingUsers() {
+        ObservableList<Account> accounts = AccountDao.getInstance().readUsers();
+        assertNotNull(accounts, "Users is null");
+        assertFalse(accounts.isEmpty());
     }
 
     @Test
@@ -86,18 +90,18 @@ public class AccountTests {
         LocalTime workStart = LocalTime.of(8, 0);
         LocalTime workFinish = workStart.plusHours(8);
         int userId = 1234567;
-        User user = new User(userId, "Mohammed Ahmed", hashedPassword,
+        Account account = new Account(userId, "Mohammed Ahmed", hashedPassword,
                 userType, salary,  workStart, workFinish);
         assertThrows(UnsupportedOperationException.class,
-                () -> UserDao.getInstance().addNewEmployee(user));
+                () -> AccountDao.getInstance().addNewAccount(account));
     }
 
     @Test
     @DisplayName("Cannot add a nameless employee")
     void testAddingNamelessEmployee() {
-        User user = new User();
+        Account account = new Account();
         assertThrows(IllegalArgumentException.class,
-                () -> UserDao.getInstance().addNewEmployee(user));
+                () -> AccountDao.getInstance().addNewAccount(account));
 
     }
 
@@ -115,7 +119,7 @@ public class AccountTests {
         LocalTime illogicalWorkfinish = illogicalWorkstart.minusHours(8);
         int userId = 1234557543;
 
-        assertThrows(IllegalArgumentException.class, () -> new User(userId, "Ahmed Adam", hashedPassword,
+        assertThrows(IllegalArgumentException.class, () -> new Account(userId, "Ahmed Adam", hashedPassword,
                 userType, salary,  illogicalWorkstart, illogicalWorkfinish));
     }
 
@@ -126,7 +130,7 @@ public class AccountTests {
     void testCreatingEmployeeAfterManager() {
     }*/
 
-    private User createTestEmployee() {
+    private Account createTestEmployee() {
         String password = "abc123";
         String hashedPassword = accountValidator.hashPassword(password);
         String userType = "مبيعات";
@@ -135,9 +139,9 @@ public class AccountTests {
         LocalTime workStart = LocalTime.of(8, 0);
         LocalTime workFinish = workStart.plusHours(8);
         int userId = 1234567;
-        User user = new User(userId, "Mohammed Ahmed", hashedPassword,
+        Account account = new Account(userId, "Mohammed Ahmed", hashedPassword,
                 userType, salary,  workStart, workFinish);
-        return user;
+        return account;
     }
 
     //TODO: implement adding a manager account:

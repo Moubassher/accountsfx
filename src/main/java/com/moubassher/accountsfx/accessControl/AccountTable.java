@@ -13,37 +13,37 @@ import javafx.scene.text.Text;
 
 import java.time.LocalTime;
 
-public class EmployeeTable extends TableView<User>{
+public class AccountTable extends TableView<Account>{
 
-	TableColumn<User, String> nameColumn = new TableColumn<>("إسم الموظف");
+	TableColumn<Account, String> nameColumn = new TableColumn<>("إسم الموظف");
 	
-	TableColumn<User, String> userTypeColumn = new TableColumn<>("القسم");
+	TableColumn<Account, String> userTypeColumn = new TableColumn<>("القسم");
 	
-	TableColumn<User, LocalTime> workStartCol = new TableColumn<>("زمن الحضور");
+	TableColumn<Account, LocalTime> workStartCol = new TableColumn<>("زمن الحضور");
 	
-	TableColumn<User, LocalTime> workFinishCol = new TableColumn<>("زمن الإنصراف");
-	TableColumn<User, Integer> salaryColumn = new TableColumn<>("المرتب");
-	TableColumn<User, String> optionsColumn = new TableColumn<>("الخيارات");
+	TableColumn<Account, LocalTime> workFinishCol = new TableColumn<>("زمن الإنصراف");
+	TableColumn<Account, Integer> salaryColumn = new TableColumn<>("المرتب");
+	TableColumn<Account, String> optionsColumn = new TableColumn<>("الخيارات");
 
-	UserDao empDatabase = UserDao.getInstance();
+	AccountDao empDatabase = AccountDao.getInstance();
 
-	private static EmployeeTable instance = null;
+	private static AccountTable instance = null;
 
-	public static EmployeeTable getInstance() {
+	public static AccountTable getInstance() {
 		if (instance == null) {
-			instance = new EmployeeTable();
+			instance = new AccountTable();
 		}
 		return instance;
 	}
 	
-	private EmployeeTable() {
+	private AccountTable() {
 		
 		this.setEditable(true);
 		
 		this.setId("employee-table"); //$NON-NLS-1$
 	
 		nameColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getName()));
-		userTypeColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getUserType()));
+		userTypeColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getAccountType()));
 		workStartCol.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getShiftStart()));
 		workFinishCol.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getShiftEnd()));
 		//salaryColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<Integer>(x.getValue().salary()));
@@ -59,16 +59,16 @@ public class EmployeeTable extends TableView<User>{
 			col.setEditable(true);
 		});
 
-		this.getItems().setAll(empDatabase.getAllEmployees());
+		this.getItems().setAll(empDatabase.readUsers());
 	}
 
 	public void reloadTable() {
 		this.getItems().clear();
-		this.setItems(empDatabase.getAllEmployees());
+		this.setItems(empDatabase.readUsers());
 	}
 	
-	private TableCell<User, String> createCell() {
-		TableCell<User, String> cell = new TableCell<>();
+	private TableCell<Account, String> createCell() {
+		TableCell<Account, String> cell = new TableCell<>();
 	
 		Text text = new Text();
 		cell.setGraphic(text);
@@ -91,7 +91,7 @@ public class EmployeeTable extends TableView<User>{
 	}
 
 
-	private void initiateEditingCell(TableCell<User, String> cell, Text text) {
+	private void initiateEditingCell(TableCell<Account, String> cell, Text text) {
 		//values to update in the database are obtained this way:
 		int index = cell.getIndex();
 		String name = nameColumn.getCellData(index);
@@ -108,7 +108,7 @@ public class EmployeeTable extends TableView<User>{
 		
 		Button OK = new Button("تعديل");
 		OK.setOnAction(x -> {
-			TableColumn<User, String> col = cell.getTableColumn();
+			TableColumn<Account, String> col = cell.getTableColumn();
 			String attr = "";
 			
 			String attrValue = textArea.getText();

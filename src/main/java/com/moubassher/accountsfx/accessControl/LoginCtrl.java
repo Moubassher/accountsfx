@@ -37,7 +37,7 @@ public class LoginCtrl implements Initializable {
 
 	private StringProperty loggedInUser = new SimpleStringProperty();
 
-	private UserDao userDao = UserDao.getInstance();
+	private AccountDao accountDao = AccountDao.getInstance();
 
 	TaskDatabase taskDatabase = TaskDatabase.getInstance();
 
@@ -48,7 +48,7 @@ public class LoginCtrl implements Initializable {
 	private ChoiceBox<String> accountTypeSelector;
 
 	@FXML
-	private ChoiceBox<User> registeredUsersSelector;
+	private ChoiceBox<Account> registeredUsersSelector;
 
 	@FXML
 	private PasswordField passwordField;
@@ -73,7 +73,7 @@ public class LoginCtrl implements Initializable {
 		}
 		signInDisplay.setText(title);
 
-		accountTypeSelector.getItems().setAll(userDao.readuserTypes());
+		accountTypeSelector.getItems().setAll(accountDao.readuserTypes());
 
 		onAccountTypeSelected(selectedDept -> getRegisteredUsersInuserType(selectedDept));
 
@@ -150,9 +150,9 @@ public class LoginCtrl implements Initializable {
 	}
 
 	private void getRegisteredUsersInuserType(String userType) {
-		Map<String, List<User>> deptEmployeeMap = userDao.getuserType_EmployeeMap();
-		List<User> users = deptEmployeeMap.get(userType);
-		registeredUsersSelector.setItems(FXCollections.observableList(users));
+		Map<String, List<Account>> deptEmployeeMap = accountDao.getuserType_EmployeeMap();
+		List<Account> accounts = deptEmployeeMap.get(userType);
+		registeredUsersSelector.setItems(FXCollections.observableList(accounts));
 	}
 
 
@@ -160,10 +160,10 @@ public class LoginCtrl implements Initializable {
 	private boolean login() {
 
 
-        User user = registeredUsersSelector.getSelectionModel().getSelectedItem();
+        Account account = registeredUsersSelector.getSelectionModel().getSelectedItem();
         BCrypt.Result result = null;
-        if (user != null) {
-            String name = user.getName();
+        if (account != null) {
+            String name = account.getName();
             String password = passwordField.getText();
 
             String hashedPassword = BCrypt.withDefaults()
@@ -185,13 +185,13 @@ public class LoginCtrl implements Initializable {
 
             boolean validCreds;
             if (isUserManager) {
-                validCreds = userDao.loginManagement(name, password);
+                validCreds = accountDao.loginManagement(name, password);
             } else {
-                validCreds = userDao.loginEmployee(name, password);
+                validCreds = accountDao.loginEmployee(name, password);
             }
 
             if (validCreds) {
-                String userName = userDao.getName();
+                String userName = accountDao.getName();
                 loggedInUser.set(userName);
             }
         }
@@ -207,7 +207,7 @@ public class LoginCtrl implements Initializable {
 	}
 
 	public void logOutUser() {
-		userDao.logoutUser();
+		accountDao.logoutUser();
 		loginWindow(false);
 	}
 
@@ -220,7 +220,7 @@ public class LoginCtrl implements Initializable {
 		warning.setId("warning");
 		warning.setPadding(new Insets(5));
 
-		Label currentAccount = new Label(userDao.getAccountType());
+		Label currentAccount = new Label(accountDao.getAccountType());
 		currentAccount.setId("current-account");
 		Label restrictedOps = new Label(restrictedOperations);
 		restrictedOps.setId("restrictedOps");
@@ -288,7 +288,7 @@ public class LoginCtrl implements Initializable {
 
 	@FXML
 	private void sendPasswordResetRequest() {
-		boolean done = taskDatabase.addTask("طلب إعادة ضبط كلمة سر", "for " + userDao.getName());
+		boolean done = taskDatabase.addTask("طلب إعادة ضبط كلمة سر", "for " + accountDao.getName());
 		if(done) {
 			//TODO replace with a suitable notification from MyNotification's.
 			//Messages.showNotification("تم", "تم إرسال طلب للإدارة لإعادة ضبط كلمة السر إلى 123. وبعدما تتم إعادة الضبط. ادخل إلى حسابك باستخدام 123 (مرة واحدة)، ومن ثم قم بتغييرها من القائمة الرئيسية.");

@@ -8,27 +8,27 @@ package com.moubassher.accountsfx.accessControl;
 import java.time.LocalTime;
 import java.util.Objects;
 
-public  class User {
+public  class Account {
     private String name;
     private String hashedPassword;
-    private  String userType;
+    private  String accountType;
     private int userId, salary;
     private LocalTime shiftStart, shiftEnd;
 
-    public User() {
+    public Account() {
 
     }
 
-    public User(String employeeName) {
-        this.name = employeeName;
+    public Account(String name) {
+        this.name = name;
     }
 
-    public User(int userId, String name, String hashedPassword, String userType, int salary, LocalTime shiftStart,
-                LocalTime shiftEnd) {
+    public Account(int userId, String name, String hashedPassword, String accountType, int salary, LocalTime shiftStart,
+                   LocalTime shiftEnd) {
         this.userId = userId;
         this.name = name;
         this.hashedPassword = hashedPassword;
-        this.userType = userType;
+        this.accountType = accountType;
         this.salary = salary;
         this.shiftStart = shiftStart;
         this.shiftEnd = shiftEnd;
@@ -50,10 +50,10 @@ public  class User {
         return (shiftStart != null && shiftEnd != null);
     }
 
-    public User(String name, String hashedPassword, String userType) {
+    public Account(String name, String hashedPassword, String accountType) {
         this.name = name;
         this.hashedPassword = hashedPassword;
-        this.userType = userType;
+        this.accountType = accountType;
     }
 
     public String getName() {
@@ -64,8 +64,8 @@ public  class User {
         return hashedPassword;
     }
 
-    public String getUserType() {
-        return userType;
+    public String getAccountType() {
+        return accountType;
     }
 
     public int getSalary() {
@@ -80,31 +80,32 @@ public  class User {
         return shiftEnd;
     }
 
-    public boolean isManager() {
-       return userType.equals("إدارة");
+    //TODO: re-implement isAdmin by creating and using a column that marks an account type as admin.
+    public boolean isAdmin() {
+       return accountType.equals("إدارة");
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (User) obj;
+        var that = (Account) obj;
         return Objects.equals(this.name, that.name) &&
-                Objects.equals(this.userType, that.userType) &&
+                Objects.equals(this.accountType, that.accountType) &&
                 Objects.equals(this.shiftStart, that.shiftStart) &&
                 Objects.equals(this.shiftEnd, that.shiftEnd);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, userType, shiftStart, shiftEnd);
+        return Objects.hash(name, accountType, shiftStart, shiftEnd);
     }
 
     @Override
     public String toString() {
-        return "User[" +
+        return "Account[" +
                 "name=" + name + ", " +
-                "userType=" + userType + ", " +
+                "userType=" + accountType + ", " +
                 "workStart=" + shiftStart + ", " +
                 "workFinish=" + shiftEnd + ']';
     }
