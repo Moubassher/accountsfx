@@ -17,7 +17,7 @@ public class EmployeeTable extends TableView<User>{
 
 	TableColumn<User, String> nameColumn = new TableColumn<>("إسم الموظف");
 	
-	TableColumn<User, String> departmentColumn = new TableColumn<>("القسم");
+	TableColumn<User, String> userTypeColumn = new TableColumn<>("القسم");
 	
 	TableColumn<User, LocalTime> workStartCol = new TableColumn<>("زمن الحضور");
 	
@@ -43,13 +43,13 @@ public class EmployeeTable extends TableView<User>{
 		this.setId("employee-table"); //$NON-NLS-1$
 	
 		nameColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getName()));
-		departmentColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getDepartment()));
+		userTypeColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getUserType()));
 		workStartCol.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getShiftStart()));
 		workFinishCol.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getShiftEnd()));
 		//salaryColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<Integer>(x.getValue().salary()));
 		
 		this.getColumns().add(nameColumn);
-		this.getColumns().add(departmentColumn);
+		this.getColumns().add(userTypeColumn);
 		this.getColumns().add(workStartCol);
 		this.getColumns().add(workFinishCol);
 		this.getColumns().add(salaryColumn);

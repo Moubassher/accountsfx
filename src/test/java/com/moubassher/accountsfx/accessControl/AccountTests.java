@@ -1,6 +1,5 @@
 package com.moubassher.accountsfx.accessControl;
 
-import accounting.PhoneNumber;
 import javafx.collections.ObservableList;
 import org.junit.jupiter.api.*;
 
@@ -44,7 +43,7 @@ public class AccountTests {
     void testPasswordStrength( ) {
         String weakPassword = "abc";
         PasswordStrength weak = accountValidator.evaluateStrength(weakPassword);
-        assertEquals(weak, PasswordStrength.WEAK, "A weak password was not determined as weak");
+        assertEquals(PasswordStrength.WEAK, weak, "A weak password was not determined as weak");
 
 
         String mediumPassword = "abc123";
@@ -76,11 +75,11 @@ public class AccountTests {
     }
 
     @Test
-    @DisplayName("Cannot create a non-manager account if no manager account exists")
-    void testCreatingNonManagerAccountWithoutManager() {
+    @DisplayName("Cannot create a non-admin account if no admin account exists")
+    void testCreatingNonAdminAccountWithoutAdmin() {
         String password = "abc123";
         String hashedPassword = accountValidator.hashPassword(password);
-        String department = "مبيعات";
+        String userType = "مبيعات";
         int salary = 300_000;
 
 
@@ -88,8 +87,9 @@ public class AccountTests {
         LocalTime workFinish = workStart.plusHours(8);
         int userId = 1234567;
         User user = new User(userId, "Mohammed Ahmed", hashedPassword,
-                department, salary,  workStart, workFinish);
-        assertThrows(UnsupportedOperationException.class, () -> UserDao.getInstance().addNewEmployee(user));
+                userType, salary,  workStart, workFinish);
+        assertThrows(UnsupportedOperationException.class,
+                () -> UserDao.getInstance().addNewEmployee(user));
     }
 
     @Test
@@ -108,7 +108,7 @@ public class AccountTests {
     void testCreatingEmployeeWithIllogicalWorkhours() {
         String password = "abc123";
         String hashedPassword = accountValidator.hashPassword(password);
-        String department = "مبيعات";
+        String userType = "مبيعات";
         int salary = 300_000;
 
         LocalTime illogicalWorkstart = LocalTime.of(8, 0);
@@ -116,7 +116,7 @@ public class AccountTests {
         int userId = 1234557543;
 
         assertThrows(IllegalArgumentException.class, () -> new User(userId, "Ahmed Adam", hashedPassword,
-                department, salary,  illogicalWorkstart, illogicalWorkfinish));
+                userType, salary,  illogicalWorkstart, illogicalWorkfinish));
     }
 
 
@@ -129,14 +129,14 @@ public class AccountTests {
     private User createTestEmployee() {
         String password = "abc123";
         String hashedPassword = accountValidator.hashPassword(password);
-        String department = "مبيعات";
+        String userType = "مبيعات";
         int salary = 300_000;
 
         LocalTime workStart = LocalTime.of(8, 0);
         LocalTime workFinish = workStart.plusHours(8);
         int userId = 1234567;
         User user = new User(userId, "Mohammed Ahmed", hashedPassword,
-                department, salary,  workStart, workFinish);
+                userType, salary,  workStart, workFinish);
         return user;
     }
 
@@ -147,7 +147,7 @@ public class AccountTests {
     void testCreatingManagerAccount() {
         String userName;
         String password;
-        String department;
+        String userType;
 
     }
 */

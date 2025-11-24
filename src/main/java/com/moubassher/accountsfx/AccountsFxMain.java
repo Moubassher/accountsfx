@@ -44,8 +44,11 @@ public class AccountsFxMain extends Application {
                     System.exit(0);
                 }else if (userChoice == ButtonBar.ButtonData.OK_DONE) {
                     try {
-                        Pane accountCreateRoot = FXMLLoader.load(AccountCreateCtrl.class.getResource("create_account.fxml"));
-                        scene.setRoot(accountCreateRoot);
+                        AccountCreateCtrl accountCreateCtrl = new AccountCreateCtrl(true);
+                         FXMLLoader fxmlLoader = new FXMLLoader(AccountCreateCtrl.class.getResource("create_account.fxml"));
+                        fxmlLoader.setController(accountCreateCtrl);
+                         Pane accountCreateRoot = fxmlLoader.load();
+                         scene.setRoot(accountCreateRoot);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

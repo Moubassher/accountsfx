@@ -52,8 +52,8 @@ public class AccountValidator {
                 .hashToString(14, password.toCharArray());
     }
 
-     void createAccount(String userName, String hashedPassword, String department) {
-        Manager manager = new Manager(userName, hashedPassword, department);
+     void createAccount(String userName, String hashedPassword, String userType) {
+        Manager manager = new Manager(userName, hashedPassword, userType);
         UserDao.getInstance().createManager(manager);
     }
 

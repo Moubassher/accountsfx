@@ -60,6 +60,14 @@ public class AccountCreateCtrl implements Initializable {
     private UserDao userDao;
 
     private AccountValidator accountValidator;
+
+    private boolean isAdminAccount, isAccountCreated;
+
+
+    public AccountCreateCtrl(boolean isAdminAccount) {
+        this.isAdminAccount = isAdminAccount;
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
@@ -67,7 +75,7 @@ public class AccountCreateCtrl implements Initializable {
 
         accountValidator = new AccountValidator();
 
-        accountTypeSelector.getItems().setAll(userDao.readDepartments());
+        accountTypeSelector.getItems().setAll(userDao.readuserTypes());
 
         visiblePasswordField.managedProperty().bind(visiblePasswordField.visibleProperty());
 
@@ -125,6 +133,10 @@ public class AccountCreateCtrl implements Initializable {
             }
         });
 
+        if(isAdminAccount) {
+            enforceAdminAccountCreation();
+        }
+
         Image notAllowedImage = new Image(this.getClass().getResource("not_allowed.png").toExternalForm());
 
         createAccountBtn.hoverProperty().addListener((a, b, hovered) -> {
@@ -141,15 +153,12 @@ public class AccountCreateCtrl implements Initializable {
 
     }
 
-    private boolean isForManagerOnly = false;
 
-    public void forManagerOnly() {
-       isForManagerOnly = true;
+    public void enforceAdminAccountCreation() {
         accountTypeSelector.getSelectionModel().select("إدارة");
         accountTypeSelector.setDisable(true);
     }
 
-    private boolean isAccountCreated = false;
     public boolean isAccountCreated() {
         return isAccountCreated;
     }
@@ -195,12 +204,12 @@ public class AccountCreateCtrl implements Initializable {
 
         String userName = userNameField.getText();
         String password = passwordField.getText();
-        String department = accountTypeSelector.getSelectionModel().getSelectedItem();
+        String userType = accountTypeSelector.getSelectionModel().getSelectedItem();
 
         createAccountBtn.setDisable(true);
         createAccountProgress.setVisible(true);
 
-        Task<String> hashingTask = runHashingTask(password, userName, department);
+        Task<String> hashingTask = runHashingTask(password, userName, userType);
 
         Future<?> result = executor.submit(hashingTask);
         boolean accountCreated = false;
@@ -215,7 +224,7 @@ public class AccountCreateCtrl implements Initializable {
         return accountCreated;
     }
 
-    private Task<String> runHashingTask(String password, String userName, String department) {
+    private Task<String> runHashingTask(String password, String userName, String userType) {
         Task<String> hashingTask = new Task<>() {
             @Override
             protected String call() {
@@ -226,7 +235,7 @@ public class AccountCreateCtrl implements Initializable {
         // When task completes
         hashingTask.setOnSucceeded(e -> {
             String hashedPassword = hashingTask.getValue();
-            accountValidator.createAccount(userName, hashedPassword, department);
+            accountValidator.createAccount(userName, hashedPassword, userType);
 
             createAccountProgress.setVisible(false);
             createAccountBtn.setDisable(false);

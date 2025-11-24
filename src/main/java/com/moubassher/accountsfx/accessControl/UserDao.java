@@ -50,9 +50,9 @@ public class UserDao {
 		return accountType;
 	}
 
-	public Map<String, List<User>> getDepartment_EmployeeMap() {
+	public Map<String, List<User>> getuserType_EmployeeMap() {
 		Map<String, List<User>> obMap = getAllEmployees().stream().collect(
-				Collectors.groupingBy(employee -> employee.getDepartment()));
+				Collectors.groupingBy(employee -> employee.getUserType()));
 		return obMap;
 	}
 
@@ -204,7 +204,7 @@ public class UserDao {
 
 		ObservableList<User> allUsers = FXCollections.observableArrayList();
 
-		String command = "SELECT userId, name, password, department, salary, workStart, workFinish FROM users;"; //$NON-NLS-1$
+		String command = "SELECT userId, name, password, userType, salary, workStart, workFinish FROM users;"; //$NON-NLS-1$
 		try(Connection conn = DriverManager.getConnection(database)) {
 			Statement stmt = conn.createStatement();
 			stmt.execute(command);
@@ -213,7 +213,7 @@ public class UserDao {
 				int userId = results.getInt("userId");
 				String name = results.getString("name"); //$NON-NLS-1$
 				String password = results.getString("password");
-				String department = results.getString("department"); //$NON-NLS-1$
+				String userType = results.getString("userType"); //$NON-NLS-1$
 				int salary = results.getInt("salary");
 				String workStartRaw = results.getString("workStart");
 				LocalTime workStart = null;
@@ -226,7 +226,7 @@ public class UserDao {
 				if(workFinishRaw != null) {
 					workFinish = LocalTime.parse(workStartRaw, localTimeformat);
 				}
-				User user = new User(userId, name, password, department, salary, workStart, workFinish);
+				User user = new User(userId, name, password, userType, salary, workStart, workFinish);
 
 				allUsers.add(user);
 			}
@@ -321,26 +321,26 @@ public class UserDao {
 		return reset;
 	}
 
-	public boolean isManagerExists() {
+	public boolean isAdminRequired() {
 		return getAllEmployees().stream()
-				.anyMatch(employee -> employee.isManager());
+				.noneMatch(employee -> employee.isManager());
 	}
 
-	public List<String> readDepartments() {
-		List<String> departments = new ArrayList<>();
+	public List<String> readuserTypes() {
+		List<String> userTypes = new ArrayList<>();
 		String sql = "SELECT employee_type FROM user_type;";
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(sql);
 			stmt.execute();
 			ResultSet results = stmt.getResultSet();
 			while(results.next()) {
-				String department = results.getString("employee_type");
-				departments.add(department);
+				String userType = results.getString("employee_type");
+				userTypes.add(userType);
 			}
 		} catch (SQLException e) {
             e.printStackTrace();
         }
-		return departments;
+		return userTypes;
     }
 
 	private boolean verifyLoginCredentials(String tableName, String name, String password) {
@@ -414,20 +414,19 @@ public class UserDao {
 			throw new IllegalArgumentException("Cannot add a nameless user");
 		}
 
-		if(!isManagerExists()) {
-			throw new UnsupportedOperationException("Cannot create a non-manager account without a manager account present first");
+		if(isAdminRequired()) {
+			throw new UnsupportedOperationException("Cannot create a non-admin account without an admin account present first");
 		}
 
-		String command = "INSERT into employees (name, password, department, salary, workStart, workFinish) " //$NON-NLS-1$
-				+ "VALUES (?,?,?,?,?)"; //$NON-NLS-1$
+		String command = "INSERT into users (name, password, userType, salary, workStart, workFinish) " //$NON-NLS-1$
+				+ "VALUES (?,?,?,?,?,?)"; //$NON-NLS-1$
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
 
 			stmt.setString(1, user.getName());
 			stmt.setString(2, user.getHashedPassword());
-			stmt.setString(3, user.getDepartment());
+			stmt.setString(3, user.getUserType());
 			stmt.setInt(4, user.getSalary());
-
 
 			String shiftStart = user.getShiftStart().format(localTimeformat);
 			String shiftFinish = user.getShiftEnd().format(localTimeformat);
@@ -445,12 +444,12 @@ public class UserDao {
 
 	public boolean createManager(Manager manager) {
 		boolean created = false;
-		String sql = "INSERT INTO employees(name, password, department) values(?,?, ?);";
+		String sql = "INSERT INTO employees(name, password, userType) values(?,?, ?);";
 		try(Connection connection = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = connection.prepareStatement(sql);
 			stmt.setString(1, manager.getName());
 			stmt.setString(2, manager.getHashedPassword());
-			stmt.setString(3, manager.getDepartment());
+			stmt.setString(3, manager.getUserType());
 			int affectedRows = stmt.executeUpdate();
 			created = affectedRows > 0;
 		} catch (SQLException e) {

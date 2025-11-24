@@ -11,7 +11,7 @@ import java.util.Objects;
 public  class User {
     private String name;
     private String hashedPassword;
-    private  String department;
+    private  String userType;
     private int userId, salary;
     private LocalTime shiftStart, shiftEnd;
 
@@ -23,12 +23,12 @@ public  class User {
         this.name = employeeName;
     }
 
-    public User(int userId, String name, String hashedPassword, String department, int salary, LocalTime shiftStart,
+    public User(int userId, String name, String hashedPassword, String userType, int salary, LocalTime shiftStart,
                 LocalTime shiftEnd) {
         this.userId = userId;
         this.name = name;
         this.hashedPassword = hashedPassword;
-        this.department = department;
+        this.userType = userType;
         this.salary = salary;
         this.shiftStart = shiftStart;
         this.shiftEnd = shiftEnd;
@@ -50,10 +50,10 @@ public  class User {
         return (shiftStart != null && shiftEnd != null);
     }
 
-    public User(String name, String hashedPassword, String department) {
+    public User(String name, String hashedPassword, String userType) {
         this.name = name;
         this.hashedPassword = hashedPassword;
-        this.department = department;
+        this.userType = userType;
     }
 
     public String getName() {
@@ -64,8 +64,8 @@ public  class User {
         return hashedPassword;
     }
 
-    public String getDepartment() {
-        return department;
+    public String getUserType() {
+        return userType;
     }
 
     public int getSalary() {
@@ -81,7 +81,7 @@ public  class User {
     }
 
     public boolean isManager() {
-       return department.equals("إدارة");
+       return userType.equals("إدارة");
     }
 
     @Override
@@ -90,21 +90,21 @@ public  class User {
         if (obj == null || obj.getClass() != this.getClass()) return false;
         var that = (User) obj;
         return Objects.equals(this.name, that.name) &&
-                Objects.equals(this.department, that.department) &&
+                Objects.equals(this.userType, that.userType) &&
                 Objects.equals(this.shiftStart, that.shiftStart) &&
                 Objects.equals(this.shiftEnd, that.shiftEnd);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, department, shiftStart, shiftEnd);
+        return Objects.hash(name, userType, shiftStart, shiftEnd);
     }
 
     @Override
     public String toString() {
         return "User[" +
                 "name=" + name + ", " +
-                "department=" + department + ", " +
+                "userType=" + userType + ", " +
                 "workStart=" + shiftStart + ", " +
                 "workFinish=" + shiftEnd + ']';
     }

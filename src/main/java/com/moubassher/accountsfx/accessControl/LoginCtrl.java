@@ -73,9 +73,9 @@ public class LoginCtrl implements Initializable {
 		}
 		signInDisplay.setText(title);
 
-		accountTypeSelector.getItems().setAll(userDao.readDepartments());
+		accountTypeSelector.getItems().setAll(userDao.readuserTypes());
 
-		onAccountTypeSelected(selectedDept -> getRegisteredUsersInDepartment(selectedDept));
+		onAccountTypeSelected(selectedDept -> getRegisteredUsersInuserType(selectedDept));
 
 		credsInfoDisplay.setId("error");
 		if(isUserManager) {
@@ -106,11 +106,11 @@ public class LoginCtrl implements Initializable {
 	}
 
 	private boolean createAccount() throws IOException {
-		AccountCreateCtrl createAccountCtrl = new AccountCreateCtrl();
+		AccountCreateCtrl createAccountCtrl = new AccountCreateCtrl(false);
 		FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/accessControl/create_account.fxml"));
 		loader.setController(createAccountCtrl);
 		Pane createAccountPane = loader.load();
-		createAccountCtrl.forManagerOnly();
+		createAccountCtrl.enforceAdminAccountCreation();
 
 		boolean isAccountCreated = createAccountCtrl.isAccountCreated();
 		return isAccountCreated;
@@ -149,9 +149,9 @@ public class LoginCtrl implements Initializable {
 				});
 	}
 
-	private void getRegisteredUsersInDepartment(String department) {
-		Map<String, List<User>> deptEmployeeMap = userDao.getDepartment_EmployeeMap();
-		List<User> users = deptEmployeeMap.get(department);
+	private void getRegisteredUsersInuserType(String userType) {
+		Map<String, List<User>> deptEmployeeMap = userDao.getuserType_EmployeeMap();
+		List<User> users = deptEmployeeMap.get(userType);
 		registeredUsersSelector.setItems(FXCollections.observableList(users));
 	}
 
