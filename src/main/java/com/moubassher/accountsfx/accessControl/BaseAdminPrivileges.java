@@ -42,9 +42,9 @@ import java.util.ResourceBundle;
 
 public abstract class BaseAdminPrivileges implements Initializable {
 
-	static AccountDao empDatabase = AccountDao.getInstance();
+	static AccountDao accountDao = AccountDao.getInstance();
 	AccountTable accountTable = AccountTable.getInstance();
-	
+
 	private Button addNewUser, modifyUser, deleteUser;
 
 	@FXML
@@ -82,8 +82,8 @@ public abstract class BaseAdminPrivileges implements Initializable {
 
 	public HBox installActionPane() {
 		HBox actionsPane = new HBox(10);
-		ChoiceBox<String> employees = new ChoiceBox<>();
-		employees.setItems(empDatabase.readAllUserNames());
+		ChoiceBox<Account> accounts = new ChoiceBox<>();
+		accounts.setItems(accountDao.readUsers());
 		addNewUser = new Button("إضافة موظف");
 		modifyUser = new Button("تعديل");
 		Button resetPasswordBtn = new Button("اعادة ضبط كلمة المرور");
@@ -94,21 +94,26 @@ public abstract class BaseAdminPrivileges implements Initializable {
 
 		addNewUser.setOnAction(x -> createEmployeeAccount());
 
-		deleteUser.setOnAction(x -> confirmDeletingEmployee(employees));
+		deleteUser.setOnAction(x -> {
+					Account account = accounts.getSelectionModel().getSelectedItem();
+					confirmDeletingEmployee(account);
+				}
+		);
 
-		actionsPane.getChildren().addAll(employees, addNewUser, modifyUser,
+		actionsPane.getChildren().addAll(accounts, addNewUser, modifyUser,
 				resetPasswordBtn, deleteUser);
 		return actionsPane;
 	}
 
 
 
-	private void confirmDeletingEmployee(ChoiceBox<String> employees) {
-		String employeeToDelete = employees.getSelectionModel().getSelectedItem();
+	private void confirmDeletingEmployee(Account account) {
+
+		String accountUsername = account.getName();
 		Alert alert = new Alert(AlertType.CONFIRMATION);
 		alert.setTitle("تأكيد حذف موظف");
 		String action = "هل تريد حذف (";
-		action += employeeToDelete;
+		action += accountUsername;
 		action += ")";
 		alert.setHeaderText(action);
 
@@ -122,7 +127,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		alert.getDialogPane().setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
 		Optional<ButtonType> result = alert.showAndWait();
 		if(result.isPresent() && result.get() == yes) {
-			empDatabase.deleteEmployee(employeeToDelete);
+			accountDao.deleteAccount(account);
 			accountTable.reloadTable();
 		} else if(result.isPresent() && result.get() == no) {
 			alert.close();
@@ -130,7 +135,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 	}
 
 	private static  void createEmployeeAccount() {
-		
+
 		Stage employeeAcctStage = new Stage();
 		employeeAcctStage.initModality(Modality.WINDOW_MODAL);
 		Label nameLabel = new Label("اسم الموظف");
@@ -138,7 +143,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 
 		Label dptLabel = new Label("القسم/ الإدارة");
 		TextField dptTF = new TextField();
-		
+
 		Label salaryLabel = new Label("المرتب");
 		TextField salaryTF = new TextField();
 
@@ -147,7 +152,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 
 		Label shiftEndLabel = new Label("نهاية الدوام");
 		ShiftPane shiftEndPane = setupShiftPane();
-		
+
 		Button add = new Button("تسجيل حساب جديد");
 		Button clear = new Button("مسح البيانات");
 
@@ -156,24 +161,24 @@ public abstract class BaseAdminPrivileges implements Initializable {
 			String defaultPassword = "123";
 			String dpt = dptTF.getText();
 			int salary = Integer.valueOf(salaryTF.getText());
-			
+
 			int startHour = shiftStartPane.getHour();
 			int startMinutes = shiftStartPane.getMinutes();
 			String startTimeOfDay = shiftStartPane.getTimeOfDay();
-			
+
 			LocalTime shiftStart = shiftStartPane.setTimestamp(startHour, startMinutes, startTimeOfDay);
-			
+
 			int finishHour = shiftEndPane.getHour();
 			int finishMinutes = shiftEndPane.getMinutes();
 			String finishTimeOfDay = shiftEndPane.getTimeOfDay();
-					
+
 			LocalTime shiftFinish= shiftEndPane.setTimestamp(finishHour, finishMinutes, finishTimeOfDay);
 
 			Account account = new Account(-1, name, defaultPassword, dpt, salary, shiftStart, shiftFinish);
-			boolean success = empDatabase.addNewAccount(account);
-			
+			boolean success = accountDao.addNewAccount(account);
+
 			Alert employeeAdded = new Alert(AlertType.INFORMATION);
-			
+
 			employeeAdded.setHeaderText("تمت إضافة الموظف بنجاح.");
 			Scene alertScene = employeeAdded.getDialogPane().getScene();
 			employeeAdded.getDialogPane().setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
@@ -184,14 +189,14 @@ public abstract class BaseAdminPrivileges implements Initializable {
 				employeeAdded.setContentText("حدث عطل ما. الرجاء الإتصال بالمبرمج");
 				employeeAdded.show();
 			}
-			
+
 		});
 
 		HBox actionsPane = new HBox(10);
 		actionsPane.getChildren().addAll(add, clear);
-		 
+
 		VBox employeeAcctPane = new VBox(10);
-		employeeAcctPane.getChildren().addAll(nameLabel, employeeName, dptLabel, dptTF, 
+		employeeAcctPane.getChildren().addAll(nameLabel, employeeName, dptLabel, dptTF,
 				salaryLabel, salaryTF, shiftStartLabel, shiftStartPane, shiftEndLabel, shiftEndPane, actionsPane);
 
 		employeeAcctPane.setPadding(new Insets(20));
@@ -207,13 +212,13 @@ public abstract class BaseAdminPrivileges implements Initializable {
 	private static ShiftPane setupShiftPane() {
 
 		ShiftPane shiftPane = new ShiftPane();
-		
+
 		Spinner<Integer> shift_hour = new Spinner<>(1, 12, 9);
 		shift_hour.setEditable(true);
 		shift_hour.setMaxWidth(60);
-		
+
 		shiftPane.hourProperty().bind(shift_hour.valueProperty());
-		
+
 		TextFormatter<Integer> hourLimit = setInputLimit(1, 12);
 		shift_hour.getEditor().setTextFormatter(hourLimit);
 
@@ -222,16 +227,16 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		Spinner<Integer> shift_minutes = new Spinner<>(00, 59, 00);
 		shift_minutes.setEditable(true);
 		shift_minutes.setMaxWidth(60);
-		
+
 		shiftPane.minutesProperty().bind(shift_minutes.valueProperty());
-		
+
 		Spinner<String> shift_am_pm = new Spinner<String>();
 		shift_am_pm.setMaxWidth(100);
 
 		TextFormatter<Integer> inputLimit = setInputLimit(0, 59);
 		shift_hour.getEditor().setTextFormatter(inputLimit);
 
-		
+
 		ObservableList<String> am_pm = FXCollections.observableArrayList();
 		am_pm.add("صباحاً");
 		am_pm.add("مساءً");
@@ -246,15 +251,15 @@ public abstract class BaseAdminPrivileges implements Initializable {
 
 	private static TextFormatter<Integer> setInputLimit(int minValue, int maxValue) {
 		TextFormatter<Integer> inputLimit = new TextFormatter<>(t -> {
-            String inputString = t.getControlNewText();
-            if(inputString.matches("[0-9]+")) {
-                int input = Integer.valueOf(inputString);
-                if(input > minValue && input < maxValue) {
-                    return t;
-                }
-            }
-            return null;
-        });
+			String inputString = t.getControlNewText();
+			if(inputString.matches("[0-9]+")) {
+				int input = Integer.valueOf(inputString);
+				if(input > minValue && input < maxValue) {
+					return t;
+				}
+			}
+			return null;
+		});
 		return inputLimit;
 	}
 
@@ -262,14 +267,14 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		AttendanceCtrl attendanceCtrl = new AttendanceCtrl();
 		FXMLLoader fxmlLoader = new FXMLLoader(this.getClass().getResource("attendance_table.fxml"));
 		fxmlLoader.setController(attendanceCtrl);
-        try {
-            TableView<Login> attendanceTable = fxmlLoader.load();
+		try {
+			TableView<Login> attendanceTable = fxmlLoader.load();
 			attendanceTab.setContent(attendanceTable);
 		} catch (IOException e) {
-            e.printStackTrace();
-        }
+			e.printStackTrace();
+		}
 
-        //TODO add more insights to attendance table than just showing it: e.g. most hours put in.
+		//TODO add more insights to attendance table than just showing it: e.g. most hours put in.
 	}
 
 	private void confirmResettingEmployeePassword() {
@@ -281,7 +286,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 						اختر الموظف الذي طلب إعادة كلمة السر واضغط على الزر أدناه ليتم ضبط كلمة السر إلى 123.
 						ليستخدمها الموظف مرة واحدة للدخول إلى حسابه، ثم تغيير كلمة السر من داخل حسابه.
 				""");
-		ChoiceBox<String> employees = new ChoiceBox<>(empDatabase.readAllUserNames());
+		ChoiceBox<String> employees = new ChoiceBox<>(accountDao.readAllUserNames());
 		Label nameDisplay = new Label("اسم الموظف");
 		VBox box= new VBox(10, nameDisplay, employees);
 		alert.getDialogPane().setContent(box);
@@ -292,7 +297,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		alert.showAndWait().ifPresent(button -> {
 			if(button == resetPassword) {
 				String name = employees.getSelectionModel().getSelectedItem();
-				empDatabase.resetPassword(name, "123");
+				accountDao.resetPassword(name, "123");
 			}
 		});
 	}
@@ -309,59 +314,59 @@ public abstract class BaseAdminPrivileges implements Initializable {
 
 		IntegerProperty hour, minutes;
 		StringProperty timeOfDay;
-		
-		
+
+
 		public IntegerProperty hourProperty() {
 			return hour;
 		}
-		
+
 		public IntegerProperty minutesProperty() {
 			return minutes;
 		}
-		
+
 		public StringProperty timeOfDayProperty() {
 			return timeOfDay;
 		}
 		public int getHour() {
 			return hour.get();
 		}
-		
+
 		public int getMinutes() {
 			return minutes.get();
 		}
-		
+
 		public String getTimeOfDay() {
 			String tod = am_pm.get(timeOfDay.get());
-			
+
 			return tod;
 		}
-		
+
 		Map<String, String> am_pm = new HashMap<String, String>();
-		
-		
+
+
 		public ShiftPane() {
-			
+
 			hour = new SimpleIntegerProperty();
 			minutes = new SimpleIntegerProperty();
 			timeOfDay = new SimpleStringProperty();
-			
+
 			am_pm.put("صباحاً", "AM");
 			am_pm.put("مساءً", "PM");
-			
+
 			this.setSpacing(10);
 		}
-		
+
 		public LocalTime setTimestamp(int hour, int minute, String timeOfDay) {
-			
+
 			String hourString = String.format("%02d", hour);
 			String minuteString = String.format("%02d", minute);
-						
+
 			String stamp = hourString+ ":" + minuteString + timeOfDay;
-			
-			
-		    LocalTime time = LocalTime.parse(stamp, DateTimeFormatter.ofPattern("h:mma"));
-		   
-		    return time;
+
+
+			LocalTime time = LocalTime.parse(stamp, DateTimeFormatter.ofPattern("h:mma"));
+
+			return time;
 		}
 	}
 }

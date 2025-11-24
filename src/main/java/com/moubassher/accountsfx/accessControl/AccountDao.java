@@ -386,13 +386,14 @@ public class AccountDao {
 		return done;
 	}
 
-	public boolean deleteEmployee(String name) {
+	public boolean deleteAccount(Account account) {
 		boolean done = false;
-		String command = "delete from employees WHERE name = ?;";
+		int accountId = account.getUserId();
+		String command = "delete from users WHERE userId = ?;";
 		try (Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
 
-			stmt.setString(1, name);
+			stmt.setInt(1, accountId);
 			stmt.executeUpdate();
 
 			done = true;

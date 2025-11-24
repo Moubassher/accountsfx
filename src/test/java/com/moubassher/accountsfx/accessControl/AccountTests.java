@@ -13,12 +13,19 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Account (Sign up/sign-in) tests")
 public class AccountTests {
 
+    private AccountDao accountDao;
     private List<Account> testAccounts;
     AccountValidator accountValidator;
     @BeforeAll
     void setUp() {
+        accountDao = AccountDao.getInstance();
         testAccounts = new ArrayList<>();
         accountValidator  = new AccountValidator();
+    }
+
+    @AfterEach
+    void tearDown() {
+        testAccounts.forEach(account -> accountDao.deleteAccount(account));
     }
 
     @Test
@@ -73,9 +80,18 @@ public class AccountTests {
     @Test
     @DisplayName("Can read users")
     void testReadingUsers() {
-        ObservableList<Account> accounts = AccountDao.getInstance().readUsers();
-        assertNotNull(accounts, "Users is null");
-        assertFalse(accounts.isEmpty());
+        String password = "user123";
+        String hashedPassword = accountValidator.hashPassword(password);
+        Account account = new Account("Robert C. Martin", hashedPassword, "account type");
+        boolean created = accountDao.addNewAccount(account);
+        if(created) {
+            ObservableList<Account> accounts = AccountDao.getInstance().readUsers();
+            assertNotNull(accounts, "Users is null");
+            assertFalse(accounts.isEmpty());
+        } else {
+            throw new RuntimeException("Account could not have been added and is a requirement for this test");
+
+        }
     }
 
     @Test

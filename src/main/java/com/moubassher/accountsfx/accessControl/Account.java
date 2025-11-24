@@ -36,9 +36,6 @@ public  class Account {
             throw new IllegalArgumentException("Shift end cannot be after shift start");
         }
 
-        if(isWorkHoursSet()) {
-
-        }
         if(isWorkHoursSet() && shiftStart.equals(shiftEnd)) {
             throw new IllegalArgumentException("shift start and shift end for employee (" + name + ")" +
                     " are the same. Shift start and shift end cannot be the same");
@@ -54,6 +51,10 @@ public  class Account {
         this.name = name;
         this.hashedPassword = hashedPassword;
         this.accountType = accountType;
+    }
+
+    public int getUserId() {
+        return userId;
     }
 
     public String getName() {
