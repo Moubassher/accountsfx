@@ -42,7 +42,7 @@ import java.util.ResourceBundle;
 
 public abstract class BaseAdminPrivileges implements Initializable {
 
-	static EmployeeDB empDatabase = EmployeeDB.getInstance();
+	static UserDao empDatabase = UserDao.getInstance();
 	EmployeeTable employeeTable = EmployeeTable.getInstance();
 	
 	private Button addNewEmployee, modifyEmployee, deleteEmployee;

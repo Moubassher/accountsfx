@@ -3,7 +3,6 @@ plugins {
     id 'maven-publish'
     id 'application'
 
-    id 'org.openjfx.javafxplugin' version '0.1.0'
 
 }
 
@@ -15,20 +14,23 @@ repositories {
     mavenCentral()
 }
 
-def javafxVersion = '23.0.2'
-
-javafx {
-    version = javafxVersion
-    modules = ['javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.media', 'javafx.graphics']
-}
-
-
 application {
     mainClass = 'com.moubassher.accountsfx.AccountsFxMain'
 }
 
 
+def javafxVersion = '23.0.1'
+
+
 dependencies {
+
+    implementation "org.openjfx:javafx-base:${javafxVersion}:win"
+    implementation "org.openjfx:javafx-graphics:${javafxVersion}:win"
+    implementation "org.openjfx:javafx-controls:${javafxVersion}:win"
+    implementation "org.openjfx:javafx-fxml:${javafxVersion}:win"
+    implementation "org.openjfx:javafx-media:${javafxVersion}:win"
+    implementation "org.openjfx:javafx-web:${javafxVersion}:win"
+    implementation "org.openjfx:javafx-swing:${javafxVersion}:win"
 
     implementation 'org.xerial:sqlite-jdbc:3.40.1.0'
 
@@ -47,6 +49,17 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
 
 }
+
+run {
+    jvmArgs = [
+            "--module-path", configurations.runtimeClasspath.asPath,
+            "--add-modules", "javafx.controls,javafx.fxml,javafx.media,javafx.web,javafx.swing"
+    ]
+
+    jvmArgs += "--add-opens"
+    jvmArgs += "java.base/java.lang.reflect=ALL-UNNAMED"
+}
+
 
 publishing {
     publications {

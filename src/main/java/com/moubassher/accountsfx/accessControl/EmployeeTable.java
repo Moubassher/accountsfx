@@ -25,7 +25,7 @@ public class EmployeeTable extends TableView<Employee>{
 	TableColumn<Employee, Integer> salaryColumn = new TableColumn<>("المرتب");
 	TableColumn<Employee, String> optionsColumn = new TableColumn<>("الخيارات");
 
-	EmployeeDB empDatabase = EmployeeDB.getInstance();
+	UserDao empDatabase = UserDao.getInstance();
 
 	private static EmployeeTable instance = null;
 

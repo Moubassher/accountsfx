@@ -1,16 +1,22 @@
 package com.moubassher.accountsfx;
 
-import com.moubassher.accountsfx.accessControl.EmployeeDB;
+import com.context.our_utilities.MyNotifications;
+import com.moubassher.accountsfx.accessControl.AccountCreateCtrl;
+import com.moubassher.accountsfx.accessControl.UserDao;
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.util.Optional;
 
 ///Logic Flow:
@@ -25,22 +31,39 @@ public class AccountsFxMain extends Application {
     @Override
     public void start(Stage stage) {
 
-        boolean isManagerExists = EmployeeDB.getInstance().isManagerExists();
+        Scene scene = new Scene(new VBox(new Label("Nothing here")), 540, 440);
+
+      //  boolean isManagerExists = UserDao.getInstance().isManagerExists();
+      boolean isManagerExists = false;
         if(!isManagerExists) {
-            showMissingAdminAlert();
+            Optional<ButtonType> result = showMissingAdminAlert();
+
+            if(result.isPresent()) {
+                ButtonBar.ButtonData userChoice = result.get().getButtonData();
+                if (userChoice == ButtonBar.ButtonData.CANCEL_CLOSE) {
+                    System.exit(0);
+                }else if (userChoice == ButtonBar.ButtonData.OK_DONE) {
+                    try {
+                        Pane accountCreateRoot = FXMLLoader.load(AccountCreateCtrl.class.getResource("create_account.fxml"));
+                        scene.setRoot(accountCreateRoot);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
         }
-        Scene scene = new Scene(new VBox(new Label("Nothing here")), 400, 400);
+
         stage.setScene(scene);
         stage.show();
     }
 
-    private void showMissingAdminAlert() {
+    private Optional<ButtonType> showMissingAdminAlert() {
         Alert alert =new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("المحاسب الذهبي");
         alert.setHeaderText("لا يوجد حساب إداري على النظام. يجب إنشاء على الأقل حساب إداري واحد لاستخدام النظام.");
         alert.getDialogPane().getStylesheets().add("GreyFabric.css");
-
-        ButtonType ok = new ButtonType("موافق");
+        ButtonType ok = new ButtonType("موافق", ButtonBar.ButtonData.OK_DONE);
         ButtonType quit = new ButtonType("خروج", ButtonBar.ButtonData.CANCEL_CLOSE);
 
         alert.getButtonTypes().setAll(ok, quit);
@@ -48,10 +71,7 @@ public class AccountsFxMain extends Application {
 
         Optional<ButtonType> result = alert.showAndWait();
 
-        if((result.isPresent() && result.get() == quit) || result.isEmpty()) {
-            System.out.println("user quit");
-            System.exit(0);
-        }
+        return result;
     }
 
 }

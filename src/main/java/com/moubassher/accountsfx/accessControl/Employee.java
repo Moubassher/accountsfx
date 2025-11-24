@@ -12,7 +12,7 @@ public  class Employee {
     private String name;
     private String hashedPassword;
     private  String department;
-    private int employeeId, salary;
+    private int userId, salary;
     private LocalTime shiftStart, shiftEnd;
 
     public Employee() {
@@ -23,9 +23,9 @@ public  class Employee {
         this.name = employeeName;
     }
 
-    public Employee(int employeeId, String name, String hashedPassword, String department, int salary, LocalTime shiftStart,
+    public Employee(int userId, String name, String hashedPassword, String department, int salary, LocalTime shiftStart,
                     LocalTime shiftEnd) {
-        this.employeeId = employeeId;
+        this.userId = userId;
         this.name = name;
         this.hashedPassword = hashedPassword;
         this.department = department;

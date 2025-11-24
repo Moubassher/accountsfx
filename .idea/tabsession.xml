@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SessionConfiguration">
+    <state version="1" />
+    <sessions>
+      <session name="Create Account">
+        <files focusedFile="$PROJECT_DIR$/src/main/java/com/moubassher/accountsfx/AccountsFxMain.java">
+          <file>$PROJECT_DIR$/build.gradle</file>
+          <file>$PROJECT_DIR$/src/main/java/com/moubassher/accountsfx/accessControl/AccountValidator.java</file>
+          <file>$PROJECT_DIR$/src/main/java/com/moubassher/accountsfx/accessControl/LoginCtrl.java</file>
+          <file>$PROJECT_DIR$/src/main/java/com/moubassher/accountsfx/AccountsFxMain.java</file>
+          <file>$PROJECT_DIR$/src/main/java/com/moubassher/accountsfx/accessControl/AccountCreateCtrl.java</file>
+          <file>$PROJECT_DIR$/src/main/java/com/moubassher/accountsfx/accessControl/Pharmacy.java</file>
+          <file>$PROJECT_DIR$/src/main/java/com/moubassher/accountsfx/accessControl/UserDao.java</file>
+          <file>$PROJECT_DIR$/src/main/java/com/moubassher/accountsfx/accessControl/BaseAdminPrivileges.java</file>
+        </files>
+      </session>
+    </sessions>
+  </component>
+</project>

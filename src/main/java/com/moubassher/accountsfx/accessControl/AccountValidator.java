@@ -54,7 +54,7 @@ public class AccountValidator {
 
      void createAccount(String userName, String hashedPassword, String department) {
         Manager manager = new Manager(userName, hashedPassword, department);
-        EmployeeDB.getInstance().createManager(manager);
+        UserDao.getInstance().createManager(manager);
     }
 
 }

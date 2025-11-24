@@ -27,8 +27,8 @@ public class AttendanceCtrl implements Initializable {
 		logoutDateCol.setCellValueFactory(x -> new SimpleStringProperty(x.getValue().logoutDate()));
 		logoutTimeCol.setCellValueFactory(x -> new SimpleStringProperty(x.getValue().logoutTime()));
 
-		EmployeeDB employeeDB = EmployeeDB.getInstance();
-		attendanceTable.setItems(FXCollections.observableArrayList(employeeDB.readLogins()));
+		UserDao userDao = UserDao.getInstance();
+		attendanceTable.setItems(FXCollections.observableArrayList(userDao.readLogins()));
 	}
 	public AttendanceCtrl() {
 

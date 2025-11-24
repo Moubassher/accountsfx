@@ -57,17 +57,17 @@ public class AccountCreateCtrl implements Initializable {
 
     private Tooltip passwordMismatch;
 
-    private EmployeeDB employeeDB;
+    private UserDao userDao;
 
     private AccountValidator accountValidator;
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        employeeDB = EmployeeDB.getInstance();
+        userDao = UserDao.getInstance();
 
         accountValidator = new AccountValidator();
 
-        accountTypeSelector.getItems().setAll(employeeDB.readDepartments());
+        accountTypeSelector.getItems().setAll(userDao.readDepartments());
 
         visiblePasswordField.managedProperty().bind(visiblePasswordField.visibleProperty());
 
@@ -175,8 +175,7 @@ public class AccountCreateCtrl implements Initializable {
         }
 
         double score = strength.getScore();
-        double progress = score / 5.0;
-        strengthBar.setProgress(progress);
+        strengthBar.setProgress(score);
 
     }
 

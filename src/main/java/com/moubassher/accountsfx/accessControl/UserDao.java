@@ -29,11 +29,11 @@ import javax.crypto.NoSuchPaddingException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-public class EmployeeDB {
+public class UserDao {
 
 	private String driverPrefix = "jdbc:sqlite:"; //$NON-NLS-1$
 
-	private String databaseName = "Employees.db"; //$NON-NLS-1$
+	private String databaseName = "Users.db"; //$NON-NLS-1$
 
 	private String databaseLocation = "file:/C:/pharmaNetResources/databases/"; //$NON-NLS-1$
 	private String database = driverPrefix + databaseLocation + databaseName;
@@ -204,13 +204,13 @@ public class EmployeeDB {
 
 		ObservableList<Employee> allEmployees = FXCollections.observableArrayList();
 
-		String command = "SELECT employeeId, name, password, department, salary, workStart, workFinish FROM employees;"; //$NON-NLS-1$
+		String command = "SELECT userId, name, password, department, salary, workStart, workFinish FROM users;"; //$NON-NLS-1$
 		try(Connection conn = DriverManager.getConnection(database)) {
 			Statement stmt = conn.createStatement();
 			stmt.execute(command);
 			ResultSet results = stmt.getResultSet();
 			while(results.next()) {
-				int employeeId = results.getInt("employeeId");
+				int userId = results.getInt("userId");
 				String name = results.getString("name"); //$NON-NLS-1$
 				String password = results.getString("password");
 				String department = results.getString("department"); //$NON-NLS-1$
@@ -226,7 +226,7 @@ public class EmployeeDB {
 				if(workFinishRaw != null) {
 					workFinish = LocalTime.parse(workStartRaw, localTimeformat);
 				}
-				Employee employee = new Employee(employeeId, name, password, department, salary, workStart, workFinish);
+				Employee employee = new Employee(userId, name, password, department, salary, workStart, workFinish);
 
 				allEmployees.add(employee);
 			}
@@ -328,7 +328,7 @@ public class EmployeeDB {
 
 	public List<String> readDepartments() {
 		List<String> departments = new ArrayList<>();
-		String sql = "SELECT employee_type FROM employee_type;";
+		String sql = "SELECT employee_type FROM user_type;";
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(sql);
 			stmt.execute();
@@ -459,16 +459,16 @@ public class EmployeeDB {
 		return created;
 	}
 
-	private EmployeeDB() {
+	private UserDao() {
 
 		//encryptDatabase();
 	}
 
-	private static EmployeeDB instance = null;
+	private static UserDao instance = null;
 
-	public static EmployeeDB getInstance() {
+	public static UserDao getInstance() {
 		if (instance == null) {
-			instance = new EmployeeDB();
+			instance = new UserDao();
 		}
 		return instance;
 	}

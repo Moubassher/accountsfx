@@ -37,7 +37,7 @@ public class LoginCtrl implements Initializable {
 
 	private StringProperty loggedInUser = new SimpleStringProperty();
 
-	private EmployeeDB employeeDB = EmployeeDB.getInstance();
+	private UserDao userDao = UserDao.getInstance();
 
 	TaskDatabase taskDatabase = TaskDatabase.getInstance();
 
@@ -73,7 +73,7 @@ public class LoginCtrl implements Initializable {
 		}
 		signInDisplay.setText(title);
 
-		accountTypeSelector.getItems().setAll(employeeDB.readDepartments());
+		accountTypeSelector.getItems().setAll(userDao.readDepartments());
 
 		onAccountTypeSelected(selectedDept -> getRegisteredUsersInDepartment(selectedDept));
 
@@ -150,7 +150,7 @@ public class LoginCtrl implements Initializable {
 	}
 
 	private void getRegisteredUsersInDepartment(String department) {
-		Map<String, List<Employee>> deptEmployeeMap = employeeDB.getDepartment_EmployeeMap();
+		Map<String, List<Employee>> deptEmployeeMap = userDao.getDepartment_EmployeeMap();
 		List<Employee> employees = deptEmployeeMap.get(department);
 		registeredUsersSelector.setItems(FXCollections.observableList(employees));
 	}
@@ -185,13 +185,13 @@ public class LoginCtrl implements Initializable {
 
             boolean validCreds;
             if (isUserManager) {
-                validCreds = employeeDB.loginManagement(name, password);
+                validCreds = userDao.loginManagement(name, password);
             } else {
-                validCreds = employeeDB.loginEmployee(name, password);
+                validCreds = userDao.loginEmployee(name, password);
             }
 
             if (validCreds) {
-                String userName = employeeDB.getName();
+                String userName = userDao.getName();
                 loggedInUser.set(userName);
             }
         }
@@ -207,7 +207,7 @@ public class LoginCtrl implements Initializable {
 	}
 
 	public void logOutUser() {
-		employeeDB.logoutUser();
+		userDao.logoutUser();
 		loginWindow(false);
 	}
 
@@ -220,7 +220,7 @@ public class LoginCtrl implements Initializable {
 		warning.setId("warning");
 		warning.setPadding(new Insets(5));
 
-		Label currentAccount = new Label(employeeDB.getAccountType());
+		Label currentAccount = new Label(userDao.getAccountType());
 		currentAccount.setId("current-account");
 		Label restrictedOps = new Label(restrictedOperations);
 		restrictedOps.setId("restrictedOps");
@@ -288,7 +288,7 @@ public class LoginCtrl implements Initializable {
 
 	@FXML
 	private void sendPasswordResetRequest() {
-		boolean done = taskDatabase.addTask("طلب إعادة ضبط كلمة سر", "for " + employeeDB.getName());
+		boolean done = taskDatabase.addTask("طلب إعادة ضبط كلمة سر", "for " + userDao.getName());
 		if(done) {
 			//TODO replace with a suitable notification from MyNotification's.
 			//Messages.showNotification("تم", "تم إرسال طلب للإدارة لإعادة ضبط كلمة السر إلى 123. وبعدما تتم إعادة الضبط. ادخل إلى حسابك باستخدام 123 (مرة واحدة)، ومن ثم قم بتغييرها من القائمة الرئيسية.");

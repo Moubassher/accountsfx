@@ -4,8 +4,6 @@ import accounting.PhoneNumber;
 import javafx.collections.ObservableList;
 import org.junit.jupiter.api.*;
 
-import java.security.InvalidParameterException;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -72,7 +70,7 @@ public class AccountTests {
     @Test
     @DisplayName("Can read employees")
     void testReadingEmployees() {
-        ObservableList<Employee> employees = EmployeeDB.getInstance().getAllEmployees();
+        ObservableList<Employee> employees = UserDao.getInstance().getAllEmployees();
         assertNotNull(employees, "Employees is null");
         assertFalse(employees.isEmpty());
     }
@@ -88,10 +86,10 @@ public class AccountTests {
 
         LocalTime workStart = LocalTime.of(8, 0);
         LocalTime workFinish = workStart.plusHours(8);
-        int employeeId = 1234567;
-        Employee employee = new Employee(employeeId, "Mohammed Ahmed", hashedPassword,
+        int userId = 1234567;
+        Employee employee = new Employee(userId, "Mohammed Ahmed", hashedPassword,
                 department, salary,  workStart, workFinish);
-        assertThrows(UnsupportedOperationException.class, () -> EmployeeDB.getInstance().addNewEmployee(employee));
+        assertThrows(UnsupportedOperationException.class, () -> UserDao.getInstance().addNewEmployee(employee));
     }
 
     @Test
@@ -99,7 +97,7 @@ public class AccountTests {
     void testAddingNamelessEmployee() {
         Employee employee = new Employee();
         assertThrows(IllegalArgumentException.class,
-                () -> EmployeeDB.getInstance().addNewEmployee(employee));
+                () -> UserDao.getInstance().addNewEmployee(employee));
 
     }
 
@@ -115,9 +113,9 @@ public class AccountTests {
 
         LocalTime illogicalWorkstart = LocalTime.of(8, 0);
         LocalTime illogicalWorkfinish = illogicalWorkstart.minusHours(8);
-        int employeeId = 1234557543;
+        int userId = 1234557543;
 
-        assertThrows(IllegalArgumentException.class, () -> new Employee(employeeId, "Ahmed Adam", hashedPassword,
+        assertThrows(IllegalArgumentException.class, () -> new Employee(userId, "Ahmed Adam", hashedPassword,
                 department, salary,  illogicalWorkstart, illogicalWorkfinish));
     }
 
@@ -136,8 +134,8 @@ public class AccountTests {
 
         LocalTime workStart = LocalTime.of(8, 0);
         LocalTime workFinish = workStart.plusHours(8);
-        int employeeId = 1234567;
-        Employee employee = new Employee(employeeId, "Mohammed Ahmed", hashedPassword,
+        int userId = 1234567;
+        Employee employee = new Employee(userId, "Mohammed Ahmed", hashedPassword,
                 department, salary,  workStart, workFinish);
         return employee;
     }

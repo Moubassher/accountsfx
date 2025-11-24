@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="root" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="428.0" prefWidth="648.0" spacing="30.0" stylesheets="@../my_vibrant_blue_theme.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:id="root" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="428.0" prefWidth="648.0" spacing="30.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.moubassher.accountsfx.accessControl.AccountCreateCtrl">
    <children>
       <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="589.0" spacing="10.0">
          <children>
@@ -43,7 +43,7 @@
                      <children>
                         <StackPane maxWidth="300.0" prefWidth="300.0">
                            <children>
-                              <JFXTextField fx:id="visiblePasswordField" labelFloat="true" visible="false">
+                              <JFXTextField fx:id="visiblePasswordField" labelFloat="true" promptText="أدخل كلمة المرور" visible="false">
                                  <font>
                                     <Font size="16.0" />
                                  </font>

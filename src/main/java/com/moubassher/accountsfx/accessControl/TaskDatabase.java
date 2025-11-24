@@ -67,7 +67,7 @@ public class TaskDatabase {
 			connection = DriverManager.getConnection(databaseLocation); 
 
 		} catch(SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + EmployeeDB.class.getEnclosingMethod());
+			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + UserDao.class.getEnclosingMethod());
 		}
 		return connection;
 
