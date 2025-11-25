@@ -5,6 +5,7 @@ import org.junit.jupiter.api.*;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -14,27 +15,31 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AccountTests {
 
     private AccountDao accountDao;
-    private List<Account> testAccounts;
     private List<String> testFeatures;
+    private List<AccountType> testAccountTypes;
+    private List<Account> testAccounts;
     AccountValidator accountValidator;
     @BeforeAll
     void setUp() {
         accountDao = AccountDao.getInstance();
+        testFeatures = new ArrayList<>();
+        testAccountTypes = new ArrayList<>();
         testAccounts = new ArrayList<>();
-        testFeatures = new ArrayList<>(List.of("all", "delete_sales", "accept_orders"));
-        accountDao.addNewFeatures(testFeatures);
 
         accountValidator  = new AccountValidator();
     }
 
 
 
-    @AfterEach
-    void tearDown() {
+    @AfterAll
+    void afterAll() {
         accountDao.deleteAccounts(testAccounts);
+        accountDao.deleteAccountTypes(testAccountTypes);
         accountDao.deleteFeatures(testFeatures);
-
+        System.out.println("after all called");
     }
+
+
 
     @Test
     @DisplayName("Can validate a password")
@@ -143,7 +148,7 @@ public class AccountTests {
 
     @Test
     @DisplayName("Can read accounts")
-    void testReadingUsers() {
+    void testReadingAccounts() {
         Account account = createTestAdminAccount();
 
         List<String> privileges = account.getAccountType().getPrivileges();
@@ -156,6 +161,7 @@ public class AccountTests {
 
         boolean created = accountDao.addNewAccount(account);
         if(created) {
+            testAccounts.add(account);
             ObservableList<Account> accounts = AccountDao.getInstance().readAccounts();
             assertNotNull(accounts, "Users is null");
             assertFalse(accounts.isEmpty());
@@ -227,6 +233,51 @@ public class AccountTests {
 
     }
 
+    @Test
+    @DisplayName("Can create a non-admin account after an admin one")
+    void testAddingNonAdminAccount() {
+        // Create a non-admin account type
+
+        accountDao.deleteAccounts(testAccounts);
+        int accountCount = accountDao.readAccounts().size();
+        System.out.println("account count at testing non-admin after admin " + accountCount);
+
+        List<String> employeePrivileges = Arrays.asList("VIEW_SCHEDULE", "CLOCK_IN", "CLOCK_OUT");
+
+        accountDao.addNewFeatures(employeePrivileges);
+        testFeatures.addAll(employeePrivileges);
+
+        AccountType employeeType = new AccountType(
+                "Employee",
+                employeePrivileges,
+                false   // isAdmin = false
+        );
+        accountDao.addAccountType(employeeType);
+        testAccountTypes.add(employeeType);
+
+// Create a non-admin account (using the short constructor)
+        Account nonAdminAccount = new Account("John Doe", "hashedPassword123", employeeType);
+
+        testAccounts.add(nonAdminAccount);
+        assertThrows(UnsupportedOperationException.class,
+                () -> accountDao.addNewAccount(nonAdminAccount));
+
+        List<String> privileges = List.of("all");
+        AccountType adminType = new AccountType("Admin", privileges, true);
+        boolean adminTypeAdded = accountDao.addAccountType(adminType);
+        assertTrue(adminTypeAdded, "Admin type not added");
+
+        Account adminAccount = new Account("David Adam", "hashedPassword123", adminType);
+        boolean adminAdded = accountDao.addNewAccount(adminAccount);
+        assertTrue(adminAdded, "Admin account not added");
+        testAccounts.add(adminAccount);
+
+        //now that an admin has been added, a non-admin account can be added:
+        boolean nonAdminAdded = accountDao.addNewAccount(nonAdminAccount);
+        assertTrue(nonAdminAdded, "Non-admin not added even after an admin has been added");
+
+    }
+
 
     @Test
     @DisplayName("Cannot create an employee with illogical work hours")
@@ -243,14 +294,7 @@ public class AccountTests {
 
         assertThrows(IllegalArgumentException.class, () ->
                 new Account(userId, "Ahmed Adam", hashedPassword,
-                userType, salary,  illogicalWorkstart, illogicalWorkfinish));
+                        userType, salary,  illogicalWorkstart, illogicalWorkfinish));
     }
-
-
-    //TODO: implement creating an employee account with a manager one present.
-  /*  @Test
-    @DisplayName("Can create an employee account after creating a manager one")
-    void testCreatingEmployeeAfterManager() {
-    }*/
 
 }

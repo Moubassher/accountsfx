@@ -109,12 +109,14 @@ public  class Account {
 
     @Override
     public String toString() {
-        return "Account[" +
-                "name=" + name + ", " +
-                "userType=" + accountType + ", " +
-                "workStart=" + shiftStart + ", " +
-                "workFinish=" + shiftEnd + ']';
+        return "Account{" +
+                "name='" + name + '\'' +
+                ", hashedPassword='" + hashedPassword + '\'' +
+                ", accountType=" + accountType +
+                ", userId=" + userId +
+                ", salary=" + salary +
+                ", shiftStart=" + shiftStart +
+                ", shiftEnd=" + shiftEnd +
+                '}';
     }
-
-
 }

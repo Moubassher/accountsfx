@@ -31,3 +31,10 @@ flowchart TD
   D --> G[Approve account]
   G --> H[Non-admin account login]
 ```
+```mermaid
+flowchart TD
+    A[features] --> B["account types"]
+    B --> C["Account"]
+    C --> D("Admin")
+    C --> E("Non-admin")
+```

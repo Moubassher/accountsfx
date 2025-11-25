@@ -426,7 +426,7 @@ public class AccountDao {
 
 	public boolean deleteAccounts(List<Account> accounts) {
 		if (accounts == null || accounts.isEmpty()) {
-			return false;
+			return true;
 		}
 
 		String command = "DELETE FROM users WHERE userId = ?;";
@@ -503,6 +503,34 @@ public class AccountDao {
 		}
 	}
 
+	public boolean addAccountType(AccountType accountType) {
+
+		String sql = "INSERT INTO accountTypes (accountType, isAdmin) VALUES (?, ?)";
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+			stmt.setString(1, accountType.getType());
+			stmt.setBoolean(2, accountType.isAdmin());
+
+			int affected = stmt.executeUpdate();
+
+			if (affected > 0) {
+				try (ResultSet rs = stmt.getGeneratedKeys()) {
+					if (rs.next()) {
+						int id = rs.getInt(1);
+						accountType.setId(id); // store generated id back in object
+					}
+				}
+			}
+
+			return affected > 0;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 
 	public boolean addAccountTypes(List<AccountType> types) {
 
@@ -538,6 +566,31 @@ public class AccountDao {
 			return false;
 		}
 	}
+
+	public boolean deleteAccountTypes(List<AccountType> types) {
+
+		String sql = "DELETE FROM accountTypes WHERE accountTypeId = ?";
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			conn.setAutoCommit(false);
+
+			for (AccountType type : types) {
+				stmt.setInt(1, type.getAccountTypeId());
+				stmt.addBatch();
+			}
+
+			stmt.executeBatch();
+			conn.commit();
+			return true;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
 
 
 	private boolean isAccountTypeValid(AccountType accountType) {
