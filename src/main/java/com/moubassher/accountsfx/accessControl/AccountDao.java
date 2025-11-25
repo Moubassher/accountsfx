@@ -424,21 +424,34 @@ public class AccountDao {
 		return done;
 	}
 
-	public boolean deleteAccount(Account account) {
-		boolean done = false;
-		int accountId = account.getUserId();
-		String command = "delete from users WHERE userId = ?;";
-		try (Connection conn = DriverManager.getConnection(database)) {
-			PreparedStatement stmt = conn.prepareStatement(command);
-
-			stmt.setInt(1, accountId);
-			stmt.executeUpdate();
-
-			done = true;
-		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
+	public boolean deleteAccounts(List<Account> accounts) {
+		if (accounts == null || accounts.isEmpty()) {
+			return false;
 		}
-		return done;
+
+		String command = "DELETE FROM users WHERE userId = ?;";
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(command)) {
+
+			conn.setAutoCommit(false);
+
+			for (Account account : accounts) {
+				stmt.setInt(1, account.getUserId());
+				stmt.addBatch();
+			}
+
+			stmt.executeBatch();
+			conn.commit();
+			return true;
+
+		} catch (SQLException e) {
+			Logger.getLogger("pharmacy-log").severe(
+					e.getMessage() + " culprit: " + e.getCause() +
+							"\nlocation: " + this.getClass().getEnclosingMethod()
+			);
+			return false;
+		}
 	}
 
 
@@ -534,47 +547,59 @@ public class AccountDao {
 	public boolean addNewAccount(Account account) {
 		boolean added = false;
 
-		if(account.getName() == null || account.getName().isBlank()) {
+		if (account.getName() == null || account.getName().isBlank()) {
 			throw new IllegalArgumentException("Cannot add a nameless account");
 		}
 
 		AccountType accountType = account.getAccountType();
-		if(accountType == null || !isAccountTypeValid(accountType)) {
-			throw new IllegalArgumentException("Account type when inserting account is invalid");
+		if (accountType == null || !isAccountTypeValid(accountType)) {
+			throw new IllegalArgumentException("Account type is invalid when inserting account");
 		}
 
-		if(isAdminRequired() && !account.isAdmin()) {
+		if (isAdminRequired() && !account.isAdmin()) {
 			throw new UnsupportedOperationException("Cannot create a non-admin account without an admin account present first");
 		}
 
-		String command = "INSERT into users (name, password, accountTypeId, salary, workStart, workFinish) " //$NON-NLS-1$
+		String command = "INSERT INTO users (name, password, accountTypeId, salary, workStart, workFinish) "
 				+ "VALUES (?,?,?,?,?,?)";
 
-		try(Connection conn = DriverManager.getConnection(database)) {
-			PreparedStatement stmt = conn.prepareStatement(command);
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(command, Statement.RETURN_GENERATED_KEYS)) {
 
 			stmt.setString(1, account.getName());
 			stmt.setString(2, account.getHashedPassword());
 			stmt.setInt(3, account.getAccountType().getAccountTypeId());
 			stmt.setInt(4, account.getSalary());
 
-			stmt.setObject(4,
-					account.getShiftStart() != null ? account.getShiftStart().format(localTimeformat) : null
-			);
-
 			stmt.setObject(5,
-					account.getShiftEnd() != null ? account.getShiftEnd().format(localTimeformat) : null
-			);
+					account.getShiftStart() != null ? account.getShiftStart().format(localTimeformat) : null);
 
+			stmt.setObject(6,
+					account.getShiftEnd() != null ? account.getShiftEnd().format(localTimeformat) : null);
 
 			int affectedRows = stmt.executeUpdate();
 			added = affectedRows > 0;
 
+			// Retrieve generated ID
+			if (added) {
+				try (ResultSet rs = stmt.getGeneratedKeys()) {
+					if (rs.next()) {
+						int id = rs.getInt(1);
+						account.setUserId(id); // <-- assign new ID back to object
+					}
+				}
+			}
+
 		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
+			Logger.getLogger("pharmacy-log").severe(
+					e.getMessage() + " culprit: " + e.getCause() +
+							"\nlocation: " + this.getClass().getEnclosingMethod()
+			);
 		}
+
 		return added;
 	}
+
 
 	private AccountDao() {
 	}
@@ -588,5 +613,29 @@ public class AccountDao {
 		return instance;
 	}
 
+
+	public boolean deleteAccount(Account account) {
+		if (account == null) {
+			return false;
+		}
+
+		String command = "DELETE FROM users WHERE userId = ?;";
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(command)) {
+
+			stmt.setInt(1, account.getUserId());
+
+			int affectedRows = stmt.executeUpdate();
+			return affectedRows > 0;
+
+		} catch (SQLException e) {
+			Logger.getLogger("pharmacy-log").severe(
+					e.getMessage() + " culprit: " + e.getCause() +
+							"\nlocation: " + this.getClass().getEnclosingMethod()
+			);
+			return false;
+		}
+	}
 
 }

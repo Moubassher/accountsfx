@@ -31,7 +31,7 @@ public class AccountTests {
 
     @AfterEach
     void tearDown() {
-        testAccounts.forEach(account -> accountDao.deleteAccount(account));
+        accountDao.deleteAccounts(testAccounts);
         accountDao.deleteFeatures(testFeatures);
 
     }
@@ -98,8 +98,31 @@ public class AccountTests {
 
         boolean isAccountTypeRead = accountDao.readAccountTypes().contains(accountType1);
         assertTrue(isAccountTypeRead, "added account type not read successfully");
+
     }
 
+
+    @Test
+    @DisplayName("Account CRUD: Delete")
+    void testDeletingAccounts() {
+        List<String> privileges = List.of("feature X");
+        accountDao.addNewFeatures(privileges);
+
+        AccountType accountType = new AccountType("account type x", privileges, true);
+        accountDao.addAccountTypes(List.of(accountType));
+
+        String password = "addddd234$";
+        String hashedPassword = accountValidator.hashPassword(password);
+
+
+        Account account = new Account("Robert Adams", hashedPassword, accountType);
+        boolean added = accountDao.addNewAccount(account);
+        assertTrue(added, "test account not added and is required to testing deleting accounts");
+        testAccounts.add(account);
+
+        boolean deleted = accountDao.deleteAccount(account);
+        assertTrue(deleted, "Account deletion failed");
+    }
 
     @Test
     @DisplayName("Can insert an admin user")
@@ -119,9 +142,17 @@ public class AccountTests {
     }
 
     @Test
-    @DisplayName("Can read users")
+    @DisplayName("Can read accounts")
     void testReadingUsers() {
-        Account account = createTestNonAdminAccount();
+        Account account = createTestAdminAccount();
+
+        List<String> privileges = account.getAccountType().getPrivileges();
+        accountDao.addNewFeatures(privileges);
+
+        AccountType accountType = account.getAccountType();
+        boolean accountTypeAdded = accountDao.addAccountTypes(List.of(accountType));
+        assertTrue(accountTypeAdded, "Account type not added and is required for test reading accounts");
+
 
         boolean created = accountDao.addNewAccount(account);
         if(created) {
@@ -149,7 +180,7 @@ public class AccountTests {
         String hashedPassword = accountValidator.hashPassword(password);
         List<String> privileges = List.of("all");
         AccountType adminAccountType =  new AccountType("Admin", privileges, true);
-        Account admin = new Account("Moubassher H. Ali", hashedPassword, adminAccountType);
+        Account admin = new Account("David Adam", hashedPassword, adminAccountType);
 
         return admin;
     }
@@ -159,18 +190,20 @@ public class AccountTests {
     void testCreatingNonAdminAccountWithoutAdmin() {
 
         //clear previous users (esp admins) for the test:
-        testAccounts.forEach(account -> accountDao.deleteAccount(account));
-
+        accountDao.deleteAccounts(testAccounts);
         boolean isAccountsRemoved = accountDao.readAccounts().isEmpty();
         assertTrue(isAccountsRemoved, "Accounts were not deleted and this is required for the test");
+
         String password = "abc123";
         String hashedPassword = accountValidator.hashPassword(password);
+
         List<String> privileges = List.of("sales", "storage");
+
         AccountType accountType = new AccountType("مبيعات", privileges, false);
         boolean accountTypeAdded = accountDao.addAccountTypes(List.of(accountType));
         assertTrue(accountTypeAdded, "Account type not added, and is required for this test");
-        int salary = 300_000;
 
+        int salary = 300_000;
 
         LocalTime workStart = LocalTime.of(8, 0);
         LocalTime workFinish = workStart.plusHours(8);
@@ -179,6 +212,8 @@ public class AccountTests {
                 accountType, salary,  workStart, workFinish);
         assertThrows(UnsupportedOperationException.class,
                 () -> AccountDao.getInstance().addNewAccount(account));
+
+        testAccounts.add(account);
     }
 
     @Test
@@ -188,8 +223,9 @@ public class AccountTests {
         assertThrows(IllegalArgumentException.class,
                 () -> AccountDao.getInstance().addNewAccount(account));
 
-    }
+        testAccounts.add(account);
 
+    }
 
 
     @Test
@@ -216,17 +252,5 @@ public class AccountTests {
     @DisplayName("Can create an employee account after creating a manager one")
     void testCreatingEmployeeAfterManager() {
     }*/
-
-    //TODO: implement adding a manager account:
-/*
-    @Test
-    @DisplayName("Can create a manager account")
-    void testCreatingManagerAccount() {
-        String userName;
-        String password;
-        String userType;
-
-    }
-*/
 
 }
