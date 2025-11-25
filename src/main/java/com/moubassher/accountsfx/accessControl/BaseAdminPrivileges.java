@@ -83,20 +83,20 @@ public abstract class BaseAdminPrivileges implements Initializable {
 	public HBox installActionPane() {
 		HBox actionsPane = new HBox(10);
 		ChoiceBox<Account> accounts = new ChoiceBox<>();
-		accounts.setItems(accountDao.readUsers());
-		addNewUser = new Button("إضافة موظف");
+		accounts.setItems(accountDao.readAccounts());
+		addNewUser = new Button("إضافة حساب");
 		modifyUser = new Button("تعديل");
 		Button resetPasswordBtn = new Button("اعادة ضبط كلمة المرور");
 		resetPasswordBtn.setOnAction(x -> {
 			confirmResettingEmployeePassword();
 		});
-		deleteUser = new Button("حذف موظف");
+		deleteUser = new Button("حذف حساب");
 
-		addNewUser.setOnAction(x -> createEmployeeAccount());
+		addNewUser.setOnAction(x -> createAccount());
 
 		deleteUser.setOnAction(x -> {
 					Account account = accounts.getSelectionModel().getSelectedItem();
-					confirmDeletingEmployee(account);
+					confirmDeletingAccount(account);
 				}
 		);
 
@@ -107,11 +107,11 @@ public abstract class BaseAdminPrivileges implements Initializable {
 
 
 
-	private void confirmDeletingEmployee(Account account) {
+	private void confirmDeletingAccount(Account account) {
 
 		String accountUsername = account.getName();
 		Alert alert = new Alert(AlertType.CONFIRMATION);
-		alert.setTitle("تأكيد حذف موظف");
+		alert.setTitle("تأكيد حذف حساب");
 		String action = "هل تريد حذف (";
 		action += accountUsername;
 		action += ")";
@@ -134,15 +134,15 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		}
 	}
 
-	private static  void createEmployeeAccount() {
+	private static  void createAccount() {
 
 		Stage employeeAcctStage = new Stage();
 		employeeAcctStage.initModality(Modality.WINDOW_MODAL);
-		Label nameLabel = new Label("اسم الموظف");
+		Label nameLabel = new Label("اسم الحساب");
 		TextField employeeName = new TextField();
 
 		Label dptLabel = new Label("القسم/ الإدارة");
-		TextField dptTF = new TextField();
+		ChoiceBox<AccountType> accountSelector = new ChoiceBox<>();
 
 		Label salaryLabel = new Label("المرتب");
 		TextField salaryTF = new TextField();
@@ -159,7 +159,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		add.setOnAction(x -> {
 			String name = employeeName.getText();
 			String defaultPassword = "123";
-			String dpt = dptTF.getText();
+			AccountType dpt = accountSelector.getSelectionModel().getSelectedItem();
 			int salary = Integer.valueOf(salaryTF.getText());
 
 			int startHour = shiftStartPane.getHour();
@@ -179,13 +179,13 @@ public abstract class BaseAdminPrivileges implements Initializable {
 
 			Alert employeeAdded = new Alert(AlertType.INFORMATION);
 
-			employeeAdded.setHeaderText("تمت إضافة الموظف بنجاح.");
+			employeeAdded.setHeaderText("تمت إضافة الحساب بنجاح.");
 			Scene alertScene = employeeAdded.getDialogPane().getScene();
 			employeeAdded.getDialogPane().setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
 			if(success) {
 				employeeAdded.show();
 			} else {
-				employeeAdded.setHeaderText("تعذّرت إضافة الموظف إلى قاعدة البيانات.");
+				employeeAdded.setHeaderText("تعذّرت إضافة الحساب إلى قاعدة البيانات.");
 				employeeAdded.setContentText("حدث عطل ما. الرجاء الإتصال بالمبرمج");
 				employeeAdded.show();
 			}
@@ -196,7 +196,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		actionsPane.getChildren().addAll(add, clear);
 
 		VBox employeeAcctPane = new VBox(10);
-		employeeAcctPane.getChildren().addAll(nameLabel, employeeName, dptLabel, dptTF,
+		employeeAcctPane.getChildren().addAll(nameLabel, employeeName, dptLabel, accountSelector,
 				salaryLabel, salaryTF, shiftStartLabel, shiftStartPane, shiftEndLabel, shiftEndPane, actionsPane);
 
 		employeeAcctPane.setPadding(new Insets(20));
@@ -236,7 +236,6 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		TextFormatter<Integer> inputLimit = setInputLimit(0, 59);
 		shift_hour.getEditor().setTextFormatter(inputLimit);
 
-
 		ObservableList<String> am_pm = FXCollections.observableArrayList();
 		am_pm.add("صباحاً");
 		am_pm.add("مساءً");
@@ -275,6 +274,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		}
 
 		//TODO add more insights to attendance table than just showing it: e.g. most hours put in.
+
 	}
 
 	private void confirmResettingEmployeePassword() {
@@ -282,12 +282,12 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		alert.setTitle("المحاسب الذهبي");
 		alert.setHeaderText("إعادة ضبط كلمة المرور");
 		alert.setContentText("""
-						يمكنك إعادة ضبط كلمة السر لأحد الموظفين من حسابك الإداري هذا من هذه النافذة.
-						اختر الموظف الذي طلب إعادة كلمة السر واضغط على الزر أدناه ليتم ضبط كلمة السر إلى 123.
-						ليستخدمها الموظف مرة واحدة للدخول إلى حسابه، ثم تغيير كلمة السر من داخل حسابه.
+						يمكنك إعادة ضبط كلمة السر لأحد الحسابين من حسابك الإداري هذا من هذه النافذة.
+						اختر الحساب الذي طلب إعادة كلمة السر واضغط على الزر أدناه ليتم ضبط كلمة السر إلى 123.
+						ليستخدمها الحساب مرة واحدة للدخول إلى حسابه، ثم تغيير كلمة السر من داخل حسابه.
 				""");
 		ChoiceBox<String> employees = new ChoiceBox<>(accountDao.readAllUserNames());
-		Label nameDisplay = new Label("اسم الموظف");
+		Label nameDisplay = new Label("اسم الحساب");
 		VBox box= new VBox(10, nameDisplay, employees);
 		alert.getDialogPane().setContent(box);
 		alert.getButtonTypes().clear();

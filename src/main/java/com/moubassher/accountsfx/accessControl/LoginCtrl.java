@@ -24,7 +24,6 @@ import org.controlsfx.validation.Validator;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -45,7 +44,7 @@ public class LoginCtrl implements Initializable {
 	private Label signInDisplay, credsInfoDisplay, accountTypeDisplay, userNameDisplay;
 
 	@FXML
-	private ChoiceBox<String> accountTypeSelector;
+	private ChoiceBox<AccountType> accountTypeSelector;
 
 	@FXML
 	private ChoiceBox<Account> registeredUsersSelector;
@@ -69,13 +68,13 @@ public class LoginCtrl implements Initializable {
 		if(isUserManager) {
 			title = "تسجيل الدخول (الإدارة)";
 		} else {
-			title = "تسجيل الدخول (موظفين)";
+			title = "تسجيل الدخول (حساب)";
 		}
 		signInDisplay.setText(title);
 
-		accountTypeSelector.getItems().setAll(accountDao.readuserTypes());
+		accountTypeSelector.getItems().setAll(accountDao.readAccountTypes());
 
-		onAccountTypeSelected(selectedDept -> getRegisteredUsersInuserType(selectedDept));
+		onAccountTypeSelected(accountType -> getAccountsForType(accountType.getType()));
 
 		credsInfoDisplay.setId("error");
 		if(isUserManager) {
@@ -142,17 +141,20 @@ public class LoginCtrl implements Initializable {
 		stage.showAndWait();
 	}
 
-	private void onAccountTypeSelected(Consumer<String> accountTypeSelectedFunc) {
+	private void onAccountTypeSelected(Consumer<AccountType> accountTypeSelectedFunc) {
 		accountTypeSelector.getSelectionModel().selectedItemProperty()
 				.addListener((a, b, selectedDept) -> {
 					accountTypeSelectedFunc.accept(selectedDept);
 				});
 	}
 
-	private void getRegisteredUsersInuserType(String userType) {
-		Map<String, List<Account>> deptEmployeeMap = accountDao.getuserType_EmployeeMap();
-		List<Account> accounts = deptEmployeeMap.get(userType);
-		registeredUsersSelector.setItems(FXCollections.observableList(accounts));
+	private void getAccountsForType(String accountType) {
+		List<Account> allAccounts = accountDao.readAccounts();
+		List<Account> filteredAccounts = allAccounts.stream()
+						.filter(account ->
+								account.getAccountType().getType().equals(accountType))
+								.toList();
+		registeredUsersSelector.setItems(FXCollections.observableList(filteredAccounts));
 	}
 
 
@@ -187,7 +189,7 @@ public class LoginCtrl implements Initializable {
             if (isUserManager) {
                 validCreds = accountDao.loginManagement(name, password);
             } else {
-                validCreds = accountDao.loginEmployee(name, password);
+                validCreds = accountDao.loginAccount(name, password);
             }
 
             if (validCreds) {

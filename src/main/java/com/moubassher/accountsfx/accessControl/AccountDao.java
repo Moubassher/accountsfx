@@ -38,27 +38,23 @@ public class AccountDao {
 	private String databaseLocation = "file:/C:/pharmaNetResources/databases/"; //$NON-NLS-1$
 	private String database = driverPrefix + databaseLocation + databaseName;
 
-	private String name = "(موظف غير مسجل)";
+	private String name = "(حساب غير مسجل)";
 
 	private String accountType = "مبيعات";
 
 	DateTimeFormatter localTimeformat =
 			DateTimeFormatter.ofPattern("hh:mm a").localizedBy(Locale.forLanguageTag("AR"));
 
-	//UP allow resetting of users' password from PharmacyManagerBot 
+	//UP allow resetting of users' password from a Maintainer account.
 	public String getAccountType() {
 		return accountType;
 	}
 
-	public Map<String, List<Account>> getuserType_EmployeeMap() {
-		Map<String, List<Account>> obMap = readUsers().stream().collect(
-				Collectors.groupingBy(employee -> employee.getAccountType()));
-		return obMap;
-	}
 
 
-	public boolean loginEmployee(String name, String password) {
-		boolean validLogin = verifyLoginCredentials("employees", name, password); //$NON-NLS-1$
+
+	public boolean loginAccount(String name, String password) {
+		boolean validLogin = verifyLoginCredentials("users", name, password); //$NON-NLS-1$
 		if(validLogin) {
 			LocalDateTime loginTime = LocalDateTime.now();
 			registerLoginTime(name, loginTime);
@@ -200,42 +196,101 @@ public class AccountDao {
 		}
 	}
 
-	public ObservableList<Account> readUsers() {
+	public ObservableList<Account> readAccounts() {
 
 		ObservableList<Account> allAccounts = FXCollections.observableArrayList();
 
-		String command = "SELECT userId, name, password, userType, salary, workStart, workFinish FROM users;"; //$NON-NLS-1$
-		try(Connection conn = DriverManager.getConnection(database)) {
-			Statement stmt = conn.createStatement();
-			stmt.execute(command);
-			ResultSet results = stmt.getResultSet();
-			while(results.next()) {
-				int userId = results.getInt("userId");
-				String name = results.getString("name"); //$NON-NLS-1$
-				String password = results.getString("password");
-				String userType = results.getString("userType"); //$NON-NLS-1$
-				int salary = results.getInt("salary");
-				String workStartRaw = results.getString("workStart");
-				LocalTime workStart = null;
-				if(workStartRaw != null) {
-					workStart = LocalTime.parse(workStartRaw, localTimeformat);
-				}
-				
-				String workFinishRaw = results.getString("workFinish");
-				LocalTime workFinish = null;
-				if(workFinishRaw != null) {
-					workFinish = LocalTime.parse(workStartRaw, localTimeformat);
-				}
-				Account account = new Account(userId, name, password, userType, salary, workStart, workFinish);
+		// Load all account types once
+		Map<Integer, AccountType> accountTypeMap = readAccountTypes()
+				.stream()
+				.collect(Collectors.toMap(AccountType::getAccountTypeId, at -> at));
+
+		String sql =
+				"SELECT userId, name, password, accountTypeId, salary, workStart, workFinish " +
+						"FROM users;";
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(sql);
+			 ResultSet rs = stmt.executeQuery()) {
+
+			while (rs.next()) {
+
+				int userId = rs.getInt("userId");
+				String name = rs.getString("name");
+				String password = rs.getString("password");
+				int accountTypeId = rs.getInt("accountTypeId");
+				int salary = rs.getInt("salary");
+
+				// Parse times
+				LocalTime workStart = Optional.ofNullable(rs.getString("workStart"))
+						.map(t -> LocalTime.parse(t, localTimeformat))
+						.orElse(null);
+
+				LocalTime workFinish = Optional.ofNullable(rs.getString("workFinish"))
+						.map(t -> LocalTime.parse(t, localTimeformat))
+						.orElse(null);
+
+				// Fetch AccountType directly from the map
+				AccountType accountType = accountTypeMap.get(accountTypeId);
+
+				Account account = new Account(
+						userId,
+						name,
+						password,
+						accountType,
+						salary,
+						workStart,
+						workFinish
+				);
 
 				allAccounts.add(account);
 			}
 
 		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
+			e.printStackTrace();
 		}
+
 		return allAccounts;
 	}
+
+
+
+	public List<AccountType> readAccountTypes() {
+		List<AccountType> accountTypes = new ArrayList<>();
+
+		String sql =
+				"SELECT a.accountTypeId, a.accountType, a.isAdmin, " +
+						"       GROUP_CONCAT(p.feature) AS privileges " +
+						"FROM accountTypes a " +
+						"LEFT JOIN privileges p ON p.accountTypeId = a.accountTypeId " +
+						"GROUP BY a.accountTypeId";
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(sql);
+			 ResultSet rs = stmt.executeQuery()) {
+
+			while (rs.next()) {
+
+				int id = rs.getInt("accountTypeId");
+				String type = rs.getString("accountType");
+
+				String privilegeString = rs.getString("privileges");
+				List<String> privileges = (privilegeString == null)
+						? new ArrayList<>()
+						: Arrays.asList(privilegeString.split(","));
+
+				boolean isAdmin = rs.getBoolean("isAdmin");
+
+				accountTypes.add(new AccountType(id, type, privileges, isAdmin));
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return accountTypes;
+	}
+
 
 	private void registerLogoutTime(String name, LocalDateTime logoutTime) {
 		String command = "UPDATE logins SET logoutTime = ?, logoutDate = ? WHERE Account = ? AND loginDate = ?"; //$NON-NLS-1$
@@ -322,26 +377,9 @@ public class AccountDao {
 	}
 
 	public boolean isAdminRequired() {
-		return readUsers().stream()
+		return readAccounts().stream()
 				.noneMatch(employee -> employee.isAdmin());
 	}
-
-	public List<String> readuserTypes() {
-		List<String> userTypes = new ArrayList<>();
-		String sql = "SELECT employee_type FROM user_type;";
-		try(Connection conn = DriverManager.getConnection(database)) {
-			PreparedStatement stmt = conn.prepareStatement(sql);
-			stmt.execute();
-			ResultSet results = stmt.getResultSet();
-			while(results.next()) {
-				String userType = results.getString("employee_type");
-				userTypes.add(userType);
-			}
-		} catch (SQLException e) {
-            e.printStackTrace();
-        }
-		return userTypes;
-    }
 
 	private boolean verifyLoginCredentials(String tableName, String name, String password) {
 
@@ -408,6 +446,91 @@ public class AccountDao {
 		return name;
 	}
 
+	public void addNewFeatures(List<String> featureNames) {
+
+		String sql = "INSERT OR IGNORE INTO features (featureName) VALUES (?)";
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			conn.setAutoCommit(false);  // batch insert for speed & safety
+
+			for (String name : featureNames) {
+				stmt.setString(1, name);
+				stmt.addBatch();
+			}
+
+			stmt.executeBatch();
+			conn.commit();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void deleteFeatures(List<String> featureNames) {
+
+		String sql = "DELETE FROM features WHERE featureName = ?";
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			conn.setAutoCommit(false);  // ensure atomic batch deletion
+
+			for (String name : featureNames) {
+				stmt.setString(1, name);
+				stmt.addBatch();
+			}
+
+			stmt.executeBatch();
+			conn.commit();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	public boolean addAccountTypes(List<AccountType> types) {
+
+		String sql = "INSERT INTO accountTypes (accountType, isAdmin) VALUES (?, ?)";
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+			conn.setAutoCommit(false);
+
+			for (AccountType accountType : types) {
+				stmt.setString(1, accountType.getType());
+				stmt.setBoolean(2, accountType.isAdmin());
+
+				int affected = stmt.executeUpdate();
+
+				// If row was actually inserted (not ignored), retrieve generated ID
+				if (affected > 0) {
+					try (ResultSet rs = stmt.getGeneratedKeys()) {
+						if (rs.next()) {
+							int id = rs.getInt(1);
+							accountType.setId(id); // store the generated id in the object
+						}
+					}
+				}
+			}
+
+			conn.commit();
+			return true;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+
+	private boolean isAccountTypeValid(AccountType accountType) {
+		return readAccountTypes().contains(accountType);
+	}
+
 	public boolean addNewAccount(Account account) {
 		boolean added = false;
 
@@ -415,24 +538,34 @@ public class AccountDao {
 			throw new IllegalArgumentException("Cannot add a nameless account");
 		}
 
-		if(isAdminRequired()) {
+		AccountType accountType = account.getAccountType();
+		if(accountType == null || !isAccountTypeValid(accountType)) {
+			throw new IllegalArgumentException("Account type when inserting account is invalid");
+		}
+
+		if(isAdminRequired() && !account.isAdmin()) {
 			throw new UnsupportedOperationException("Cannot create a non-admin account without an admin account present first");
 		}
 
-		String command = "INSERT into users (name, password, userType, salary, workStart, workFinish) " //$NON-NLS-1$
-				+ "VALUES (?,?,?,?,?,?)"; //$NON-NLS-1$
+		String command = "INSERT into users (name, password, accountTypeId, salary, workStart, workFinish) " //$NON-NLS-1$
+				+ "VALUES (?,?,?,?,?,?)";
+
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
 
 			stmt.setString(1, account.getName());
 			stmt.setString(2, account.getHashedPassword());
-			stmt.setString(3, account.getAccountType());
+			stmt.setInt(3, account.getAccountType().getAccountTypeId());
 			stmt.setInt(4, account.getSalary());
 
-			String shiftStart = account.getShiftStart().format(localTimeformat);
-			String shiftFinish = account.getShiftEnd().format(localTimeformat);
-			stmt.setString(4, shiftStart);
-			stmt.setString(5, shiftFinish);
+			stmt.setObject(4,
+					account.getShiftStart() != null ? account.getShiftStart().format(localTimeformat) : null
+			);
+
+			stmt.setObject(5,
+					account.getShiftEnd() != null ? account.getShiftEnd().format(localTimeformat) : null
+			);
+
 
 			int affectedRows = stmt.executeUpdate();
 			added = affectedRows > 0;
@@ -443,25 +576,7 @@ public class AccountDao {
 		return added;
 	}
 
-	public boolean createManager(Manager manager) {
-		boolean created = false;
-		String sql = "INSERT INTO employees(name, password, userType) values(?,?, ?);";
-		try(Connection connection = DriverManager.getConnection(database)) {
-			PreparedStatement stmt = connection.prepareStatement(sql);
-			stmt.setString(1, manager.getName());
-			stmt.setString(2, manager.getHashedPassword());
-			stmt.setString(3, manager.getAccountType());
-			int affectedRows = stmt.executeUpdate();
-			created = affectedRows > 0;
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return created;
-	}
-
 	private AccountDao() {
-
-		//encryptDatabase();
 	}
 
 	private static AccountDao instance = null;

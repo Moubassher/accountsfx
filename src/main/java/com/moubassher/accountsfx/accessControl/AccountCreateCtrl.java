@@ -2,6 +2,7 @@ package com.moubassher.accountsfx.accessControl;
 
 import com.context.our_utilities.MyNotifications;
 import com.jfoenix.controls.JFXComboBox;
+import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -18,6 +19,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -40,7 +42,7 @@ public class AccountCreateCtrl implements Initializable {
     private PasswordField passwordField, confirmPasswordField;
 
     @FXML
-    private JFXComboBox<String> accountTypeSelector;
+    private JFXComboBox<AccountType> accountTypeSelector;
 
     @FXML
     private ProgressBar strengthBar;
@@ -74,8 +76,6 @@ public class AccountCreateCtrl implements Initializable {
         accountDao = AccountDao.getInstance();
 
         accountValidator = new AccountValidator();
-
-        accountTypeSelector.getItems().setAll(accountDao.readuserTypes());
 
         visiblePasswordField.managedProperty().bind(visiblePasswordField.visibleProperty());
 
@@ -135,6 +135,8 @@ public class AccountCreateCtrl implements Initializable {
 
         if(isAdminAccount) {
             enforceAdminAccountCreation();
+        } else {
+            accountTypeSelector.getItems().setAll(accountDao.readAccountTypes());
         }
 
         Image notAllowedImage = new Image(this.getClass().getResource("not_allowed.png").toExternalForm());
@@ -155,8 +157,12 @@ public class AccountCreateCtrl implements Initializable {
 
 
     public void enforceAdminAccountCreation() {
-        accountTypeSelector.getSelectionModel().select("إدارة");
-        accountTypeSelector.setDisable(true);
+        accountTypeSelector.getItems().clear();
+        List<AccountType> adminAccountTypes = accountDao.readAccountTypes()
+                .stream()
+                .filter(accountType -> accountType.isAdmin()).toList();
+
+        accountTypeSelector.setItems(FXCollections.observableArrayList(adminAccountTypes));
     }
 
     public boolean isAccountCreated() {
@@ -204,7 +210,7 @@ public class AccountCreateCtrl implements Initializable {
 
         String userName = userNameField.getText();
         String password = passwordField.getText();
-        String userType = accountTypeSelector.getSelectionModel().getSelectedItem();
+        AccountType userType = accountTypeSelector.getSelectionModel().getSelectedItem();
 
         createAccountBtn.setDisable(true);
         createAccountProgress.setVisible(true);

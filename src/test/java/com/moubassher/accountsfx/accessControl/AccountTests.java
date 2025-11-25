@@ -15,17 +15,25 @@ public class AccountTests {
 
     private AccountDao accountDao;
     private List<Account> testAccounts;
+    private List<String> testFeatures;
     AccountValidator accountValidator;
     @BeforeAll
     void setUp() {
         accountDao = AccountDao.getInstance();
         testAccounts = new ArrayList<>();
+        testFeatures = new ArrayList<>(List.of("all", "delete_sales", "accept_orders"));
+        accountDao.addNewFeatures(testFeatures);
+
         accountValidator  = new AccountValidator();
     }
+
+
 
     @AfterEach
     void tearDown() {
         testAccounts.forEach(account -> accountDao.deleteAccount(account));
+        accountDao.deleteFeatures(testFeatures);
+
     }
 
     @Test
@@ -78,14 +86,46 @@ public class AccountTests {
     }
 
     @Test
+    @DisplayName("Can add new account types")
+    void testAddingAccountTypes() {
+        List<String> features = List.of("feature a", "feature b");
+        accountDao.addNewFeatures(features);
+        testFeatures.addAll(features);
+
+        AccountType accountType1 = new AccountType("account type 1", features, true);
+        boolean added = accountDao.addAccountTypes(List.of(accountType1));
+        assertTrue(added, "Account type not added");
+
+        boolean isAccountTypeRead = accountDao.readAccountTypes().contains(accountType1);
+        assertTrue(isAccountTypeRead, "added account type not read successfully");
+    }
+
+
+    @Test
+    @DisplayName("Can insert an admin user")
+    void testAddingAdmin() {
+        Account adminAccount = createTestAdminAccount();
+
+        List<String> privileges = adminAccount.getAccountType().getPrivileges();
+        accountDao.addNewFeatures(privileges);
+        testFeatures.addAll(privileges);
+
+        boolean accountTypeAdded = accountDao.addAccountTypes(List.of(adminAccount.getAccountType()));
+        assertTrue(accountTypeAdded, "Admin account type was not added and is required for inserting admin");
+
+        boolean added = accountDao.addNewAccount(adminAccount);
+        assertTrue(added, "Admin account was not added");
+        testAccounts.add(adminAccount);
+    }
+
+    @Test
     @DisplayName("Can read users")
     void testReadingUsers() {
-        String password = "user123";
-        String hashedPassword = accountValidator.hashPassword(password);
-        Account account = new Account("Robert C. Martin", hashedPassword, "account type");
+        Account account = createTestNonAdminAccount();
+
         boolean created = accountDao.addNewAccount(account);
         if(created) {
-            ObservableList<Account> accounts = AccountDao.getInstance().readUsers();
+            ObservableList<Account> accounts = AccountDao.getInstance().readAccounts();
             assertNotNull(accounts, "Users is null");
             assertFalse(accounts.isEmpty());
         } else {
@@ -94,12 +134,41 @@ public class AccountTests {
         }
     }
 
+    private Account createTestNonAdminAccount() {
+
+        String password = "user123";
+        String hashedPassword = accountValidator.hashPassword(password);
+        List<String> privileges = List.of("sales", "orders");
+        AccountType accountType = new AccountType("regular accountType", privileges, false);
+        Account account = new Account("Robert C. Martin", hashedPassword, accountType);
+        return account;
+    }
+
+    private Account createTestAdminAccount() {
+        String password = "user123$";
+        String hashedPassword = accountValidator.hashPassword(password);
+        List<String> privileges = List.of("all");
+        AccountType adminAccountType =  new AccountType("Admin", privileges, true);
+        Account admin = new Account("Moubassher H. Ali", hashedPassword, adminAccountType);
+
+        return admin;
+    }
+
     @Test
     @DisplayName("Cannot create a non-admin account if no admin account exists")
     void testCreatingNonAdminAccountWithoutAdmin() {
+
+        //clear previous users (esp admins) for the test:
+        testAccounts.forEach(account -> accountDao.deleteAccount(account));
+
+        boolean isAccountsRemoved = accountDao.readAccounts().isEmpty();
+        assertTrue(isAccountsRemoved, "Accounts were not deleted and this is required for the test");
         String password = "abc123";
         String hashedPassword = accountValidator.hashPassword(password);
-        String userType = "مبيعات";
+        List<String> privileges = List.of("sales", "storage");
+        AccountType accountType = new AccountType("مبيعات", privileges, false);
+        boolean accountTypeAdded = accountDao.addAccountTypes(List.of(accountType));
+        assertTrue(accountTypeAdded, "Account type not added, and is required for this test");
         int salary = 300_000;
 
 
@@ -107,7 +176,7 @@ public class AccountTests {
         LocalTime workFinish = workStart.plusHours(8);
         int userId = 1234567;
         Account account = new Account(userId, "Mohammed Ahmed", hashedPassword,
-                userType, salary,  workStart, workFinish);
+                accountType, salary,  workStart, workFinish);
         assertThrows(UnsupportedOperationException.class,
                 () -> AccountDao.getInstance().addNewAccount(account));
     }
@@ -128,14 +197,16 @@ public class AccountTests {
     void testCreatingEmployeeWithIllogicalWorkhours() {
         String password = "abc123";
         String hashedPassword = accountValidator.hashPassword(password);
-        String userType = "مبيعات";
+        List<String> privileges = List.of("sales");
+        AccountType userType = new AccountType("مبيعات", privileges, false);
         int salary = 300_000;
 
         LocalTime illogicalWorkstart = LocalTime.of(8, 0);
         LocalTime illogicalWorkfinish = illogicalWorkstart.minusHours(8);
         int userId = 1234557543;
 
-        assertThrows(IllegalArgumentException.class, () -> new Account(userId, "Ahmed Adam", hashedPassword,
+        assertThrows(IllegalArgumentException.class, () ->
+                new Account(userId, "Ahmed Adam", hashedPassword,
                 userType, salary,  illogicalWorkstart, illogicalWorkfinish));
     }
 
@@ -145,20 +216,6 @@ public class AccountTests {
     @DisplayName("Can create an employee account after creating a manager one")
     void testCreatingEmployeeAfterManager() {
     }*/
-
-    private Account createTestEmployee() {
-        String password = "abc123";
-        String hashedPassword = accountValidator.hashPassword(password);
-        String userType = "مبيعات";
-        int salary = 300_000;
-
-        LocalTime workStart = LocalTime.of(8, 0);
-        LocalTime workFinish = workStart.plusHours(8);
-        int userId = 1234567;
-        Account account = new Account(userId, "Mohammed Ahmed", hashedPassword,
-                userType, salary,  workStart, workFinish);
-        return account;
-    }
 
     //TODO: implement adding a manager account:
 /*

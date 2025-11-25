@@ -11,7 +11,7 @@ import java.util.Objects;
 public  class Account {
     private String name;
     private String hashedPassword;
-    private  String accountType;
+    private  AccountType accountType;
     private int userId, salary;
     private LocalTime shiftStart, shiftEnd;
 
@@ -23,7 +23,8 @@ public  class Account {
         this.name = name;
     }
 
-    public Account(int userId, String name, String hashedPassword, String accountType, int salary, LocalTime shiftStart,
+    public Account(int userId, String name, String hashedPassword, AccountType accountType,
+                   int salary, LocalTime shiftStart,
                    LocalTime shiftEnd) {
         this.userId = userId;
         this.name = name;
@@ -47,7 +48,7 @@ public  class Account {
         return (shiftStart != null && shiftEnd != null);
     }
 
-    public Account(String name, String hashedPassword, String accountType) {
+    public Account(String name, String hashedPassword, AccountType accountType) {
         this.name = name;
         this.hashedPassword = hashedPassword;
         this.accountType = accountType;
@@ -65,7 +66,7 @@ public  class Account {
         return hashedPassword;
     }
 
-    public String getAccountType() {
+    public AccountType getAccountType() {
         return accountType;
     }
 
@@ -81,9 +82,8 @@ public  class Account {
         return shiftEnd;
     }
 
-    //TODO: re-implement isAdmin by creating and using a column that marks an account type as admin.
     public boolean isAdmin() {
-       return accountType.equals("إدارة");
+       return accountType == null ? false : accountType.isAdmin();
     }
 
     @Override

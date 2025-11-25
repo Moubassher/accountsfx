@@ -1,6 +1,7 @@
 package com.moubassher.accountsfx;
 
 import com.moubassher.accountsfx.accessControl.AccountCreateCtrl;
+import com.moubassher.accountsfx.accessControl.LoginCtrl;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.NodeOrientation;
@@ -26,9 +27,11 @@ import java.util.Optional;
 public class AccountsFxMain extends Application {
 
     @Override
-    public void start(Stage stage) {
+    public void start(Stage stage) throws IOException {
 
-        Scene scene = new Scene(new VBox(new Label("Nothing here")), 540, 440);
+        VBox loginRoot = FXMLLoader.load(this.getClass().getResource("accessControl/login.fxml"));
+
+        Scene scene = new Scene(loginRoot, 540, 440);
 
         //  boolean isAdminRequired = AccountDao.getInstance().isAdminRequired();
         boolean isAdminRequired = false;

@@ -15,9 +15,9 @@ import java.time.LocalTime;
 
 public class AccountTable extends TableView<Account>{
 
-	TableColumn<Account, String> nameColumn = new TableColumn<>("إسم الموظف");
+	TableColumn<Account, String> nameColumn = new TableColumn<>("إسم الحساب");
 	
-	TableColumn<Account, String> userTypeColumn = new TableColumn<>("القسم");
+	TableColumn<Account, AccountType> accountTypeCol = new TableColumn<>("نوع الحساب");
 	
 	TableColumn<Account, LocalTime> workStartCol = new TableColumn<>("زمن الحضور");
 	
@@ -43,13 +43,13 @@ public class AccountTable extends TableView<Account>{
 		this.setId("employee-table"); //$NON-NLS-1$
 	
 		nameColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getName()));
-		userTypeColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getAccountType()));
+		accountTypeCol.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getAccountType()));
 		workStartCol.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getShiftStart()));
 		workFinishCol.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getShiftEnd()));
 		//salaryColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<Integer>(x.getValue().salary()));
 		
 		this.getColumns().add(nameColumn);
-		this.getColumns().add(userTypeColumn);
+		this.getColumns().add(accountTypeCol);
 		this.getColumns().add(workStartCol);
 		this.getColumns().add(workFinishCol);
 		this.getColumns().add(salaryColumn);
@@ -59,12 +59,12 @@ public class AccountTable extends TableView<Account>{
 			col.setEditable(true);
 		});
 
-		this.getItems().setAll(empDatabase.readUsers());
+		this.getItems().setAll(empDatabase.readAccounts());
 	}
 
 	public void reloadTable() {
 		this.getItems().clear();
-		this.setItems(empDatabase.readUsers());
+		this.setItems(empDatabase.readAccounts());
 	}
 	
 	private TableCell<Account, String> createCell() {
@@ -82,7 +82,6 @@ public class AccountTable extends TableView<Account>{
 			} else {	//else: cell is not editing:
 				cell.cancelEdit();
 				cell.setGraphic(text);
-
 			}
 				
 		});
@@ -104,8 +103,7 @@ public class AccountTable extends TableView<Account>{
 		textArea.setWrapText(true);
 
 		textArea.setText(text.getText());
-		
-		
+
 		Button OK = new Button("تعديل");
 		OK.setOnAction(x -> {
 			TableColumn<Account, String> col = cell.getTableColumn();
@@ -144,11 +142,8 @@ public class AccountTable extends TableView<Account>{
 	}	
 	
 	public boolean editOkAction(String attr, String attrValue, String name) {
-		boolean done = false;
-		
-		return done = empDatabase.updateEmployee(attr, attrValue, name);
+		boolean done = empDatabase.updateEmployee(attr, attrValue, name);
+		return done;
 	}
-	
-
 	
 }
