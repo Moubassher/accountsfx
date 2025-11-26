@@ -53,7 +53,6 @@ public class AccountCreateCtrl implements Initializable {
     @FXML
     private Button showPasswordBtn1, showPasswordBtn2, createAccountBtn;
 
-
     @FXML
     private ProgressIndicator createAccountProgress;
 
@@ -114,22 +113,9 @@ public class AccountCreateCtrl implements Initializable {
         createAccountProgress.setVisible(false);
 
         createAccountBtn.setOnAction(x -> {
-
-            String password = passwordField.getText();
-            PasswordStrength strength = accountValidator.evaluateStrength(password);
-            if(strength != STRONG) {
-                MyNotifications.getInstance()
-                        .showErrorAlert("كلمة المرور ليست قوية ما يكفي",
-                                "يجب إضافة كلمة مرور قوية حسب الإرشادات لرفع مستوى الحماية");
-                return;
-            }
-
-            String confirmedPassword = confirmPasswordField.getText();
-            boolean match = accountValidator.validatePassword(password, confirmedPassword);
-            if(match) {
+            boolean isValid = validatePassword();
+            if(isValid) {
                 isAccountCreated = createAccount();
-            } else {
-                notifyOfPasswordMismatch(false);
             }
         });
 
@@ -154,6 +140,39 @@ public class AccountCreateCtrl implements Initializable {
         });
 
     }
+
+    private boolean validatePassword() {
+        String password = passwordField.getText();
+        String confirmed = confirmPasswordField.getText();
+
+        return validatePasswordStrength(password)
+                && validatePasswordMatch(password, confirmed);
+    }
+
+
+    private boolean validatePasswordStrength(String password) {
+        PasswordStrength strength = accountValidator.evaluateStrength(password);
+        if (strength != STRONG) {
+            MyNotifications.getInstance().showErrorAlert(
+                    "كلمة المرور ليست قوية ما يكفي",
+                    "يجب إضافة كلمة مرور قوية حسب الإرشادات لرفع مستوى الحماية"
+            );
+            return false;
+        }
+        return true;
+    }
+
+
+    private boolean validatePasswordMatch(String password, String confirmed) {
+        boolean match = accountValidator.validatePassword(password, confirmed);
+        if (!match) {
+            passwordMismatch.show(confirmPasswordField.getScene().getWindow());
+        } else {
+            passwordMismatch.hide();
+        }
+        return match;
+    }
+
 
 
     public void enforceAdminAccountCreation() {
@@ -195,17 +214,6 @@ public class AccountCreateCtrl implements Initializable {
     }
 
 
-    private void notifyOfPasswordMismatch(boolean match) {
-        if (!match) {
-            passwordMismatch.show(confirmPasswordField.getScene().getWindow());
-        } else {
-            passwordMismatch.hide();
-        }
-    }
-
-
-    ExecutorService executor = Executors.newSingleThreadExecutor();
-
     private boolean createAccount() {
 
         String userName = userNameField.getText();
@@ -222,24 +230,25 @@ public class AccountCreateCtrl implements Initializable {
             }
         };
 
-        Future<?> result = executor.submit(hashingTask);
-        boolean accountCreated = false;
-        try {
-            result.get();
 
+        hashingTask.setOnSucceeded(e -> {
             String hashedPassword = hashingTask.getValue();
             Account account = new Account(userName, hashedPassword, userType);
-            accountCreated = accountDao.addNewAccount(account);
 
-            createAccountProgress.setVisible(false);
+            isAccountCreated = accountDao.addNewAccount(account);
+
             createAccountBtn.setDisable(false);
+            createAccountProgress.setVisible(false);
+        });
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            MyNotifications.getInstance().showExceptionAlert(e);
-        }
-        return accountCreated;
+        String hashedPassword = hashingTask.getValue();
+        Account account = new Account(userName, hashedPassword, userType);
+        isAccountCreated = accountDao.addNewAccount(account);
+
+        createAccountProgress.setVisible(false);
+        createAccountBtn.setDisable(false);
+
+        return isAccountCreated;
     }
 
 
