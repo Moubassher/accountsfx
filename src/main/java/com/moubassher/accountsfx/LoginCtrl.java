@@ -157,7 +157,7 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		registeredUsersSelector.setItems(FXCollections.observableList(filteredAccounts));
 	}
 
-	private boolean login() {
+	private void login() {
 
 		Account<F> account = registeredUsersSelector.getSelectionModel().getSelectedItem();
 		BCrypt.Result result = null;
@@ -179,22 +179,22 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 
 			validationSupport.registerValidator(passwordField, passwordValidator);
 
-			result = BCrypt.verifyer().verify(password.toCharArray(),
-					hashedPassword);
+			boolean passwordMatches = BCrypt.verifyer().verify(password.toCharArray(), hashedPassword).verified;
+			if(passwordMatches) {
+				boolean validCreds;
+				if (isUserManager) {
+					validCreds = accountDao.loginManagement(name, password);
+				} else {
+					validCreds = accountDao.loginAccount(name, password);
+				}
 
-			boolean validCreds;
-			if (isUserManager) {
-				validCreds = accountDao.loginManagement(name, password);
-			} else {
-				validCreds = accountDao.loginAccount(name, password);
+				if(validCreds) {
+					Stage stage = (Stage) this.loginRootPane.getScene().getWindow();
+					stage.close();
+				}
 			}
 
-			if (validCreds) {
-				String userName = accountDao.getName();
-				loggedInUser.set(userName);
-			}
 		}
-		return result.verified;
 	}
 
 	private Predicate<String> getPasswordPredicate(String hashedPassword) {
