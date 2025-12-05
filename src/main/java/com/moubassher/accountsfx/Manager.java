@@ -1,4 +1,4 @@
-package com.moubassher.accountsfx.accessControl;
+package com.moubassher.accountsfx;
 
 public class Manager extends Account {
 

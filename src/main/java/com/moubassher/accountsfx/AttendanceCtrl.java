@@ -1,4 +1,4 @@
-package com.moubassher.accountsfx.accessControl;
+package com.moubassher.accountsfx;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -27,7 +27,7 @@ public class AttendanceCtrl implements Initializable {
 		logoutDateCol.setCellValueFactory(x -> new SimpleStringProperty(x.getValue().logoutDate()));
 		logoutTimeCol.setCellValueFactory(x -> new SimpleStringProperty(x.getValue().logoutTime()));
 
-		AccountDao accountDao = AccountDao.getInstance();
+		AccountDao accountDao = null;
 		attendanceTable.setItems(FXCollections.observableArrayList(accountDao.readLogins()));
 	}
 	public AttendanceCtrl() {

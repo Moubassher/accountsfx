@@ -1,7 +1,6 @@
 package com.moubassher.accountsfx;
 
-import com.moubassher.accountsfx.accessControl.AccountCreateCtrl;
-import com.moubassher.accountsfx.accessControl.LoginCtrl;
+import atlantafx.base.theme.NordLight;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.NodeOrientation;
@@ -9,12 +8,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 ///Logic Flow:
@@ -26,15 +25,25 @@ import java.util.Optional;
 ///
 public class AccountsFxMain extends Application {
 
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+
+    AccountDao<TestFeature> accountDao;
     @Override
     public void start(Stage stage) throws IOException {
+
+        Application.setUserAgentStylesheet(new NordLight().getUserAgentStylesheet());
 
         VBox loginRoot = FXMLLoader.load(this.getClass().getResource("accessControl/login.fxml"));
 
         Scene scene = new Scene(loginRoot, 540, 440);
 
-        //  boolean isAdminRequired = AccountDao.getInstance().isAdminRequired();
-        boolean isAdminRequired = false;
+        AccountDao<TestFeature> accountDao = new AccountDao<>(TestFeature.class);
+        boolean isAdminRequired = accountDao.isAdminRequired();
+
         if(isAdminRequired) {
             Optional<ButtonType> result = showMissingAdminAlert();
 
@@ -43,6 +52,9 @@ public class AccountsFxMain extends Application {
                 if (userChoice == ButtonBar.ButtonData.CANCEL_CLOSE) {
                     System.exit(0);
                 }else if (userChoice == ButtonBar.ButtonData.OK_DONE) {
+
+                    accountDao.createMaintainerAccount(TestFeature.class);
+
                     showCreateAdminAccountDialog(scene);
                 }
             }
@@ -55,7 +67,8 @@ public class AccountsFxMain extends Application {
 
     private void showCreateAdminAccountDialog(Scene scene) {
         try {
-            AccountCreateCtrl accountCreateCtrl = new AccountCreateCtrl(true);
+            AccountCreateCtrl accountCreateCtrl = new AccountCreateCtrl(accountDao,
+                    List.of(), true);
             FXMLLoader fxmlLoader = new FXMLLoader(AccountCreateCtrl.class.getResource("create_account.fxml"));
             fxmlLoader.setController(accountCreateCtrl);
             Pane accountCreateRoot = fxmlLoader.load();

@@ -1,4 +1,4 @@
-package com.moubassher.accountsfx.accessControl;
+package com.moubassher.accountsfx;
 
 import com.context.our_utilities.MyNotifications;
 import com.jfoenix.controls.JFXComboBox;
@@ -16,21 +16,18 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
+import javafx.stage.Window;
 import javafx.util.Duration;
 
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
-import static com.moubassher.accountsfx.accessControl.PasswordStrength.STRONG;
+import static com.moubassher.accountsfx.PasswordStrength.STRONG;
 
 
-public class AccountCreateCtrl implements Initializable {
+public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initializable {
 
     @FXML
     private VBox root;
@@ -42,7 +39,7 @@ public class AccountCreateCtrl implements Initializable {
     private PasswordField passwordField, confirmPasswordField;
 
     @FXML
-    private JFXComboBox<AccountType> accountTypeSelector;
+    private JFXComboBox<AccountType<F>> accountTypeSelector;
 
     @FXML
     private ProgressBar strengthBar;
@@ -58,23 +55,33 @@ public class AccountCreateCtrl implements Initializable {
 
     private Tooltip passwordMismatch;
 
-    private AccountDao accountDao;
+    private AccountDao<F> accountDao;
 
     private AccountValidator accountValidator;
 
     private boolean isAdminAccount, isAccountCreated;
 
+    private List<F> privileges;
 
-    public AccountCreateCtrl(boolean isAdminAccount) {
+    private Window thisWindow;
+
+    public AccountCreateCtrl(AccountDao<F> accountDao, List<F> privileges, boolean isAdminAccount) {
+        this.accountDao = accountDao;
+        this.privileges = privileges;
         this.isAdminAccount = isAdminAccount;
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        accountDao = AccountDao.getInstance();
+        getWindowReference();
 
         accountValidator = new AccountValidator();
+
+        if(accountTypeSelector.getItems().isEmpty()) {
+            AccountType<F> accountType = AccountType.of("مشرف",privileges, true);
+            accountTypeSelector.getItems().add(accountType);
+        }
 
         visiblePasswordField.managedProperty().bind(visiblePasswordField.visibleProperty());
 
@@ -84,16 +91,20 @@ public class AccountCreateCtrl implements Initializable {
 
         onPasswordTyped(this::showPasswordStrength);
 
+        onConfirmedPasswordTyped(confirmedPass -> {
+            validatePasswordMatch(passwordField.getText(), confirmedPass);
+        });
+
         passwordMismatch = new Tooltip();
         passwordMismatch.setText("يجب أن تتطابق كلمة المرور");
         passwordMismatch.setShowDelay(Duration.ZERO);
         passwordMismatch.setHideDelay(Duration.INDEFINITE);
 
-
         showPasswordBtn1.setOnMousePressed(e -> {
             visiblePasswordField.setVisible(true);
             passwordField.setVisible(false);
         });
+
 
         showPasswordBtn1.setOnMouseReleased(e -> {
             visiblePasswordField.setVisible(false);
@@ -113,7 +124,7 @@ public class AccountCreateCtrl implements Initializable {
         createAccountProgress.setVisible(false);
 
         createAccountBtn.setOnAction(x -> {
-            boolean isValid = validatePassword();
+            boolean isValid = validateAccountDetails();
             if(isValid) {
                 isAccountCreated = createAccount();
             }
@@ -140,6 +151,37 @@ public class AccountCreateCtrl implements Initializable {
         });
 
     }
+
+    private void getWindowReference() {
+        root.sceneProperty().addListener((a, b, scene) -> {
+            if(scene != null) {
+                root.getScene().windowProperty().addListener((obs, old, window) -> {
+                    thisWindow = window;
+                });
+            }
+        });
+    }
+
+    private boolean validateAccountDetails() {
+        boolean isValid;
+        String userName = userNameField.getText();
+        if(userName.isBlank()) {
+            userNameField.getTooltip().show(thisWindow);
+            userNameField.requestFocus();
+            return false;
+        }
+
+        AccountType accountType = accountTypeSelector.getSelectionModel().getSelectedItem();
+        if(accountType == null) {
+            accountTypeSelector.getTooltip().show(thisWindow);
+            accountTypeSelector.requestFocus();
+            return false;
+        }
+        isValid = validatePassword();
+
+        return isValid;
+    }
+
 
     private boolean validatePassword() {
         String password = passwordField.getText();
@@ -174,12 +216,11 @@ public class AccountCreateCtrl implements Initializable {
     }
 
 
-
     public void enforceAdminAccountCreation() {
         accountTypeSelector.getItems().clear();
-        List<AccountType> adminAccountTypes = accountDao.readAccountTypes()
+        List<AccountType<F>> adminAccountTypes = accountDao.readAccountTypes()
                 .stream()
-                .filter(accountType -> accountType.isAdmin()).toList();
+                .filter( accountType -> accountType.isAdmin()).toList();
 
         accountTypeSelector.setItems(FXCollections.observableArrayList(adminAccountTypes));
     }
@@ -191,6 +232,12 @@ public class AccountCreateCtrl implements Initializable {
     private void onPasswordTyped(Consumer<String> passwordFunc) {
         passwordField.textProperty().addListener((obs, oldVal, newVal) -> {
             passwordFunc.accept(newVal);
+        });
+    }
+
+    private void onConfirmedPasswordTyped(Consumer<String> func) {
+        confirmPasswordField.textProperty().addListener((a, b, newVal) -> {
+            func.accept(newVal);
         });
     }
 

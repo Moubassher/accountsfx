@@ -1,4 +1,4 @@
-package com.moubassher.accountsfx.accessControl;
+package com.moubassher.accountsfx;
 
 
 /* The first time a user logs in
@@ -8,10 +8,10 @@ package com.moubassher.accountsfx.accessControl;
 import java.time.LocalTime;
 import java.util.Objects;
 
-public  class Account {
+public  class Account <F extends Enum<F> & Feature<F>>  {
     private String name;
     private String hashedPassword;
-    private  AccountType accountType;
+    private  AccountType<F> accountType;
     private int userId, salary;
     private LocalTime shiftStart, shiftEnd;
 
@@ -23,7 +23,7 @@ public  class Account {
         this.name = name;
     }
 
-    public Account(int userId, String name, String hashedPassword, AccountType accountType,
+    public Account(int userId, String name, String hashedPassword, AccountType<F> accountType,
                    int salary, LocalTime shiftStart,
                    LocalTime shiftEnd) {
         this.userId = userId;
@@ -71,7 +71,7 @@ public  class Account {
         return hashedPassword;
     }
 
-    public AccountType getAccountType() {
+    public AccountType<F> getAccountType() {
         return accountType;
     }
 

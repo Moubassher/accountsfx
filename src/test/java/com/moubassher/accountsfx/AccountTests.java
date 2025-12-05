@@ -1,7 +1,17 @@
-package com.moubassher.accountsfx.accessControl;
+package com.moubassher.accountsfx;
 
+import com.moubassher.accountsfx.Account;
+import com.moubassher.accountsfx.AccountDao;
+import com.moubassher.accountsfx.AccountType;
+import com.moubassher.accountsfx.AccountValidator;
+import com.moubassher.accountsfx.PasswordStrength;
+import com.moubassher.accountsfx.TestFeature;
 import javafx.collections.ObservableList;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -14,15 +24,13 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Account (Sign up/sign-in) tests")
 public class AccountTests {
 
-    private AccountDao accountDao;
-    private List<String> testFeatures;
-    private List<AccountType> testAccountTypes;
+    private AccountDao<TestFeature> accountDao;
+    private List<AccountType<TestFeature>> testAccountTypes;
     private List<Account> testAccounts;
     AccountValidator accountValidator;
     @BeforeAll
     void setUp() {
-        accountDao = AccountDao.getInstance();
-        testFeatures = new ArrayList<>();
+        accountDao = new AccountDao<>(TestFeature.class);
         testAccountTypes = new ArrayList<>();
         testAccounts = new ArrayList<>();
 
@@ -35,8 +43,6 @@ public class AccountTests {
     void afterAll() {
         accountDao.deleteAccounts(testAccounts);
         accountDao.deleteAccountTypes(testAccountTypes);
-        accountDao.deleteFeatures(testFeatures);
-        System.out.println("after all called");
     }
 
 
@@ -93,11 +99,9 @@ public class AccountTests {
     @Test
     @DisplayName("Can add new account types")
     void testAddingAccountTypes() {
-        List<String> features = List.of("feature a", "feature b");
-        accountDao.addNewFeatures(features);
-        testFeatures.addAll(features);
+        List<TestFeature> features = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
 
-        AccountType accountType1 = new AccountType("account type 1", features, true);
+        AccountType<TestFeature> accountType1 = AccountType.of("account type 1", features, true);
         boolean added = accountDao.addAccountTypes(List.of(accountType1));
         assertTrue(added, "Account type not added");
 
@@ -106,14 +110,12 @@ public class AccountTests {
 
     }
 
-
     @Test
     @DisplayName("Account CRUD: Delete")
     void testDeletingAccounts() {
-        List<String> privileges = List.of("feature X");
-        accountDao.addNewFeatures(privileges);
+        List<TestFeature> privileges = List.of(TestFeature.FeatureA);
 
-        AccountType accountType = new AccountType("account type x", privileges, true);
+        AccountType accountType = AccountType.of("account type x", privileges, true);
         accountDao.addAccountTypes(List.of(accountType));
 
         String password = "addddd234$";
@@ -132,11 +134,7 @@ public class AccountTests {
     @Test
     @DisplayName("Can insert an admin user")
     void testAddingAdmin() {
-        Account adminAccount = createTestAdminAccount();
-
-        List<String> privileges = adminAccount.getAccountType().getPrivileges();
-        accountDao.addNewFeatures(privileges);
-        testFeatures.addAll(privileges);
+        Account<TestFeature> adminAccount = createTestAdminAccount();
 
         boolean accountTypeAdded = accountDao.addAccountTypes(List.of(adminAccount.getAccountType()));
         assertTrue(accountTypeAdded, "Admin account type was not added and is required for inserting admin");
@@ -151,8 +149,7 @@ public class AccountTests {
     void testReadingAccounts() {
         Account account = createTestAdminAccount();
 
-        List<String> privileges = account.getAccountType().getPrivileges();
-        accountDao.addNewFeatures(privileges);
+        List<TestFeature> privileges = account.getAccountType().getPrivileges();
 
         AccountType accountType = account.getAccountType();
         boolean accountTypeAdded = accountDao.addAccountTypes(List.of(accountType));
@@ -162,7 +159,7 @@ public class AccountTests {
         boolean created = accountDao.addNewAccount(account);
         if(created) {
             testAccounts.add(account);
-            ObservableList<Account> accounts = AccountDao.getInstance().readAccounts();
+            ObservableList<Account> accounts = accountDao.readAccounts();
             assertNotNull(accounts, "Users is null");
             assertFalse(accounts.isEmpty());
         } else {
@@ -175,8 +172,8 @@ public class AccountTests {
 
         String password = "user123";
         String hashedPassword = accountValidator.hashPassword(password);
-        List<String> privileges = List.of("sales", "orders");
-        AccountType accountType = new AccountType("regular accountType", privileges, false);
+        List<TestFeature> privileges = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
+        AccountType accountType = AccountType.of("regular accountType", privileges, false);
         Account account = new Account("Robert C. Martin", hashedPassword, accountType);
         return account;
     }
@@ -184,9 +181,9 @@ public class AccountTests {
     private Account createTestAdminAccount() {
         String password = "user123$";
         String hashedPassword = accountValidator.hashPassword(password);
-        List<String> privileges = List.of("all");
-        AccountType adminAccountType =  new AccountType("Admin", privileges, true);
-        Account admin = new Account("David Adam", hashedPassword, adminAccountType);
+        List<TestFeature> privileges = List.of(TestFeature.All);
+        AccountType<TestFeature> adminAccountType =   AccountType.of("Admin", privileges, true);
+        Account<TestFeature> admin = new Account<>("David Adam", hashedPassword, adminAccountType);
 
         return admin;
     }
@@ -203,9 +200,9 @@ public class AccountTests {
         String password = "abc123";
         String hashedPassword = accountValidator.hashPassword(password);
 
-        List<String> privileges = List.of("sales", "storage");
+        List<TestFeature> privileges = List.of(TestFeature.FeatureA);
 
-        AccountType accountType = new AccountType("مبيعات", privileges, false);
+        AccountType accountType =  AccountType.of("مبيعات", privileges, false);
         boolean accountTypeAdded = accountDao.addAccountTypes(List.of(accountType));
         assertTrue(accountTypeAdded, "Account type not added, and is required for this test");
 
@@ -217,7 +214,7 @@ public class AccountTests {
         Account account = new Account(userId, "Mohammed Ahmed", hashedPassword,
                 accountType, salary,  workStart, workFinish);
         assertThrows(UnsupportedOperationException.class,
-                () -> AccountDao.getInstance().addNewAccount(account));
+                () -> accountDao.addNewAccount(account));
 
         testAccounts.add(account);
     }
@@ -227,7 +224,7 @@ public class AccountTests {
     void testAddingNamelessEmployee() {
         Account account = new Account();
         assertThrows(IllegalArgumentException.class,
-                () -> AccountDao.getInstance().addNewAccount(account));
+                () -> accountDao.addNewAccount(account));
 
         testAccounts.add(account);
 
@@ -242,12 +239,9 @@ public class AccountTests {
         int accountCount = accountDao.readAccounts().size();
         System.out.println("account count at testing non-admin after admin " + accountCount);
 
-        List<String> employeePrivileges = Arrays.asList("VIEW_SCHEDULE", "CLOCK_IN", "CLOCK_OUT");
+        List<TestFeature> employeePrivileges = Arrays.asList(TestFeature.FeatureA, TestFeature.FeatureB);
 
-        accountDao.addNewFeatures(employeePrivileges);
-        testFeatures.addAll(employeePrivileges);
-
-        AccountType employeeType = new AccountType(
+        AccountType employeeType = AccountType.of(
                 "Employee",
                 employeePrivileges,
                 false   // isAdmin = false
@@ -262,8 +256,8 @@ public class AccountTests {
         assertThrows(UnsupportedOperationException.class,
                 () -> accountDao.addNewAccount(nonAdminAccount));
 
-        List<String> privileges = List.of("all");
-        AccountType adminType = new AccountType("Admin", privileges, true);
+        List<TestFeature> privileges = List.of(TestFeature.All);
+        AccountType adminType = AccountType.of("Admin", privileges, true);
         boolean adminTypeAdded = accountDao.addAccountType(adminType);
         assertTrue(adminTypeAdded, "Admin type not added");
 
@@ -284,8 +278,8 @@ public class AccountTests {
     void testCreatingEmployeeWithIllogicalWorkhours() {
         String password = "abc123";
         String hashedPassword = accountValidator.hashPassword(password);
-        List<String> privileges = List.of("sales");
-        AccountType userType = new AccountType("مبيعات", privileges, false);
+        List<TestFeature> privileges = List.of(TestFeature.FeatureB);
+        AccountType userType = AccountType.of("مبيعات", privileges, false);
         int salary = 300_000;
 
         LocalTime illogicalWorkstart = LocalTime.of(8, 0);
@@ -296,5 +290,8 @@ public class AccountTests {
                 new Account(userId, "Ahmed Adam", hashedPassword,
                         userType, salary,  illogicalWorkstart, illogicalWorkfinish));
     }
+
+
+
 
 }

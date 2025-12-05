@@ -8,21 +8,28 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="root" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="428.0" prefWidth="648.0" spacing="30.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:id="root" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="428.0" prefWidth="567.0" spacing="30.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="589.0" spacing="10.0">
          <children>
-            <JFXTextField fx:id="userNameField" focusColor="#4163c7" labelFloat="true" maxWidth="300.0" prefWidth="300.0" promptText="أدخل اسم المستخدم">
+            <JFXTextField fx:id="userNameField" focusColor="#4163c7" labelFloat="true" maxWidth="300.0" prefWidth="300.0" promptText="اسم المستخدم">
                <font>
                   <Font size="16.0" />
                </font>
+               <tooltip>
+                  <Tooltip text="يجب إضافة اسم المستخدم" />
+               </tooltip>
             </JFXTextField>
-            <JFXComboBox fx:id="accountTypeSelector" labelFloat="true" prefHeight="29.0" prefWidth="150.0" promptText="نوع الحساب" />
+            <JFXComboBox fx:id="accountTypeSelector" labelFloat="true" prefHeight="29.0" prefWidth="150.0" promptText="نوع الحساب">
+               <tooltip>
+                  <Tooltip text="يجب إضافة نوع الحساب" />
+               </tooltip></JFXComboBox>
             <VBox maxWidth="-Infinity" prefHeight="200.0">
                <children>
                   <Label alignment="CENTER_RIGHT" style="-fx-text-fill: black; -fx-font-size: 12;" text="لتحقيق أقصى درجة حماية، يجب أن تحتوي كلمة المرور على حروف، رموز وأرقام" />
@@ -39,7 +46,7 @@
             </VBox>
             <VBox alignment="CENTER_LEFT" maxWidth="-Infinity" minHeight="-Infinity" spacing="10.0" VBox.vgrow="NEVER">
                <children>
-                  <HBox alignment="BASELINE_CENTER" spacing="10.0">
+                  <HBox alignment="BOTTOM_CENTER" spacing="10.0">
                      <children>
                         <StackPane maxWidth="300.0" prefWidth="300.0">
                            <children>
@@ -65,7 +72,7 @@
                   <Label fx:id="strengthLabel" />
                </children>
             </VBox>
-            <HBox alignment="BASELINE_CENTER" maxWidth="-Infinity" minWidth="-Infinity" spacing="10.0">
+            <HBox alignment="BOTTOM_CENTER" maxWidth="-Infinity" minWidth="-Infinity" spacing="10.0">
                <children>
                   <StackPane maxWidth="300.0" prefWidth="300.0">
                      <children>

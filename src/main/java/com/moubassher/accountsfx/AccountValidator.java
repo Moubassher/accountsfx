@@ -1,4 +1,4 @@
-package com.moubassher.accountsfx.accessControl;
+package com.moubassher.accountsfx;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 

@@ -15,7 +15,8 @@ repositories {
 }
 
 application {
-    mainClass = 'com.moubassher.accountsfx.AccountsFxMain'
+    mainClass = 'com.moubassher.accountsfx.Launcher'
+
 }
 
 
@@ -23,6 +24,9 @@ def javafxVersion = '23.0.1'
 
 
 dependencies {
+
+
+    implementation 'io.github.mkpaz:atlantafx-base:2.1.0'
 
     implementation "org.openjfx:javafx-base:${javafxVersion}:win"
     implementation "org.openjfx:javafx-graphics:${javafxVersion}:win"
@@ -69,7 +73,9 @@ publishing {
     }
 }
 
-
+/*tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ["-Xlint:rawtypes", "-Werror"]
+}*/
 
 test {
     useJUnitPlatform()

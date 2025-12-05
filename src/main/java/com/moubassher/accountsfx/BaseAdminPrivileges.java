@@ -1,4 +1,4 @@
-package com.moubassher.accountsfx.accessControl;
+package com.moubassher.accountsfx;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -42,8 +42,8 @@ import java.util.ResourceBundle;
 
 public abstract class BaseAdminPrivileges implements Initializable {
 
-	static AccountDao accountDao = AccountDao.getInstance();
-	AccountTable accountTable = AccountTable.getInstance();
+	static AccountDao accountDao;
+	AccountTable accountTable;
 
 	private Button addNewUser, modifyUser, deleteUser;
 

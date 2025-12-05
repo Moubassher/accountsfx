@@ -1,4 +1,4 @@
-package com.moubassher.accountsfx.accessControl;
+package com.moubassher.accountsfx;
 
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.NodeOrientation;
@@ -13,11 +13,11 @@ import javafx.scene.text.Text;
 
 import java.time.LocalTime;
 
-public class AccountTable extends TableView<Account>{
+public class AccountTable<F extends Enum<F> & Feature<F>>extends TableView<Account>{
 
 	TableColumn<Account, String> nameColumn = new TableColumn<>("إسم الحساب");
 	
-	TableColumn<Account, AccountType> accountTypeCol = new TableColumn<>("نوع الحساب");
+	TableColumn<Account, AccountType<F>> accountTypeCol = new TableColumn<>("نوع الحساب");
 	
 	TableColumn<Account, LocalTime> workStartCol = new TableColumn<>("زمن الحضور");
 	
@@ -25,19 +25,12 @@ public class AccountTable extends TableView<Account>{
 	TableColumn<Account, Integer> salaryColumn = new TableColumn<>("المرتب");
 	TableColumn<Account, String> optionsColumn = new TableColumn<>("الخيارات");
 
-	AccountDao empDatabase = AccountDao.getInstance();
+	private AccountDao<F> accountDao;
 
-	private static AccountTable instance = null;
 
-	public static AccountTable getInstance() {
-		if (instance == null) {
-			instance = new AccountTable();
-		}
-		return instance;
-	}
-	
-	private AccountTable() {
-		
+	 AccountTable(AccountDao<F> accountDao) {
+		this.accountDao = accountDao;
+
 		this.setEditable(true);
 		
 		this.setId("employee-table"); //$NON-NLS-1$
@@ -59,12 +52,12 @@ public class AccountTable extends TableView<Account>{
 			col.setEditable(true);
 		});
 
-		this.getItems().setAll(empDatabase.readAccounts());
+		this.getItems().setAll(accountDao.readAccounts());
 	}
 
 	public void reloadTable() {
 		this.getItems().clear();
-		this.setItems(empDatabase.readAccounts());
+		this.setItems(accountDao.readAccounts());
 	}
 	
 	private TableCell<Account, String> createCell() {
@@ -142,7 +135,7 @@ public class AccountTable extends TableView<Account>{
 	}	
 	
 	public boolean editOkAction(String attr, String attrValue, String name) {
-		boolean done = empDatabase.updateEmployee(attr, attrValue, name);
+		boolean done = accountDao.updateEmployee(attr, attrValue, name);
 		return done;
 	}
 	

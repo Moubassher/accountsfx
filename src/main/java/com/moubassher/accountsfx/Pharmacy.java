@@ -1,4 +1,4 @@
-package com.moubassher.accountsfx.accessControl;
+package com.moubassher.accountsfx;
 
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -127,8 +127,8 @@ public class Pharmacy  {
 		if(exportSuccess) {
 			String notification = "تم تسجيل بيانات الصيدلية بنجاح." + "\n";
 			notification += "يمكنك الآن اجراء طلبات من المورّدين المسجلين، كما يمكن استقبال العروض منهم." + "\n";
-			//UP add "know more" button showcasing what it means for a pharmacy to be registered.
-			//TODO: show a toast for successfully registering a pharmacy.
+			//UP add "know more" button showcasing what it means for a retailer to be registered.
+			//TODO: show a toast for successfully registering a retailer.
 			//MyNotifications.getInstance().showSimpleToast("نجاح!", notification);
 		}
 	}

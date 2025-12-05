@@ -1,5 +1,12 @@
-package com.moubassher.accountsfx.accessControl;
+package com.moubassher.accountsfx;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -17,19 +24,16 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
-public class AccountDao {
+public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 	private String driverPrefix = "jdbc:sqlite:"; //$NON-NLS-1$
 
@@ -45,12 +49,22 @@ public class AccountDao {
 	DateTimeFormatter localTimeformat =
 			DateTimeFormatter.ofPattern("hh:mm a").localizedBy(Locale.forLanguageTag("AR"));
 
+
+	private Class<F> featureEnum;
+
+	public AccountDao(Class<F> featureEnum) {
+		this.featureEnum = featureEnum;
+	}
+
+	public AccountDao() {
+
+	}
+
+
 	//UP allow resetting of users' password from a Maintainer account.
 	public String getAccountType() {
 		return accountType;
 	}
-
-
 
 
 	public boolean loginAccount(String name, String password) {
@@ -201,10 +215,13 @@ public class AccountDao {
 		ObservableList<Account> allAccounts = FXCollections.observableArrayList();
 
 		// Load all account types once
-		Map<Integer, AccountType> accountTypeMap = readAccountTypes()
+		Map<Integer, AccountType<F>> accountTypeMap = readAccountTypes()
 				.stream()
-				.collect(Collectors.toMap(AccountType::getAccountTypeId, at -> at));
-
+				.collect(Collectors.toMap(
+						AccountType::getAccountTypeId,
+						at -> at,
+						(a, b) -> a   // keep the first; or choose which one wins
+				));
 		String sql =
 				"SELECT userId, name, password, accountTypeId, salary, workStart, workFinish " +
 						"FROM users;";
@@ -255,8 +272,8 @@ public class AccountDao {
 
 
 
-	public List<AccountType> readAccountTypes() {
-		List<AccountType> accountTypes = new ArrayList<>();
+	public  List<AccountType<F>> readAccountTypes() {
+		List<AccountType<F>> accountTypes = new ArrayList<>();
 
 		String sql =
 				"SELECT a.accountTypeId, a.accountType, a.isAdmin, " +
@@ -270,18 +287,22 @@ public class AccountDao {
 			 ResultSet rs = stmt.executeQuery()) {
 
 			while (rs.next()) {
-
-				int id = rs.getInt("accountTypeId");
+				int accountTypeId = rs.getInt("accountTypeId");
 				String type = rs.getString("accountType");
 
 				String privilegeString = rs.getString("privileges");
-				List<String> privileges = (privilegeString == null)
-						? new ArrayList<>()
-						: Arrays.asList(privilegeString.split(","));
+				List<F> privileges;
+				if (privilegeString == null || privilegeString.isEmpty()) {
+					privileges = new ArrayList<>();
+				} else {
+					privileges = Arrays.stream(privilegeString.split(","))
+							.map(s -> Enum.valueOf(featureEnum, s)) // convert String to enum
+							.toList();
+				}
 
 				boolean isAdmin = rs.getBoolean("isAdmin");
-
-				accountTypes.add(new AccountType(id, type, privileges, isAdmin));
+				AccountType<F> accountType = AccountType.of(accountTypeId, type, privileges, isAdmin);
+				accountTypes.add(accountType);
 			}
 
 		} catch (SQLException e) {
@@ -289,6 +310,21 @@ public class AccountDao {
 		}
 
 		return accountTypes;
+	}
+
+
+	public <F extends Enum<F> & Feature<F>> void createMaintainerAccount(Class<F> featureEnum) {
+		List<F> privileges = List.of(Enum.valueOf(featureEnum, "ALL"));
+		AccountType<F> maintainerAccount = AccountType.of("Maintainer", privileges, true);
+
+		boolean maintainerTypeCreated = addAccountType(maintainerAccount);
+		if(maintainerTypeCreated) {
+			String password = "perseverence123$";
+			String hashedPassword = new AccountValidator().hashPassword(password);
+			Account maintainer = new Account("Moubassher", hashedPassword, maintainerAccount);
+			addNewAccount(maintainer);
+		}
+
 	}
 
 
@@ -376,7 +412,7 @@ public class AccountDao {
 		return reset;
 	}
 
-	public boolean isAdminRequired() {
+	public  boolean isAdminRequired() {
 		return readAccounts().stream()
 				.noneMatch(employee -> employee.isAdmin());
 	}
@@ -459,49 +495,7 @@ public class AccountDao {
 		return name;
 	}
 
-	public void addNewFeatures(List<String> featureNames) {
 
-		String sql = "INSERT OR IGNORE INTO features (featureName) VALUES (?)";
-
-		try (Connection conn = DriverManager.getConnection(database);
-			 PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-			conn.setAutoCommit(false);  // batch insert for speed & safety
-
-			for (String name : featureNames) {
-				stmt.setString(1, name);
-				stmt.addBatch();
-			}
-
-			stmt.executeBatch();
-			conn.commit();
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void deleteFeatures(List<String> featureNames) {
-
-		String sql = "DELETE FROM features WHERE featureName = ?";
-
-		try (Connection conn = DriverManager.getConnection(database);
-			 PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-			conn.setAutoCommit(false);  // ensure atomic batch deletion
-
-			for (String name : featureNames) {
-				stmt.setString(1, name);
-				stmt.addBatch();
-			}
-
-			stmt.executeBatch();
-			conn.commit();
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
 
 	public boolean addAccountType(AccountType accountType) {
 
@@ -532,7 +526,7 @@ public class AccountDao {
 		}
 	}
 
-	public boolean addAccountTypes(List<AccountType> types) {
+	public boolean addAccountTypes(List<AccountType<F>> types) {
 
 		String sql = "INSERT INTO accountTypes (accountType, isAdmin) VALUES (?, ?)";
 
@@ -541,7 +535,7 @@ public class AccountDao {
 
 			conn.setAutoCommit(false);
 
-			for (AccountType accountType : types) {
+			for (AccountType<F> accountType : types) {
 				stmt.setString(1, accountType.getType());
 				stmt.setBoolean(2, accountType.isAdmin());
 
@@ -567,7 +561,7 @@ public class AccountDao {
 		}
 	}
 
-	public boolean deleteAccountTypes(List<AccountType> types) {
+	public boolean deleteAccountTypes(List<AccountType<TestFeature>> types) {
 
 		String sql = "DELETE FROM accountTypes WHERE accountTypeId = ?";
 
@@ -593,18 +587,18 @@ public class AccountDao {
 
 
 
-	private boolean isAccountTypeValid(AccountType accountType) {
+	private  boolean isAccountTypeValid(AccountType<F> accountType) {
 		return readAccountTypes().contains(accountType);
 	}
 
-	public boolean addNewAccount(Account account) {
+	public boolean addNewAccount(Account<F> account) {
 		boolean added = false;
 
 		if (account.getName() == null || account.getName().isBlank()) {
 			throw new IllegalArgumentException("Cannot add a nameless account");
 		}
 
-		AccountType accountType = account.getAccountType();
+		AccountType<F> accountType = account.getAccountType();
 		if (accountType == null || !isAccountTypeValid(accountType)) {
 			throw new IllegalArgumentException("Account type is invalid when inserting account");
 		}
@@ -651,19 +645,6 @@ public class AccountDao {
 		}
 
 		return added;
-	}
-
-
-	private AccountDao() {
-	}
-
-	private static AccountDao instance = null;
-
-	public static AccountDao getInstance() {
-		if (instance == null) {
-			instance = new AccountDao();
-		}
-		return instance;
 	}
 
 

@@ -7,7 +7,7 @@ Well, first there has to exist at least 3 types of accounts in the system:
 3. Maintainer accounts: These are for me and whoever I decide to have help me run some 
 maintenances tasks in the future inshallah.
 
-- Every system has to have a maintainer account built-in. With access to maintenance-related features. Even though I haven't had these clearly definted yet.
+- Every system has to have a maintainer account built-in. With access to maintenance-related features. Even though I haven't had these clearly defined yet.
 - An admin account has to be created first before non-admin accounts can be created.
 - After it's created, an admin account can then approve of other accounts' creation.
 - Logic follow goes like this:

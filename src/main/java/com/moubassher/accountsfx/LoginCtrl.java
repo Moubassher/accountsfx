@@ -1,4 +1,4 @@
-package com.moubassher.accountsfx.accessControl;
+package com.moubassher.accountsfx;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import javafx.beans.property.SimpleStringProperty;
@@ -36,7 +36,7 @@ public class LoginCtrl implements Initializable {
 
 	private StringProperty loggedInUser = new SimpleStringProperty();
 
-	private AccountDao accountDao = AccountDao.getInstance();
+	private AccountDao accountDao = new AccountDao();
 
 	TaskDatabase taskDatabase = TaskDatabase.getInstance();
 
@@ -104,8 +104,8 @@ public class LoginCtrl implements Initializable {
 		});
 	}
 
-	private boolean createAccount() throws IOException {
-		AccountCreateCtrl createAccountCtrl = new AccountCreateCtrl(false);
+/*	private boolean createAccount() throws IOException {
+		AccountCreateCtrl createAccountCtrl = new AccountCreateCtrl(List.of(),false);
 		FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/accessControl/create_account.fxml"));
 		loader.setController(createAccountCtrl);
 		Pane createAccountPane = loader.load();
@@ -113,7 +113,7 @@ public class LoginCtrl implements Initializable {
 
 		boolean isAccountCreated = createAccountCtrl.isAccountCreated();
 		return isAccountCreated;
-	}
+	}*/
 
 	public String getloggedInUser() {
 		return loggedInUser.get();
