@@ -37,7 +37,7 @@ public class AccountsFxMain extends Application {
 
         Application.setUserAgentStylesheet(new NordLight().getUserAgentStylesheet());
 
-        VBox loginRoot = FXMLLoader.load(this.getClass().getResource("accessControl/login.fxml"));
+        VBox loginRoot = FXMLLoader.load(this.getClass().getResource("login.fxml"));
 
         Scene scene = new Scene(loginRoot, 540, 440);
 
