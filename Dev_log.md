@@ -8,7 +8,10 @@ Well, first there has to exist at least 3 types of accounts in the system:
 maintenances tasks in the future inshallah.
 
 - Every system has to have a maintainer account built-in. With access to maintenance-related features. Even though I haven't had these clearly defined yet.
-- An admin account has to be created first before non-admin accounts can be created.
+- A maintainer account is created before anything else, including an admin account.
+  A maintainer account can create ACCOUNT TYPES and assign access to features for each
+  type of account. The feature list is an enum provided by the dependent project.
+- Then, an admin account has to be created first before non-admin accounts can be created.
 - After it's created, an admin account can then approve of other accounts' creation.
 - Logic follow goes like this:
 
