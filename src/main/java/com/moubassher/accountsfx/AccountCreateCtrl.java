@@ -5,8 +5,10 @@ import com.jfoenix.controls.JFXComboBox;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.ImageCursor;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -15,11 +17,14 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Duration;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -166,7 +171,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             return false;
         }
 
-        AccountType accountType = accountTypeSelector.getSelectionModel().getSelectedItem();
+        AccountType<F> accountType = accountTypeSelector.getSelectionModel().getSelectedItem();
         if(accountType == null) {
             accountTypeSelector.getTooltip().show(window);
             accountTypeSelector.requestFocus();
@@ -289,5 +294,27 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
         return isAccountCreated;
     }
+
+    void showCreateAdminAccountDialog() {
+        try {
+            AccountDao<TestFeature> accountDao = new AccountDao<>();
+
+
+            FXMLLoader fxmlLoader = new FXMLLoader(AccountCreateCtrl.class.getResource("create_account.fxml"));
+            fxmlLoader.setController(this);
+            Pane accountCreateRoot = fxmlLoader.load();
+
+            Scene scene = new Scene(accountCreateRoot, 540, 440);
+
+            Stage stage = new Stage();
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(scene);
+            stage.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }
