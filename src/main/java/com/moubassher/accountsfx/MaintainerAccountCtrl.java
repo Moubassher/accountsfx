@@ -49,7 +49,13 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
         accountTypeAccordion.getPanes().clear();
 
-        
+        List<AccountType<F>> accountTypes = accountDao.readAccountTypes();
+        accountTypes.forEach(accountType -> {
+           String accountTypeName = accountType.getType();
+           List<F> privileges = accountType.getPrivileges();
+           boolean isAdmin = accountType.isAdmin();
+           displayCreatedAccountType(accountTypeName, privileges, isAdmin);
+        });
 
         for (F feature : featureEnumClass.getEnumConstants()) {
             CheckBox checkBox = new CheckBox(feature.name());
@@ -64,9 +70,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
             List<F> selectedPrivileges = readSelectedPrivileges();
 
-            TitledPane accountTypePane = displayCreatedAccountType(accountTypeName, selectedPrivileges);
-
-            accountTypeAccordion.getPanes().add(accountTypePane);
+            displayCreatedAccountType(accountTypeName, selectedPrivileges, isAdmin);
 
             AccountType<F> accountType = AccountType.of(accountTypeName, selectedPrivileges, isAdmin);
 
@@ -82,8 +86,12 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
     }
 
-    private TitledPane displayCreatedAccountType(String accountTypeName, List<F> selectedPrivileges) {
+    private void displayCreatedAccountType(String accountTypeName, List<F> selectedPrivileges, boolean isAdmin) {
         TitledPane accountTypePane = new TitledPane();
+        CheckBox isAdminBox = new CheckBox("admin:");
+        isAdminBox.setSelected(isAdmin);
+        accountTypePane.setGraphic(isAdminBox);
+
         accountTypePane.setText(accountTypeName);
         FlowPane featurePane = new FlowPane(10, 10);
         accountTypePane.setContent(featurePane);
@@ -92,7 +100,8 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
             featureBox.setSelected(true);
             featurePane.getChildren().add(featureBox);
         });
-        return accountTypePane;
+
+        accountTypeAccordion.getPanes().add(accountTypePane);
     }
 
     private List<F> readSelectedPrivileges() {

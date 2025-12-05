@@ -1,6 +1,6 @@
 package com.moubassher.accountsfx;
 
-import atlantafx.base.theme.NordLight;
+import atlantafx.base.theme.NordDark;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.NodeOrientation;
@@ -34,8 +34,8 @@ public class AccountsFxMain extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
-        Application.setUserAgentStylesheet(new NordLight().getUserAgentStylesheet());
-
+        Application.setUserAgentStylesheet(new NordDark().getUserAgentStylesheet());
+        
 
         VBox loginRoot = FXMLLoader.load(this.getClass().getResource("login.fxml"));
 
