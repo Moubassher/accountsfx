@@ -18,20 +18,33 @@ public class AccountValidator {
             return null;
         }
 
+        int length = password.length();
         boolean hasLetter = password.matches(".*[a-zA-Z\\u0600-\\u06FF].*");
         boolean hasDigit = password.matches(".*\\d.*");
         boolean hasSpecial = password.matches(".*[^a-zA-Z\\u0600-\\u06FF\\d].*");
 
-        if (hasLetter && !hasDigit && !hasSpecial) {
-            return PasswordStrength.WEAK;
-        } else if (hasLetter && hasDigit && !hasSpecial) {
-            return PasswordStrength.MEDIUM;
-        } else if (hasLetter && hasDigit && hasSpecial) {
-            return PasswordStrength.STRONG;
-        } else {
-            // No letters at all (only numbers or symbols) → treat as weak
+        // very short → weak
+        if (length <= 2) {
             return PasswordStrength.WEAK;
         }
+
+        // strong → length 6+ AND letters + digits + special
+        if (length >= 6 && hasLetter && hasDigit && hasSpecial) {
+            return PasswordStrength.STRONG;
+        }
+
+        // medium → length 4-5 AND contains at least 2 types (letters/digits/special)
+        int types = 0;
+        if (hasLetter) types++;
+        if (hasDigit) types++;
+        if (hasSpecial) types++;
+
+        if (length >= 4 && length < 6 && types >= 2) {
+            return PasswordStrength.MEDIUM;
+        }
+
+        // fallback: anything else is weak
+        return PasswordStrength.WEAK;
     }
 
 

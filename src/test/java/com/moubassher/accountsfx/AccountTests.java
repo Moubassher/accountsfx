@@ -69,8 +69,11 @@ public class AccountTests {
         PasswordStrength weak = accountValidator.evaluateStrength(weakPassword);
         assertEquals(PasswordStrength.WEAK, weak, "A weak password was not determined as weak");
 
+        String weakPassword2 = "1b";
+        PasswordStrength weak2 = accountValidator.evaluateStrength(weakPassword2);
+        assertEquals(PasswordStrength.WEAK, weak2, "A weak password (2) was not determined as weak");
 
-        String mediumPassword = "abc123";
+        String mediumPassword = "abc1";
         PasswordStrength medium = accountValidator.evaluateStrength(mediumPassword);
         assertEquals(medium, PasswordStrength.MEDIUM, "A Medium-strength password was not determined as such.");
 
@@ -152,7 +155,7 @@ public class AccountTests {
         boolean created = accountDao.addNewAccount(account);
         if(created) {
             testAccounts.add(account);
-            ObservableList<Account> accounts = accountDao.readAccounts();
+            ObservableList<Account<TestFeature>> accounts = accountDao.readAccounts();
             assertNotNull(accounts, "Users is null");
             assertFalse(accounts.isEmpty());
         } else {
