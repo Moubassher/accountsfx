@@ -280,7 +280,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
         hashingTask.setOnSucceeded(e -> {
             String hashedPassword = hashingTask.getValue();
-            Account account = new Account(userName, hashedPassword, userType);
+            Account<F> account = new Account<>(userName, hashedPassword, userType);
 
             isAccountCreated = accountDao.addNewAccount(account);
 
@@ -289,7 +289,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         });
 
         String hashedPassword = hashingTask.getValue();
-        Account account = new Account(userName, hashedPassword, userType);
+        Account<F> account = new Account(userName, hashedPassword, userType);
         isAccountCreated = accountDao.addNewAccount(account);
 
         createAccountProgress.setVisible(false);

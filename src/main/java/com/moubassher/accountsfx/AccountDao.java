@@ -35,12 +35,12 @@ import java.util.stream.Collectors;
 
 public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
-	private String driverPrefix = "jdbc:sqlite:"; //$NON-NLS-1$
+	private final String driverPrefix = "jdbc:sqlite:"; //$NON-NLS-1$
 
-	private String databaseName = "Users.db"; //$NON-NLS-1$
+	private final String databaseName = "Users.db"; //$NON-NLS-1$
 
-	private String databaseLocation = "file:/C:/pharmaNetResources/databases/"; //$NON-NLS-1$
-	private String database = driverPrefix + databaseLocation + databaseName;
+	private final String databaseLocation = "file:/C:/pharmaNetResources/databases/"; //$NON-NLS-1$
+	private final String database = driverPrefix + databaseLocation + databaseName;
 
 	private String name = "(حساب غير مسجل)";
 
@@ -210,9 +210,9 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		}
 	}
 
-	public ObservableList<Account> readAccounts() {
+	public ObservableList<Account<F>> readAccounts() {
 
-		ObservableList<Account> allAccounts = FXCollections.observableArrayList();
+		ObservableList<Account<F>> allAccounts = FXCollections.observableArrayList();
 
 		// Load all account types once
 		Map<Integer, AccountType<F>> accountTypeMap = readAccountTypes()
@@ -248,9 +248,9 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 						.orElse(null);
 
 				// Fetch AccountType directly from the map
-				AccountType accountType = accountTypeMap.get(accountTypeId);
+				AccountType<F> accountType = accountTypeMap.get(accountTypeId);
 
-				Account account = new Account(
+				Account<F> account = new Account(
 						userId,
 						name,
 						password,
@@ -314,7 +314,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 
 	public <F extends Enum<F> & Feature<F>> void createMaintainerAccount(Class<F> featureEnum) {
-		List<F> privileges = List.of(Enum.valueOf(featureEnum, "ALL"));
+		List<F> privileges = List.of(featureEnum.getEnumConstants());
 		AccountType<F> maintainerAccount = AccountType.of("Maintainer", privileges, true);
 
 		boolean maintainerTypeCreated = addAccountType(maintainerAccount);
@@ -460,7 +460,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		return done;
 	}
 
-	public boolean deleteAccounts(List<Account> accounts) {
+	public boolean deleteAccounts(List<Account<F>> accounts) {
 		if (accounts == null || accounts.isEmpty()) {
 			return true;
 		}
@@ -472,7 +472,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 			conn.setAutoCommit(false);
 
-			for (Account account : accounts) {
+			for (Account<F> account : accounts) {
 				stmt.setInt(1, account.getUserId());
 				stmt.addBatch();
 			}
@@ -648,7 +648,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public boolean deleteAccount(Account account) {
+	public boolean deleteAccount(Account<F> account) {
 		if (account == null) {
 			return false;
 		}

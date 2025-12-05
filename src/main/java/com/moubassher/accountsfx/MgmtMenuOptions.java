@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.List;
 
-public class MgmtMenuOptions {
+public class MgmtMenuOptions<F extends Enum<F> & Feature<F>>  {
 
 	
 	public void installManagementWindow() {
@@ -19,7 +19,7 @@ public class MgmtMenuOptions {
 		mgmtStage.initModality(Modality.WINDOW_MODAL);
 		mgmtStage.setTitle("الإدارة");
 
-		BaseAdminPrivileges baseAdminPrivileges = new BaseAdminPrivileges() {
+		BaseAdminPrivileges<F> baseAdminPrivileges = new BaseAdminPrivileges<>() {
 
 			@Override
 			public void addCustomTabs(List<Tab> tabs) {

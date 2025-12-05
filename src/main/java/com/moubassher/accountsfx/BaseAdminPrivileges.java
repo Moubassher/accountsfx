@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-public abstract class BaseAdminPrivileges implements Initializable {
+public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  implements Initializable {
 
 	static AccountDao accountDao;
 	AccountTable accountTable;
@@ -95,7 +95,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 		addNewUser.setOnAction(x -> createAccount());
 
 		deleteUser.setOnAction(x -> {
-					Account account = accounts.getSelectionModel().getSelectedItem();
+					Account<F> account = accounts.getSelectionModel().getSelectedItem();
 					confirmDeletingAccount(account);
 				}
 		);
@@ -107,7 +107,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 
 
 
-	private void confirmDeletingAccount(Account account) {
+	private void confirmDeletingAccount(Account<F> account) {
 
 		String accountUsername = account.getName();
 		Alert alert = new Alert(AlertType.CONFIRMATION);
@@ -174,7 +174,7 @@ public abstract class BaseAdminPrivileges implements Initializable {
 
 			LocalTime shiftFinish= shiftEndPane.setTimestamp(finishHour, finishMinutes, finishTimeOfDay);
 
-			Account account = new Account(-1, name, defaultPassword, dpt, salary, shiftStart, shiftFinish);
+			Account<?> account = new Account<>(-1, name, defaultPassword, dpt, salary, shiftStart, shiftFinish);
 			boolean success = accountDao.addNewAccount(account);
 
 			Alert employeeAdded = new Alert(AlertType.INFORMATION);

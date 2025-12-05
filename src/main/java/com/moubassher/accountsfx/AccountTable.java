@@ -13,17 +13,17 @@ import javafx.scene.text.Text;
 
 import java.time.LocalTime;
 
-public class AccountTable<F extends Enum<F> & Feature<F>>extends TableView<Account>{
+public class AccountTable<F extends Enum<F> & Feature<F>> extends TableView<Account<F>>{
 
-	TableColumn<Account, String> nameColumn = new TableColumn<>("إسم الحساب");
+	TableColumn<Account<F>, String> nameColumn = new TableColumn<>("إسم الحساب");
 	
-	TableColumn<Account, AccountType<F>> accountTypeCol = new TableColumn<>("نوع الحساب");
+	TableColumn<Account<F>, AccountType<F>> accountTypeCol = new TableColumn<>("نوع الحساب");
 	
-	TableColumn<Account, LocalTime> workStartCol = new TableColumn<>("زمن الحضور");
+	TableColumn<Account<F>, LocalTime> workStartCol = new TableColumn<>("زمن الحضور");
 	
-	TableColumn<Account, LocalTime> workFinishCol = new TableColumn<>("زمن الإنصراف");
-	TableColumn<Account, Integer> salaryColumn = new TableColumn<>("المرتب");
-	TableColumn<Account, String> optionsColumn = new TableColumn<>("الخيارات");
+	TableColumn<Account<F>, LocalTime> workFinishCol = new TableColumn<>("زمن الإنصراف");
+	TableColumn<Account<F>, Integer> salaryColumn = new TableColumn<>("المرتب");
+	TableColumn<Account<F>, String> optionsColumn = new TableColumn<>("الخيارات");
 
 	private AccountDao<F> accountDao;
 
@@ -60,8 +60,8 @@ public class AccountTable<F extends Enum<F> & Feature<F>>extends TableView<Accou
 		this.setItems(accountDao.readAccounts());
 	}
 	
-	private TableCell<Account, String> createCell() {
-		TableCell<Account, String> cell = new TableCell<>();
+	private TableCell<Account<F>, String> createCell() {
+		TableCell<Account<F>, String> cell = new TableCell<>();
 	
 		Text text = new Text();
 		cell.setGraphic(text);
@@ -83,7 +83,7 @@ public class AccountTable<F extends Enum<F> & Feature<F>>extends TableView<Accou
 	}
 
 
-	private void initiateEditingCell(TableCell<Account, String> cell, Text text) {
+	private void initiateEditingCell(TableCell<Account<F>, String> cell, Text text) {
 		//values to update in the database are obtained this way:
 		int index = cell.getIndex();
 		String name = nameColumn.getCellData(index);
@@ -99,7 +99,7 @@ public class AccountTable<F extends Enum<F> & Feature<F>>extends TableView<Accou
 
 		Button OK = new Button("تعديل");
 		OK.setOnAction(x -> {
-			TableColumn<Account, String> col = cell.getTableColumn();
+			TableColumn<Account<F>, String> col = cell.getTableColumn();
 			String attr = "";
 			
 			String attrValue = textArea.getText();

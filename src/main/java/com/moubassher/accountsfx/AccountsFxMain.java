@@ -31,7 +31,6 @@ public class AccountsFxMain extends Application {
     }
 
 
-    AccountDao<TestFeature> accountDao;
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -67,7 +66,9 @@ public class AccountsFxMain extends Application {
 
     private void showCreateAdminAccountDialog(Scene scene) {
         try {
-            AccountCreateCtrl accountCreateCtrl = new AccountCreateCtrl(accountDao,
+            AccountDao<TestFeature> accountDao = new AccountDao<>();
+
+            AccountCreateCtrl<TestFeature> accountCreateCtrl = new AccountCreateCtrl<>(accountDao,
                     List.of(), true);
             FXMLLoader fxmlLoader = new FXMLLoader(AccountCreateCtrl.class.getResource("create_account.fxml"));
             fxmlLoader.setController(accountCreateCtrl);

@@ -1,11 +1,5 @@
 package com.moubassher.accountsfx;
 
-import com.moubassher.accountsfx.Account;
-import com.moubassher.accountsfx.AccountDao;
-import com.moubassher.accountsfx.AccountType;
-import com.moubassher.accountsfx.AccountValidator;
-import com.moubassher.accountsfx.PasswordStrength;
-import com.moubassher.accountsfx.TestFeature;
 import javafx.collections.ObservableList;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -26,7 +20,7 @@ public class AccountTests {
 
     private AccountDao<TestFeature> accountDao;
     private List<AccountType<TestFeature>> testAccountTypes;
-    private List<Account> testAccounts;
+    private List<Account<TestFeature>> testAccounts;
     AccountValidator accountValidator;
     @BeforeAll
     void setUp() {
@@ -121,8 +115,7 @@ public class AccountTests {
         String password = "addddd234$";
         String hashedPassword = accountValidator.hashPassword(password);
 
-
-        Account account = new Account("Robert Adams", hashedPassword, accountType);
+        Account<TestFeature> account = new Account<>("Robert Adams", hashedPassword, accountType);
         boolean added = accountDao.addNewAccount(account);
         assertTrue(added, "test account not added and is required to testing deleting accounts");
         testAccounts.add(account);
@@ -147,7 +140,7 @@ public class AccountTests {
     @Test
     @DisplayName("Can read accounts")
     void testReadingAccounts() {
-        Account account = createTestAdminAccount();
+        Account<TestFeature> account = createTestAdminAccount();
 
         List<TestFeature> privileges = account.getAccountType().getPrivileges();
 
@@ -174,7 +167,7 @@ public class AccountTests {
         String hashedPassword = accountValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
         AccountType accountType = AccountType.of("regular accountType", privileges, false);
-        Account account = new Account("Robert C. Martin", hashedPassword, accountType);
+        Account<TestFeature> account = new Account("Robert C. Martin", hashedPassword, accountType);
         return account;
     }
 
@@ -211,7 +204,7 @@ public class AccountTests {
         LocalTime workStart = LocalTime.of(8, 0);
         LocalTime workFinish = workStart.plusHours(8);
         int userId = 1234567;
-        Account account = new Account(userId, "Mohammed Ahmed", hashedPassword,
+        Account<TestFeature> account = new Account<>(userId, "Mohammed Ahmed", hashedPassword,
                 accountType, salary,  workStart, workFinish);
         assertThrows(UnsupportedOperationException.class,
                 () -> accountDao.addNewAccount(account));
@@ -222,7 +215,7 @@ public class AccountTests {
     @Test
     @DisplayName("Cannot add a nameless employee")
     void testAddingNamelessEmployee() {
-        Account account = new Account();
+        Account<TestFeature> account = new Account<>();
         assertThrows(IllegalArgumentException.class,
                 () -> accountDao.addNewAccount(account));
 

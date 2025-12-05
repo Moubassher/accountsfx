@@ -5,23 +5,26 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.controlsfx.validation.ValidationSupport;
 import org.controlsfx.validation.Validator;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -31,12 +34,11 @@ import java.util.function.Predicate;
 /**
  * A controller for the login window. The user
  */
-public class LoginCtrl implements Initializable {
-
+public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable {
 
 	private StringProperty loggedInUser = new SimpleStringProperty();
 
-	private AccountDao accountDao = new AccountDao();
+	private AccountDao<F> accountDao = new AccountDao<>();
 
 	TaskDatabase taskDatabase = TaskDatabase.getInstance();
 
@@ -44,10 +46,10 @@ public class LoginCtrl implements Initializable {
 	private Label signInDisplay, credsInfoDisplay, accountTypeDisplay, userNameDisplay;
 
 	@FXML
-	private ChoiceBox<AccountType> accountTypeSelector;
+	private ChoiceBox<AccountType<F>> accountTypeSelector;
 
 	@FXML
-	private ChoiceBox<Account> registeredUsersSelector;
+	private ChoiceBox<Account<F>> registeredUsersSelector;
 
 	@FXML
 	private PasswordField passwordField;
@@ -60,6 +62,8 @@ public class LoginCtrl implements Initializable {
 
 	@FXML
 	private VBox loginRootPane;
+
+	private boolean isUserManager;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -81,10 +85,7 @@ public class LoginCtrl implements Initializable {
 			credsInfoDisplay.setText("تسجيل دخول للإدارة");
 		}
 
-
-		loginBtn.setOnAction(x -> {
-			login();
-		});
+		loginBtn.setOnAction(x -> login());
 
 		createAccountBtn.setOnAction(x -> {
 			String description = "تم إرسال الطلب للإدارة";
@@ -100,7 +101,6 @@ public class LoginCtrl implements Initializable {
 					loginWindow(true);
 				}
 			});
-
 		});
 	}
 
@@ -149,56 +149,53 @@ public class LoginCtrl implements Initializable {
 	}
 
 	private void getAccountsForType(String accountType) {
-		List<Account> allAccounts = accountDao.readAccounts();
-		List<Account> filteredAccounts = allAccounts.stream()
-						.filter(account ->
-								account.getAccountType().getType().equals(accountType))
-								.toList();
+		List<Account<F>> allAccounts = accountDao.readAccounts();
+		List<Account<F>> filteredAccounts = allAccounts.stream()
+				.filter(account ->
+						account.getAccountType().getType().equals(accountType))
+				.toList();
 		registeredUsersSelector.setItems(FXCollections.observableList(filteredAccounts));
 	}
 
-
-	private boolean isUserManager;
 	private boolean login() {
 
+		Account<F> account = registeredUsersSelector.getSelectionModel().getSelectedItem();
+		BCrypt.Result result = null;
+		if (account != null) {
+			String name = account.getName();
+			String password = passwordField.getText();
 
-        Account account = registeredUsersSelector.getSelectionModel().getSelectedItem();
-        BCrypt.Result result = null;
-        if (account != null) {
-            String name = account.getName();
-            String password = passwordField.getText();
+			String hashedPassword = BCrypt.withDefaults()
+					.hashToString(14, password.toCharArray());
 
-            String hashedPassword = BCrypt.withDefaults()
-                    .hashToString(14, password.toCharArray());
+			ValidationSupport validationSupport = new ValidationSupport();
+			validationSupport.registerValidator(passwordField,
+					Validator.createEmptyValidator("يجب إدخال كلمة السر"));
 
-            ValidationSupport validationSupport = new ValidationSupport();
-            validationSupport.registerValidator(passwordField,
-                    Validator.createEmptyValidator("يجب إدخال كلمة السر"));
+			Predicate<String> passwordPredicate = getPasswordPredicate(hashedPassword);
+			String invalidPasswordMsg = "كلمة السر غير صحيحة";
 
-            Predicate<String> passwordPredicate = getPasswordPredicate(hashedPassword);
-            String invalidPasswordMsg = "كلمة السر غير صحيحة";
+			Validator<String> passwordValidator = Validator.createPredicateValidator(passwordPredicate, invalidPasswordMsg);
 
-            Validator<String> passwordValidator = Validator.createPredicateValidator(passwordPredicate, invalidPasswordMsg);
+			validationSupport.registerValidator(passwordField, passwordValidator);
 
-            validationSupport.registerValidator(passwordField, passwordValidator);
+			result = BCrypt.verifyer().verify(password.toCharArray(),
+					hashedPassword);
 
-            result = BCrypt.verifyer().verify(password.toCharArray(),
-                    hashedPassword);
+			boolean validCreds;
+			if (isUserManager) {
+				validCreds = accountDao.loginManagement(name, password);
+			} else {
+				validCreds = accountDao.loginAccount(name, password);
+			}
 
-            boolean validCreds;
-            if (isUserManager) {
-                validCreds = accountDao.loginManagement(name, password);
-            } else {
-                validCreds = accountDao.loginAccount(name, password);
-            }
-
-            if (validCreds) {
-                String userName = accountDao.getName();
-                loggedInUser.set(userName);
-            }
-        }
-        return result.verified;
-    }
+			if (validCreds) {
+				String userName = accountDao.getName();
+				loggedInUser.set(userName);
+			}
+		}
+		return result.verified;
+	}
 
 	private Predicate<String> getPasswordPredicate(String hashedPassword) {
 		return password -> {
