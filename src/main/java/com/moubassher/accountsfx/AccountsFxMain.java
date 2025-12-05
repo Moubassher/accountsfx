@@ -10,6 +10,7 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -53,8 +54,8 @@ public class AccountsFxMain extends Application {
                 }else if (userChoice == ButtonBar.ButtonData.OK_DONE) {
 
                     accountDao.createMaintainerAccount(TestFeature.class);
+                    showCreateAdminAccountDialog();
 
-                    showCreateAdminAccountDialog(scene);
                 }
             }
 
@@ -62,9 +63,10 @@ public class AccountsFxMain extends Application {
 
         stage.setScene(scene);
         stage.show();
+
     }
 
-    private void showCreateAdminAccountDialog(Scene scene) {
+    private void showCreateAdminAccountDialog() {
         try {
             AccountDao<TestFeature> accountDao = new AccountDao<>();
 
@@ -73,7 +75,14 @@ public class AccountsFxMain extends Application {
             FXMLLoader fxmlLoader = new FXMLLoader(AccountCreateCtrl.class.getResource("create_account.fxml"));
             fxmlLoader.setController(accountCreateCtrl);
             Pane accountCreateRoot = fxmlLoader.load();
-            scene.setRoot(accountCreateRoot);
+
+            Scene scene = new Scene(accountCreateRoot, 540, 440);
+
+            Stage stage = new Stage();
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(scene);
+            stage.showAndWait();
+
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -16,6 +16,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Duration;
 
@@ -63,7 +64,6 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
     private List<F> privileges;
 
-    private Window thisWindow;
 
     public AccountCreateCtrl(AccountDao<F> accountDao, List<F> privileges, boolean isAdminAccount) {
         this.accountDao = accountDao;
@@ -73,8 +73,6 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
-        getWindowReference();
 
         accountValidator = new AccountValidator();
 
@@ -127,6 +125,10 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             boolean isValid = validateAccountDetails();
             if(isValid) {
                 isAccountCreated = createAccount();
+                if(isAccountCreated) {
+                    Stage theStage = (Stage) root.getScene().getWindow();
+                    theStage.close();
+                }
             }
         });
 
@@ -152,28 +154,21 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
     }
 
-    private void getWindowReference() {
-        root.sceneProperty().addListener((a, b, scene) -> {
-            if(scene != null) {
-                root.getScene().windowProperty().addListener((obs, old, window) -> {
-                    thisWindow = window;
-                });
-            }
-        });
-    }
 
     private boolean validateAccountDetails() {
         boolean isValid;
+        Window window = root.getScene().getWindow();
+
         String userName = userNameField.getText();
         if(userName.isBlank()) {
-            userNameField.getTooltip().show(thisWindow);
+            userNameField.getTooltip().show(window);
             userNameField.requestFocus();
             return false;
         }
 
         AccountType accountType = accountTypeSelector.getSelectionModel().getSelectedItem();
         if(accountType == null) {
-            accountTypeSelector.getTooltip().show(thisWindow);
+            accountTypeSelector.getTooltip().show(window);
             accountTypeSelector.requestFocus();
             return false;
         }
@@ -225,9 +220,6 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         accountTypeSelector.setItems(FXCollections.observableArrayList(adminAccountTypes));
     }
 
-    public boolean isAccountCreated() {
-        return isAccountCreated;
-    }
 
     private void onPasswordTyped(Consumer<String> passwordFunc) {
         passwordField.textProperty().addListener((obs, oldVal, newVal) -> {
@@ -254,10 +246,10 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             strengthLabel.setText("كلمة المرور قوية ✔");
             strengthBar.setStyle("-fx-accent: green;");
         }
-
-        double score = strength.getScore();
-        strengthBar.setProgress(score);
-
+        if(strength != null) {
+            double score = strength.getScore();
+            strengthBar.setProgress(score);
+        }
     }
 
 
@@ -297,7 +289,5 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
         return isAccountCreated;
     }
-
-
 
 }
