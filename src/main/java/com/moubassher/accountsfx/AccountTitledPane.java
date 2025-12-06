@@ -21,6 +21,7 @@ public class AccountTitledPane <F extends Enum<F> & Feature<F>>  extends TitledP
         this.setGraphic(isAdminBox);
 
         FlowPane featurePane = new FlowPane(10, 10);
+        featurePane.getStyleClass().add("root");
         this.setContent(featurePane);
 
         accountType.addListener((a, b, accountType) -> {

@@ -21,7 +21,7 @@
             <Button fx:id="addAccountTypeBtn" mnemonicParsing="false" text="Add Account Type" />
          </children>
       </VBox>
-      <ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="-Infinity" pannable="true" prefHeight="200.0" prefWidth="200.0" HBox.hgrow="SOMETIMES">
+      <ScrollPane fx:id="accordionContainer" fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" pannable="true" prefWidth="200.0" HBox.hgrow="SOMETIMES">
          <content>
             <Accordion fx:id="accountTypeAccordion" minWidth="-Infinity">
               <panes>

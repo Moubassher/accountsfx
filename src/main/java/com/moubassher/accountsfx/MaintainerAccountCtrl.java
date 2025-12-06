@@ -8,6 +8,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.FlowPane;
@@ -32,6 +33,9 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
     @FXML
     private FlowPane featurePane;
+
+    @FXML
+    private ScrollPane accordionContainer;
 
     @FXML
     private Accordion accountTypeAccordion;
@@ -98,21 +102,14 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
     private void addAccountType() {
         String accountTypeName = accountTypeField.getText();
-        if(accountTypeName.isBlank()) {
-            MyNotifications.getInstance().showSimpleToast("Cannot add a nameless account type",root);
-            return;
-        }
+        List<F> selectedPrivileges = readSelectedPrivileges();
         boolean isAdmin = isAdminBox.isSelected();
 
-        List<F> selectedPrivileges = readSelectedPrivileges();
-        if(selectedPrivileges.isEmpty()) {
-            MyNotifications.getInstance().showSimpleToast("Cannot add an account type with zero privileges!", root);
-            return;
-        }
+        AccountType<F> accountType = AccountType.of(accountTypeName, selectedPrivileges, isAdmin);
+
+        validateAccountType(accountType);
 
         displayCreatedAccountType(accountTypeName, selectedPrivileges, isAdmin);
-
-        AccountType<F> accountType = AccountType.of(accountTypeName, selectedPrivileges, isAdmin);
 
         boolean added = accountDao.addAccountType(accountType);
         if(added) {
@@ -122,6 +119,29 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         }
     }
 
+    private void validateAccountType(AccountType<F> accountType) {
+
+        String accountTypeName = accountType.getType();
+        List<F> selectedPrivileges = accountType.getPrivileges();
+
+        if(accountTypeName.isBlank()) {
+            MyNotifications.getInstance().showErrorAlert("Error!", "Cannot add a nameless account type.");
+            return;
+        }
+
+        List<String> accountTypeNames = accountDao.readAccountTypes().stream().map(AccountType::getType).toList();
+        if(accountTypeNames.contains(accountTypeName)) {
+            MyNotifications.getInstance().showErrorAlert("Account type already exists.","Cannot add 2 account types with the same name");
+            return;
+        }
+
+        if(selectedPrivileges.isEmpty()) {
+            MyNotifications.getInstance().showErrorAlert("Error!", "Cannot add an account type with zero privileges!");
+            return;
+        }
+
+    }
+
     private void displayCreatedAccountType(String accountTypeName, List<F> selectedPrivileges, boolean isAdmin) {
         AccountTitledPane accountTypePane = new AccountTitledPane();
         AccountType<F> accountType = AccountType.of(accountTypeName, selectedPrivileges, isAdmin);
@@ -129,6 +149,8 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
         accountTypeAccordion.getPanes().add(accountTypePane);
         accountTypeAccordion.setExpandedPane(accountTypePane);
+        accordionContainer.setVvalue(1.0);
+        accountTypePane.requestFocus();
     }
 
     private List<F> readSelectedPrivileges() {
