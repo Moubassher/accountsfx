@@ -65,6 +65,10 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 
 	private boolean isUserManager;
 
+	public LoginCtrl(AccountDao<F> accountDao) {
+		this.accountDao = accountDao;
+	}
+
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 
@@ -86,6 +90,10 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		}
 
 		loginBtn.setOnAction(x -> login());
+
+		forgotPasswordLink.setOnAction(x -> {
+			sendPasswordResetRequest();
+		});
 
 		createAccountBtn.setOnAction(x -> {
 			String description = "تم إرسال الطلب للإدارة";

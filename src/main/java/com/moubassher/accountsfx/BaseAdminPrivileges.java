@@ -42,8 +42,8 @@ import java.util.ResourceBundle;
 
 public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  implements Initializable {
 
-	static AccountDao accountDao;
-	AccountTable accountTable;
+	private AccountDao<F> accountDao;
+	private AccountTable<F> accountTable;
 
 	private Button addNewUser, modifyUser, deleteUser;
 
@@ -82,7 +82,7 @@ public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  imple
 
 	public HBox installActionPane() {
 		HBox actionsPane = new HBox(10);
-		ChoiceBox<Account> accounts = new ChoiceBox<>();
+		ChoiceBox<Account<F>> accounts = new ChoiceBox<>();
 		accounts.setItems(accountDao.readAccounts());
 		addNewUser = new Button("إضافة حساب");
 		modifyUser = new Button("تعديل");
@@ -134,7 +134,7 @@ public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  imple
 		}
 	}
 
-	private static  void createAccount() {
+	private  void createAccount() {
 
 		Stage employeeAcctStage = new Stage();
 		employeeAcctStage.initModality(Modality.WINDOW_MODAL);
@@ -142,7 +142,7 @@ public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  imple
 		TextField employeeName = new TextField();
 
 		Label dptLabel = new Label("القسم/ الإدارة");
-		ChoiceBox<AccountType> accountSelector = new ChoiceBox<>();
+		ChoiceBox<AccountType<F>> accountSelector = new ChoiceBox<>();
 
 		Label salaryLabel = new Label("المرتب");
 		TextField salaryTF = new TextField();
@@ -159,7 +159,7 @@ public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  imple
 		add.setOnAction(x -> {
 			String name = employeeName.getText();
 			String defaultPassword = "123";
-			AccountType dpt = accountSelector.getSelectionModel().getSelectedItem();
+			AccountType<F> dpt = accountSelector.getSelectionModel().getSelectedItem();
 			int salary = Integer.valueOf(salaryTF.getText());
 
 			int startHour = shiftStartPane.getHour();
@@ -174,7 +174,7 @@ public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  imple
 
 			LocalTime shiftFinish= shiftEndPane.setTimestamp(finishHour, finishMinutes, finishTimeOfDay);
 
-			Account<?> account = new Account<>(-1, name, defaultPassword, dpt, salary, shiftStart, shiftFinish);
+			Account<F> account = new Account<>(-1, name, defaultPassword, dpt, salary, shiftStart, shiftFinish);
 			boolean success = accountDao.addNewAccount(account);
 
 			Alert employeeAdded = new Alert(AlertType.INFORMATION);

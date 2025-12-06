@@ -1,6 +1,6 @@
 package com.moubassher.accountsfx;
 
-import atlantafx.base.theme.NordDark;
+import com.context.themes.vibrant_blue.MyThemes;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.NodeOrientation;
@@ -34,14 +34,20 @@ public class AccountsFxMain extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
-        Application.setUserAgentStylesheet(new NordDark().getUserAgentStylesheet());
-        
+      //  Application.setUserAgentStylesheet(new CupertinoDark().getUserAgentStylesheet());
 
-        VBox loginRoot = FXMLLoader.load(this.getClass().getResource("login.fxml"));
-
-        Scene scene = new Scene(loginRoot, 540, 440);
 
         AccountDao<TestFeature> accountDao = new AccountDao<>(TestFeature.class);
+
+        LoginCtrl<TestFeature> loginCtrl = new LoginCtrl<>(accountDao);
+
+        FXMLLoader loginLoader = new FXMLLoader(this.getClass().getResource("login.fxml"));
+        loginLoader.setController(loginCtrl);
+
+        VBox loginRoot = loginLoader.load();
+
+        Scene scene = new Scene(loginRoot, 540, 440);
+        scene.getStylesheets().add(MyThemes.vibrantBlue);
 
         MaintainerAccountCtrl<TestFeature> maintainerAccountCtrl = new MaintainerAccountCtrl<>(accountDao, TestFeature.class);
         FXMLLoader maintainerLoader = new FXMLLoader(this.getClass().getResource("maintainer_account.fxml"));
@@ -50,7 +56,7 @@ public class AccountsFxMain extends Application {
         scene.setRoot(maintainerViewRoot);
 
         boolean isAdminRequired = accountDao.isAdminRequired();
-
+        isAdminRequired = false;
         if(isAdminRequired) {
             Optional<ButtonType> result = showMissingAdminAlert();
 

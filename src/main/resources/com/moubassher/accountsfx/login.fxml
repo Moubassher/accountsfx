@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="loginRootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="353.0" prefWidth="600.0" spacing="10.0" stylesheets="@../my_vibrant_blue_theme.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.moubassher.accountsfx.LoginCtrl">
+<VBox fx:id="loginRootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="353.0" prefWidth="600.0" spacing="10.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <padding>
       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
    </padding>
@@ -29,7 +29,7 @@
             <Button fx:id="createAccountBtn" mnemonicParsing="false" text="انشاء حساب جديد" />
          </children>
       </HBox>
-      <Hyperlink id="forgot-password" fx:id="forgotPasswordLink" onAction="#sendPasswordResetRequest" text="نسيت كلمة المرور؟" underline="true">
+      <Hyperlink id="forgot-password" fx:id="forgotPasswordLink"  text="نسيت كلمة المرور؟" underline="true">
          <font>
             <Font size="14.0" />
          </font>

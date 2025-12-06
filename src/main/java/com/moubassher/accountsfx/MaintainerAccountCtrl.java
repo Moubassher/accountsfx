@@ -53,7 +53,6 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         accountTypes.forEach(accountType -> {
            String accountTypeName = accountType.getType();
            List<F> privileges = accountType.getPrivileges();
-            System.out.println("privileges count: " + privileges.size());
            boolean isAdmin = accountType.isAdmin();
            displayCreatedAccountType(accountTypeName, privileges, isAdmin);
         });
@@ -65,26 +64,27 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         }
 
         addAccountTypeBtn.setOnAction(x -> {
-
-            String accountTypeName = accountTypeField.getText();
-            boolean isAdmin = isAdminBox.isSelected();
-
-            List<F> selectedPrivileges = readSelectedPrivileges();
-
-            displayCreatedAccountType(accountTypeName, selectedPrivileges, isAdmin);
-
-            AccountType<F> accountType = AccountType.of(accountTypeName, selectedPrivileges, isAdmin);
-
-            boolean added = accountDao.addAccountType(accountType);
-            if(added) {
-                accountTypeField.clear();
-                isAdminBox.setSelected(false);
-                clearSelectedPrivileges();
-            }
-
-
+            addAccountType();
         });
 
+    }
+
+    private void addAccountType() {
+        String accountTypeName = accountTypeField.getText();
+        boolean isAdmin = isAdminBox.isSelected();
+
+        List<F> selectedPrivileges = readSelectedPrivileges();
+
+        displayCreatedAccountType(accountTypeName, selectedPrivileges, isAdmin);
+
+        AccountType<F> accountType = AccountType.of(accountTypeName, selectedPrivileges, isAdmin);
+
+        boolean added = accountDao.addAccountType(accountType);
+        if(added) {
+            accountTypeField.clear();
+            isAdminBox.setSelected(false);
+            clearSelectedPrivileges();
+        }
     }
 
     private void displayCreatedAccountType(String accountTypeName, List<F> selectedPrivileges, boolean isAdmin) {

@@ -417,7 +417,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 				.noneMatch(employee -> employee.isAdmin());
 	}
 
-	private boolean verifyLoginCredentials(String tableName, String name, String password) {
+	private boolean verifyLoginCredentials(String tableName, String name, String hashedPassword) {
 
 		String command = "SELECT name, password from "+ tableName +" WHERE name = ? AND password = ?;"; //$NON-NLS-1$
 		boolean validCreds = false;
@@ -425,12 +425,12 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
 			stmt.setString(1, name);
-			stmt.setString(2, password);
+			stmt.setString(2, hashedPassword);
 
 			ResultSet results = stmt.executeQuery();
 			while(results.next()) {
 				name = results.getString("name");
-				password = results.getString("password");
+				hashedPassword = results.getString("password");
 				this.name = name;
 
 				validCreds = true;
@@ -510,12 +510,15 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			int affected = stmt.executeUpdate();
 
 			if (affected > 0) {
+
 				try (ResultSet rs = stmt.getGeneratedKeys()) {
 					if (rs.next()) {
 						int id = rs.getInt(1);
 						accountType.setId(id); // store generated id back in object
 					}
 				}
+				addPrivileges(accountType);
+
 			}
 
 			return affected > 0;
@@ -525,6 +528,25 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			return false;
 		}
 	}
+
+	public void addPrivileges(AccountType<F> accountType) throws SQLException {
+		String sql = "INSERT OR IGNORE INTO privileges (accountTypeId, feature) VALUES (?, ?)";
+
+		try (Connection connection = DriverManager.getConnection(database);
+				PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+			int accountTypeId = accountType.getAccountTypeId();
+
+			for (F privilege : accountType.getPrivileges()) {
+				stmt.setInt(1, accountTypeId);
+				stmt.setString(2, privilege.name());
+				stmt.addBatch();
+			}
+
+			stmt.executeBatch();
+		}
+	}
+
 
 	public boolean addAccountTypes(List<AccountType<F>> types) {
 
