@@ -10,9 +10,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="400.0" prefWidth="600.0" styleClass="root" stylesheets="@../my_vibrant_blue_theme.css" xmlns="http://javafx.com/javafx/17.0.17" xmlns:fx="http://javafx.com/fxml/1">
+<VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="400.0" prefWidth="600.0" styleClass="root"  xmlns="http://javafx.com/javafx/17.0.17" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <HBox prefHeight="100.0" prefWidth="200.0" styleClass="sensible_pane" stylesheets="@../my_vibrant_blue_theme.css">
+      <HBox prefHeight="100.0" prefWidth="200.0" styleClass="sensible_pane" >
          <children>
             <Button contentDisplay="RIGHT" mnemonicParsing="false" text="بحث" />
             <TextField HBox.hgrow="ALWAYS" />

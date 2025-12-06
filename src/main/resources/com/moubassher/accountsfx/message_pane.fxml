@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" spacing="5.0" styleClass="translucent" stylesheets="@../my_vibrant_blue_theme.css" xmlns="http://javafx.com/javafx/17.0.17" xmlns:fx="http://javafx.com/fxml/1">
+<HBox maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" spacing="5.0" styleClass="translucent"  xmlns="http://javafx.com/javafx/17.0.17" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <Label fx:id="msgCounterDisplay" styleClass="notification-label" text="99" />
       <VBox maxWidth="1.7976931348623157E308" minWidth="-Infinity" spacing="5.0" HBox.hgrow="ALWAYS">

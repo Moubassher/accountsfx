@@ -7,11 +7,11 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<Accordion maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@../my_vibrant_blue_theme.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.17">
+<Accordion maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0"  xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.17">
   <panes>
     <TitledPane animated="false" contentDisplay="GRAPHIC_ONLY" text="untitled 1">
          <graphic>
-            <HBox maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="51.0" prefWidth="563.0" spacing="5.0" styleClass="translucent" stylesheets="@../my_vibrant_blue_theme.css">
+            <HBox maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="51.0" prefWidth="563.0" spacing="5.0" styleClass="translucent" >
                <children>
                   <Label fx:id="msgCounterDisplay" styleClass="notification-label" text="99" />
                   <VBox maxWidth="1.7976931348623157E308" minWidth="-Infinity" spacing="5.0" HBox.hgrow="ALWAYS">

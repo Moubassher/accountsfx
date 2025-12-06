@@ -23,7 +23,7 @@
       <ChoiceBox fx:id="registeredUsersSelector" minWidth="300.0" prefWidth="150.0" />
       <Label text="كلمة المرور" />
       <PasswordField fx:id="passwordField" />
-      <HBox fillHeight="false" prefWidth="200.0" spacing="30.0" stylesheets="@../my_vibrant_blue_theme.css">
+      <HBox fillHeight="false" prefWidth="200.0" spacing="30.0" >
          <children>
             <Button fx:id="loginBtn" mnemonicParsing="false" text="تسجيل الدخول" />
             <Button fx:id="createAccountBtn" mnemonicParsing="false" text="انشاء حساب جديد" />
