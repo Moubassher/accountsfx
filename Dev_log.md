@@ -13,8 +13,9 @@ maintenances tasks in the future inshallah.
   type of account. The feature list is an enum provided by the dependent project.
 - Then, an admin account has to be created first before non-admin accounts can be created.
 - After it's created, an admin account can then approve of other accounts' creation.
-- Logic follow goes like this:
-
+- Logic flow goes like this:
+- 
+No account types specified -> maintainer account creates 
 No admin account -> create-admin-account-popup -> admin account created
 -> account(admin) login
 OR
@@ -24,16 +25,15 @@ OR
 
 ```mermaid
 flowchart TD
-  A((No admin account)) --> B[Create admin account popup]
-  B --> C[Admin account created]
-  C --> D[Admin login]
+    A((No account types specified)) --> B[maintainer account specifies account types and assigns roles] 
+  C((No admin account)) --> D[Admin account required popup] --> E[create admin account] --> F[Admin login]
 
-  C --> E[Create non-admin account]
-  E --> F[Send approval request to admin]
-  F --> D
-  D --> G[Approve account]
-  G --> H[Non-admin account login]
+  F --> G[Create non-admin account] --> H[Send approval request to admin]
+  H --> I["Admin login"]
+  I --> J[Approve account]
+  J --> K[Non-admin account login]
 ```
+
 ```mermaid
 flowchart TD
     A[features] --> B["account types"]
