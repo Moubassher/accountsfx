@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox maxHeight="-Infinity" minHeight="-Infinity" prefWidth="614.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<HBox fx:id="root" maxHeight="-Infinity" minHeight="-Infinity" prefWidth="614.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <VBox maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="374.0" spacing="10.0" HBox.hgrow="SOMETIMES">
          <children>

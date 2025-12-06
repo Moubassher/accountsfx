@@ -1,26 +1,29 @@
 package com.moubassher.accountsfx;
 
+import com.context.our_utilities.MyNotifications;
 import com.jfoenix.controls.JFXTextField;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TitledPane;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-//TODO: Finish implementing creating a maintainer account:
-/* A maintainer account is created before anything else, including an admin account.
-    A maintainer account can create ACCOUNT TYPES and assign access to features for each
-    type of account. The feature list is an enum provided by the dependent project.
- */
 
 public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements Initializable {
+
+    @FXML
+    private HBox root;
+
     @FXML
     private JFXTextField accountTypeField;
 
@@ -51,15 +54,15 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
         List<AccountType<F>> accountTypes = accountDao.readAccountTypes();
         accountTypes.forEach(accountType -> {
-           String accountTypeName = accountType.getType();
-           List<F> privileges = accountType.getPrivileges();
-           boolean isAdmin = accountType.isAdmin();
-           displayCreatedAccountType(accountTypeName, privileges, isAdmin);
+            String accountTypeName = accountType.getType();
+            List<F> privileges = accountType.getPrivileges();
+            boolean isAdmin = accountType.isAdmin();
+            displayCreatedAccountType(accountTypeName, privileges, isAdmin);
         });
 
         for (F feature : featureEnumClass.getEnumConstants()) {
             CheckBox checkBox = new CheckBox(feature.name());
-            checkBox.setUserData(feature); // store enum value
+            checkBox.setUserData(feature);
             featurePane.getChildren().add(checkBox);
         }
 
@@ -67,13 +70,45 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
             addAccountType();
         });
 
+        accountTypeAccordion.expandedPaneProperty().addListener((a, b, titledPane) -> {
+            showSelectedAccountTypeDetails((AccountTitledPane) titledPane);
+        });
+
+    }
+
+    private void showSelectedAccountTypeDetails(AccountTitledPane titledPane) {
+        AccountTitledPane accountTitledPane = titledPane;
+        if(accountTitledPane == null) return;
+        AccountType<F> accountType = accountTitledPane.getAccountType();
+        String name = accountType.getType();
+        accountTypeField.setText(name);
+        boolean isAdmin = accountType.isAdmin();
+        isAdminBox.setSelected(isAdmin);
+        List<String> privileges = accountType.getPrivileges().stream().map(feature -> feature.name()).toList();
+        for (Node node : featurePane.getChildren()) {
+            if (node instanceof CheckBox checkBox) {
+                if (privileges.contains(checkBox.getText())) {
+                    checkBox.setSelected(true);
+                } else {
+                    checkBox.setSelected(false);
+                }
+            }
+        }
     }
 
     private void addAccountType() {
         String accountTypeName = accountTypeField.getText();
+        if(accountTypeName.isBlank()) {
+            MyNotifications.getInstance().showSimpleToast("Cannot add a nameless account type",root);
+            return;
+        }
         boolean isAdmin = isAdminBox.isSelected();
 
         List<F> selectedPrivileges = readSelectedPrivileges();
+        if(selectedPrivileges.isEmpty()) {
+            MyNotifications.getInstance().showSimpleToast("Cannot add an account type with zero privileges!", root);
+            return;
+        }
 
         displayCreatedAccountType(accountTypeName, selectedPrivileges, isAdmin);
 
@@ -88,23 +123,12 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
     }
 
     private void displayCreatedAccountType(String accountTypeName, List<F> selectedPrivileges, boolean isAdmin) {
-        TitledPane accountTypePane = new TitledPane();
-        accountTypePane.setText(accountTypeName);
-
-        FlowPane featurePane = new FlowPane(10, 10);
-        accountTypePane.setContent(featurePane);
-        selectedPrivileges.forEach(selectedFeature -> {
-            CheckBox featureBox = new CheckBox(selectedFeature.name());
-            featureBox.setSelected(true);
-            featurePane.getChildren().add(featureBox);
-        });
-
-        CheckBox isAdminBox = new CheckBox("admin:");
-        isAdminBox.setSelected(isAdmin);
-        accountTypePane.setGraphic(isAdminBox);
-
+        AccountTitledPane accountTypePane = new AccountTitledPane();
+        AccountType<F> accountType = AccountType.of(accountTypeName, selectedPrivileges, isAdmin);
+        accountTypePane.setAccountType(accountType);
 
         accountTypeAccordion.getPanes().add(accountTypePane);
+        accountTypeAccordion.setExpandedPane(accountTypePane);
     }
 
     private List<F> readSelectedPrivileges() {
