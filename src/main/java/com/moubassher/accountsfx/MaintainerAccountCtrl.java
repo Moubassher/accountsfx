@@ -53,6 +53,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         accountTypes.forEach(accountType -> {
            String accountTypeName = accountType.getType();
            List<F> privileges = accountType.getPrivileges();
+            System.out.println("privileges count: " + privileges.size());
            boolean isAdmin = accountType.isAdmin();
            displayCreatedAccountType(accountTypeName, privileges, isAdmin);
         });
@@ -88,11 +89,8 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
     private void displayCreatedAccountType(String accountTypeName, List<F> selectedPrivileges, boolean isAdmin) {
         TitledPane accountTypePane = new TitledPane();
-        CheckBox isAdminBox = new CheckBox("admin:");
-        isAdminBox.setSelected(isAdmin);
-        accountTypePane.setGraphic(isAdminBox);
-
         accountTypePane.setText(accountTypeName);
+
         FlowPane featurePane = new FlowPane(10, 10);
         accountTypePane.setContent(featurePane);
         selectedPrivileges.forEach(selectedFeature -> {
@@ -100,6 +98,11 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
             featureBox.setSelected(true);
             featurePane.getChildren().add(featureBox);
         });
+
+        CheckBox isAdminBox = new CheckBox("admin:");
+        isAdminBox.setSelected(isAdmin);
+        accountTypePane.setGraphic(isAdminBox);
+
 
         accountTypeAccordion.getPanes().add(accountTypePane);
     }

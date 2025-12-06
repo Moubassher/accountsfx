@@ -25,6 +25,8 @@ def javafxVersion = '23.0.1'
 
 dependencies {
 
+    implementation 'com.context.themes:my-vibrant-blue-theme:1.0.0'
+
 
     implementation 'io.github.mkpaz:atlantafx-base:2.1.0'
 
