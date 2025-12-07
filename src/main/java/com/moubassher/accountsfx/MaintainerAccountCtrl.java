@@ -107,7 +107,8 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
         AccountType<F> accountType = AccountType.of(accountTypeName, selectedPrivileges, isAdmin);
 
-        validateAccountType(accountType);
+        boolean isValid = validateAccountType(accountType);
+        if(!isValid) return;
 
         displayCreatedAccountType(accountTypeName, selectedPrivileges, isAdmin);
 
@@ -119,27 +120,28 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         }
     }
 
-    private void validateAccountType(AccountType<F> accountType) {
+    private boolean validateAccountType(AccountType<F> accountType) {
 
         String accountTypeName = accountType.getType();
         List<F> selectedPrivileges = accountType.getPrivileges();
 
         if(accountTypeName.isBlank()) {
             MyNotifications.getInstance().showErrorAlert("Error!", "Cannot add a nameless account type.");
-            return;
+            return false;
         }
 
         List<String> accountTypeNames = accountDao.readAccountTypes().stream().map(AccountType::getType).toList();
         if(accountTypeNames.contains(accountTypeName)) {
             MyNotifications.getInstance().showErrorAlert("Account type already exists.","Cannot add 2 account types with the same name");
-            return;
+            return false;
         }
 
         if(selectedPrivileges.isEmpty()) {
             MyNotifications.getInstance().showErrorAlert("Error!", "Cannot add an account type with zero privileges!");
-            return;
+            return false;
         }
 
+        return true;
     }
 
     private void displayCreatedAccountType(String accountTypeName, List<F> selectedPrivileges, boolean isAdmin) {
