@@ -34,7 +34,6 @@ public class AccountTests {
     }
 
 
-
     @AfterAll
     void afterAll() {
         accountDao.deleteAccounts(testAccounts);
@@ -60,7 +59,7 @@ public class AccountTests {
     @DisplayName("Can update an account type's name")
     void testUpdatingAccountTypeName() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
-        AccountType<TestFeature> accountType = new AccountType<>("accountant", privileges, false);
+        AccountType<TestFeature> accountType = new AccountType<>("salesman", privileges, false);
 
         boolean added = accountDao.addAccountType(accountType);
         assertTrue(added, "Account type was not added and is required for this update test");
@@ -116,12 +115,12 @@ public class AccountTests {
 
         AccountType<TestFeature> readAccountType = accountDao.getAccountType(accountTypeId);
         privileges = readAccountType.getPrivileges();
-       
+
         assertEquals(updatedPrivileges, privileges, "Account type's privileges were not updated");
 
     }
 
-        @Test
+    @Test
     @DisplayName("Account CRUD: Delete")
     void testDeletingAccounts() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
@@ -144,7 +143,7 @@ public class AccountTests {
     @Test
     @DisplayName("Can insert an admin user")
     void testAddingAdmin() {
-        Account<TestFeature> adminAccount = createTestAdminAccount();
+        Account<TestFeature> adminAccount = createTestAdminAccount("Admin");
 
         boolean accountTypeAdded = accountDao.addAccountType(adminAccount.getAccountType());
         assertTrue(accountTypeAdded, "Admin account type was not added and is required for inserting admin");
@@ -157,7 +156,7 @@ public class AccountTests {
     @Test
     @DisplayName("Can read accounts")
     void testReadingAccounts() {
-        Account<TestFeature> account = createTestAdminAccount();
+        Account<TestFeature> account = createTestAdminAccount("admin x");
 
         List<TestFeature> privileges = account.getAccountType().getPrivileges();
 
@@ -188,11 +187,11 @@ public class AccountTests {
         return account;
     }
 
-    private Account createTestAdminAccount() {
+    private Account createTestAdminAccount(String name) {
         String password = "user123$";
         String hashedPassword = passwordValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.All);
-        AccountType<TestFeature> adminAccountType =   new AccountType("Admin", privileges, true);
+        AccountType<TestFeature> adminAccountType =   new AccountType(name, privileges, true);
         Account<TestFeature> admin = new Account<>("David Adam", hashedPassword, adminAccountType);
 
         return admin;
@@ -231,8 +230,8 @@ public class AccountTests {
     }
 
     @Test
-    @DisplayName("Cannot add a nameless employee")
-    void testAddingNamelessEmployee() {
+    @DisplayName("Cannot add a nameless account")
+    void testAddingNamelessAccount() {
         Account<TestFeature> account = new Account<>();
         assertThrows(IllegalArgumentException.class,
                 () -> accountDao.addNewAccount(account));
@@ -258,6 +257,19 @@ public class AccountTests {
 
         assertThrows(IllegalArgumentException.class,
                 () -> accountDao.addAccountType(unprivileged));
+    }
+
+    @Test
+    @DisplayName("Cannot add a duplicate account type")
+    void testAddingDuplicateAccountType() {
+        List<TestFeature> privileges = List.of(TestFeature.All);
+        AccountType<TestFeature> accountType = new AccountType<>("Some name", privileges, false);
+        boolean added = accountDao.addAccountType(accountType);
+        assertTrue(added, "Account type not added and is required for the test");
+
+        added  = accountDao.addAccountType(accountType);
+        assertFalse(added, "duplicate account type was added when it shouldn't have");
+
     }
 
 
@@ -286,7 +298,7 @@ public class AccountTests {
                 () -> accountDao.addNewAccount(nonAdminAccount));
 
         List<TestFeature> privileges = List.of(TestFeature.All);
-        AccountType adminType = new AccountType("Admin", privileges, true);
+        AccountType adminType = new AccountType("Admin Y", privileges, true);
         boolean adminTypeAdded = accountDao.addAccountType(adminType);
         assertTrue(adminTypeAdded, "Admin type not added");
 
@@ -319,8 +331,5 @@ public class AccountTests {
                 new Account(userId, "Ahmed Adam", hashedPassword,
                         userType, salary,  illogicalWorkstart, illogicalWorkfinish));
     }
-
-
-
 
 }

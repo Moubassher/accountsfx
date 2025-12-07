@@ -135,7 +135,7 @@ public class AccountTable<F extends Enum<F> & Feature<F>> extends TableView<Acco
 	}	
 	
 	public boolean editOkAction(String attr, String attrValue, String name) {
-		boolean done = accountDao.updateEmployee(attr, attrValue, name);
+		boolean done = false; /*accountDao.updateEmployee(attr, attrValue, name);*/
 		return done;
 	}
 	

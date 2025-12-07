@@ -490,9 +490,17 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		return name;
 	}
 
+
+
 	public boolean addAccountType(AccountType<F> accountType) {
 
 		accountType.validate();
+
+		boolean isAccountTypeNew = isAccountTypeNew(accountType);
+		if(!isAccountTypeNew) {
+			return false;
+		}
+
 
 		String sql = "INSERT INTO accountTypes (accountType, isAdmin) VALUES (?, ?)";
 
@@ -522,6 +530,13 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			e.printStackTrace();
 			return false;
 		}
+	}
+
+	private boolean isAccountTypeNew(AccountType<F> accountType) {
+		String newType = accountType.getType().toLowerCase();
+		return readAccountTypes().stream()
+				.map(type -> type.getType().toLowerCase())
+				.noneMatch(name -> name.equals(newType));
 	}
 
 
