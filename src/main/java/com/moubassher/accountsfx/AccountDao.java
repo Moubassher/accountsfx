@@ -301,7 +301,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 				}
 
 				boolean isAdmin = rs.getBoolean("isAdmin");
-				AccountType<F> accountType = AccountType.of(accountTypeId, type, privileges, isAdmin);
+				AccountType<F> accountType = new AccountType(accountTypeId, type, privileges, isAdmin);
 				accountTypes.add(accountType);
 			}
 
@@ -313,9 +313,9 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public <F extends Enum<F> & Feature<F>> void createMaintainerAccount(Class<F> featureEnum) {
+	public void createMaintainerAccount(Class<F> featureEnum) {
 		List<F> privileges = List.of(featureEnum.getEnumConstants());
-		AccountType<F> maintainerAccount = AccountType.of("Maintainer", privileges, true);
+		AccountType<F> maintainerAccount = new AccountType<>("Maintainer", privileges, true);
 
 		boolean maintainerTypeCreated = addAccountType(maintainerAccount);
 		if(maintainerTypeCreated) {
@@ -326,6 +326,17 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		}
 
 	}
+
+	public void deleteAllUsers() {
+		String sql = "DELETE FROM users";
+		try (Connection conn = DriverManager.getConnection(database)
+			 ;PreparedStatement stmt = conn.prepareStatement(sql)) {
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 
 
 	private void registerLogoutTime(String name, LocalDateTime logoutTime) {
@@ -495,9 +506,9 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		return name;
 	}
 
+	public boolean addAccountType(AccountType<F> accountType) {
 
-
-	public boolean addAccountType(AccountType accountType) {
+		accountType.validate();
 
 		String sql = "INSERT INTO accountTypes (accountType, isAdmin) VALUES (?, ?)";
 

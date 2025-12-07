@@ -98,7 +98,7 @@ public class AccountTests {
     void testAddingAccountTypes() {
         List<TestFeature> features = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
 
-        AccountType<TestFeature> accountType1 = AccountType.of("account type 1", features, true);
+        AccountType<TestFeature> accountType1 = new AccountType("account type 1", features, true);
         boolean added = accountDao.addAccountTypes(List.of(accountType1));
         assertTrue(added, "Account type not added");
 
@@ -112,7 +112,7 @@ public class AccountTests {
     void testDeletingAccounts() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
 
-        AccountType accountType = AccountType.of("account type x", privileges, true);
+        AccountType accountType = new AccountType("account type x", privileges, true);
         accountDao.addAccountTypes(List.of(accountType));
 
         String password = "addddd234$";
@@ -169,7 +169,7 @@ public class AccountTests {
         String password = "user123";
         String hashedPassword = accountValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
-        AccountType accountType = AccountType.of("regular accountType", privileges, false);
+        AccountType accountType = new AccountType("regular accountType", privileges, false);
         Account<TestFeature> account = new Account("Robert C. Martin", hashedPassword, accountType);
         return account;
     }
@@ -178,7 +178,7 @@ public class AccountTests {
         String password = "user123$";
         String hashedPassword = accountValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.All);
-        AccountType<TestFeature> adminAccountType =   AccountType.of("Admin", privileges, true);
+        AccountType<TestFeature> adminAccountType =   new AccountType("Admin", privileges, true);
         Account<TestFeature> admin = new Account<>("David Adam", hashedPassword, adminAccountType);
 
         return admin;
@@ -190,6 +190,8 @@ public class AccountTests {
 
         //clear previous users (esp admins) for the test:
         accountDao.deleteAccounts(testAccounts);
+        accountDao.deleteAllUsers();
+        
         boolean isAccountsRemoved = accountDao.readAccounts().isEmpty();
         assertTrue(isAccountsRemoved, "Accounts were not deleted and this is required for the test");
 
@@ -198,7 +200,7 @@ public class AccountTests {
 
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
 
-        AccountType accountType =  AccountType.of("مبيعات", privileges, false);
+        AccountType accountType =  new AccountType("مبيعات", privileges, false);
         boolean accountTypeAdded = accountDao.addAccountTypes(List.of(accountType));
         assertTrue(accountTypeAdded, "Account type not added, and is required for this test");
 
@@ -231,13 +233,11 @@ public class AccountTests {
     void testAddingNonAdminAccount() {
         // Create a non-admin account type
 
-        accountDao.deleteAccounts(testAccounts);
-        int accountCount = accountDao.readAccounts().size();
-        System.out.println("account count at testing non-admin after admin " + accountCount);
+        accountDao.deleteAllUsers();
 
         List<TestFeature> employeePrivileges = Arrays.asList(TestFeature.FeatureA, TestFeature.FeatureB);
 
-        AccountType employeeType = AccountType.of(
+        AccountType employeeType = new AccountType(
                 "Employee",
                 employeePrivileges,
                 false   // isAdmin = false
@@ -253,7 +253,7 @@ public class AccountTests {
                 () -> accountDao.addNewAccount(nonAdminAccount));
 
         List<TestFeature> privileges = List.of(TestFeature.All);
-        AccountType adminType = AccountType.of("Admin", privileges, true);
+        AccountType adminType = new AccountType("Admin", privileges, true);
         boolean adminTypeAdded = accountDao.addAccountType(adminType);
         assertTrue(adminTypeAdded, "Admin type not added");
 
@@ -275,7 +275,7 @@ public class AccountTests {
         String password = "abc123";
         String hashedPassword = accountValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.FeatureB);
-        AccountType userType = AccountType.of("مبيعات", privileges, false);
+        AccountType userType = new AccountType("مبيعات", privileges, false);
         int salary = 300_000;
 
         LocalTime illogicalWorkstart = LocalTime.of(8, 0);

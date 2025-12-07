@@ -82,7 +82,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         accountValidator = new AccountValidator();
 
         if(accountTypeSelector.getItems().isEmpty()) {
-            AccountType<F> accountType = AccountType.of("مشرف",privileges, true);
+            AccountType<F> accountType = new AccountType("مشرف",privileges, true);
             accountTypeSelector.getItems().add(accountType);
         }
 

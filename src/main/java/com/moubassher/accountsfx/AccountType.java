@@ -3,28 +3,20 @@ package com.moubassher.accountsfx;
 import java.util.List;
 import java.util.Objects;
 
-public class AccountType<F extends Feature<?>> {
+public class AccountType<F extends Enum<F> & Feature<F>> {
 
     private int accountTypeId;
     private String type;
     private List<F> privileges;
     private boolean isAdmin;
 
-    private AccountType(String type, List<F> privileges, boolean isAdmin) {
+    public AccountType(String type, List<F> privileges, boolean isAdmin) {
         this.type = type;
         this.privileges = privileges;
         this.isAdmin = isAdmin;
     }
 
-
-
-    public static <F extends Enum<F> & Feature<F>>
-    AccountType<F> of(String type, List<F> privileges, boolean isAdmin)
-    {
-        return new AccountType<>(type, privileges, isAdmin);
-    }
-
-    private AccountType(int accountTypeId, String type, List<F> privileges, boolean isAdmin) {
+    public AccountType(int accountTypeId, String type, List<F> privileges, boolean isAdmin) {
         this.accountTypeId = accountTypeId;
         this.type = type;
         this.privileges = privileges;
@@ -32,10 +24,11 @@ public class AccountType<F extends Feature<?>> {
     }
 
 
-    public static <F extends Enum<F> & Feature<F>> AccountType<F> of(
-            int accountTypeId, String type, List<F> privileges, boolean isAdmin) {
-        return new AccountType<>(accountTypeId, type, privileges, isAdmin);
-    };
+    public void validate() {
+        if(type == null || type.isBlank()) {
+            throw new IllegalArgumentException("Cannot add a nameless account type");
+        }
+    }
 
 
     public int getAccountTypeId() {

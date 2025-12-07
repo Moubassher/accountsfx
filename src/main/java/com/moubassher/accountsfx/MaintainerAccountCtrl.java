@@ -9,8 +9,6 @@ import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TitledPane;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 
@@ -105,7 +103,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         List<F> selectedPrivileges = readSelectedPrivileges();
         boolean isAdmin = isAdminBox.isSelected();
 
-        AccountType<F> accountType = AccountType.of(accountTypeName, selectedPrivileges, isAdmin);
+        AccountType<F> accountType = new AccountType<>(accountTypeName, selectedPrivileges, isAdmin);
 
         boolean isValid = validateAccountType(accountType);
         if(!isValid) return;
@@ -146,7 +144,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
     private void displayCreatedAccountType(String accountTypeName, List<F> selectedPrivileges, boolean isAdmin) {
         AccountTitledPane accountTypePane = new AccountTitledPane();
-        AccountType<F> accountType = AccountType.of(accountTypeName, selectedPrivileges, isAdmin);
+        AccountType<F> accountType = new AccountType(accountTypeName, selectedPrivileges, isAdmin);
         accountTypePane.setAccountType(accountType);
 
         accountTypeAccordion.getPanes().add(accountTypePane);
