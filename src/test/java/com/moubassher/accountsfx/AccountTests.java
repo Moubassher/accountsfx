@@ -21,14 +21,15 @@ public class AccountTests {
     private AccountDao<TestFeature> accountDao;
     private List<AccountType<TestFeature>> testAccountTypes;
     private List<Account<TestFeature>> testAccounts;
-    AccountValidator accountValidator;
+    private PasswordValidator passwordValidator;
+
     @BeforeAll
     void setUp() {
         accountDao = new AccountDao<>(TestFeature.class);
         testAccountTypes = new ArrayList<>();
         testAccounts = new ArrayList<>();
 
-        accountValidator  = new AccountValidator();
+        passwordValidator = new PasswordValidator();
     }
 
 
@@ -41,65 +42,14 @@ public class AccountTests {
 
 
 
-    @Test
-    @DisplayName("Can validate a password")
-    void testValidatingPassword() {
-        String emptyPassword = "";
-        String emptyConfirmedPassword = "";
-        boolean isValid = accountValidator.validatePassword(emptyPassword, emptyConfirmedPassword);
-        assertFalse(isValid, "password validation failed - password/confirmed password is empty. Shouldn't be valid");
-
-        String password = "something";
-        String confirmedPassword = "something else";
-        boolean isValid2 = accountValidator.validatePassword(password, confirmedPassword);
-        assertFalse(isValid2, "password validation failed - even though confirmed password was different from password");
-
-        String actualPassword = "something";
-        String validConfirmedPassword = "something";
-        boolean actuallyValid = accountValidator.validatePassword(actualPassword, validConfirmedPassword);
-
-        assertTrue(actuallyValid, "password was not validated correctly");
-
-    }
-
-    @Test
-    @DisplayName("Can check password's strength")
-    void testPasswordStrength( ) {
-        String weakPassword = "abc";
-        PasswordStrength weak = accountValidator.evaluateStrength(weakPassword);
-        assertEquals(PasswordStrength.WEAK, weak, "A weak password was not determined as weak");
-
-        String weakPassword2 = "1b";
-        PasswordStrength weak2 = accountValidator.evaluateStrength(weakPassword2);
-        assertEquals(PasswordStrength.WEAK, weak2, "A weak password (2) was not determined as weak");
-
-        String mediumPassword = "abc1";
-        PasswordStrength medium = accountValidator.evaluateStrength(mediumPassword);
-        assertEquals(medium, PasswordStrength.MEDIUM, "A Medium-strength password was not determined as such.");
-
-        String strongPassword = "ابت123#";
-        PasswordStrength strong = accountValidator.evaluateStrength(strongPassword);
-        assertEquals(strong, PasswordStrength.STRONG, "A strong password was not determined as such");
-
-    }
-
-
-    @Test
-    @DisplayName("Can hash passwords")
-    void testHashingPassword() {
-        String password = "user123";
-        String hashedPassword = accountValidator.hashPassword(password);
-
-        assertNotEquals(password, hashedPassword, "password was not hashed");
-    }
 
     @Test
     @DisplayName("Can add new account types")
     void testAddingAccountTypes() {
         List<TestFeature> features = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
 
-        AccountType<TestFeature> accountType1 = new AccountType("account type 1", features, true);
-        boolean added = accountDao.addAccountTypes(List.of(accountType1));
+        AccountType<TestFeature> accountType1 = new AccountType<>("account type 1", features, true);
+        boolean added = accountDao.addAccountType(accountType1);
         assertTrue(added, "Account type not added");
 
         boolean isAccountTypeRead = accountDao.readAccountTypes().contains(accountType1);
@@ -112,11 +62,11 @@ public class AccountTests {
     void testDeletingAccounts() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
 
-        AccountType accountType = new AccountType("account type x", privileges, true);
-        accountDao.addAccountTypes(List.of(accountType));
+        AccountType<TestFeature> accountType = new AccountType<>("account type x", privileges, true);
+        accountDao.addAccountType(accountType);
 
         String password = "addddd234$";
-        String hashedPassword = accountValidator.hashPassword(password);
+        String hashedPassword = passwordValidator.hashPassword(password);
 
         Account<TestFeature> account = new Account<>("Robert Adams", hashedPassword, accountType);
         boolean added = accountDao.addNewAccount(account);
@@ -132,7 +82,7 @@ public class AccountTests {
     void testAddingAdmin() {
         Account<TestFeature> adminAccount = createTestAdminAccount();
 
-        boolean accountTypeAdded = accountDao.addAccountTypes(List.of(adminAccount.getAccountType()));
+        boolean accountTypeAdded = accountDao.addAccountType(adminAccount.getAccountType());
         assertTrue(accountTypeAdded, "Admin account type was not added and is required for inserting admin");
 
         boolean added = accountDao.addNewAccount(adminAccount);
@@ -148,7 +98,7 @@ public class AccountTests {
         List<TestFeature> privileges = account.getAccountType().getPrivileges();
 
         AccountType accountType = account.getAccountType();
-        boolean accountTypeAdded = accountDao.addAccountTypes(List.of(accountType));
+        boolean accountTypeAdded = accountDao.addAccountType(accountType);
         assertTrue(accountTypeAdded, "Account type not added and is required for test reading accounts");
 
 
@@ -167,7 +117,7 @@ public class AccountTests {
     private Account createTestNonAdminAccount() {
 
         String password = "user123";
-        String hashedPassword = accountValidator.hashPassword(password);
+        String hashedPassword = passwordValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
         AccountType accountType = new AccountType("regular accountType", privileges, false);
         Account<TestFeature> account = new Account("Robert C. Martin", hashedPassword, accountType);
@@ -176,7 +126,7 @@ public class AccountTests {
 
     private Account createTestAdminAccount() {
         String password = "user123$";
-        String hashedPassword = accountValidator.hashPassword(password);
+        String hashedPassword = passwordValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.All);
         AccountType<TestFeature> adminAccountType =   new AccountType("Admin", privileges, true);
         Account<TestFeature> admin = new Account<>("David Adam", hashedPassword, adminAccountType);
@@ -189,19 +139,18 @@ public class AccountTests {
     void testCreatingNonAdminAccountWithoutAdmin() {
 
         //clear previous users (esp admins) for the test:
-        accountDao.deleteAccounts(testAccounts);
         accountDao.deleteAllUsers();
-        
+
         boolean isAccountsRemoved = accountDao.readAccounts().isEmpty();
         assertTrue(isAccountsRemoved, "Accounts were not deleted and this is required for the test");
 
         String password = "abc123";
-        String hashedPassword = accountValidator.hashPassword(password);
+        String hashedPassword = passwordValidator.hashPassword(password);
 
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
 
         AccountType accountType =  new AccountType("مبيعات", privileges, false);
-        boolean accountTypeAdded = accountDao.addAccountTypes(List.of(accountType));
+        boolean accountTypeAdded = accountDao.addAccountType(accountType);
         assertTrue(accountTypeAdded, "Account type not added, and is required for this test");
 
         int salary = 300_000;
@@ -227,6 +176,29 @@ public class AccountTests {
         testAccounts.add(account);
 
     }
+
+    @Test
+    @DisplayName("Cannot add a nameless account type")
+    void testAddingNamelessAccountType() {
+        List<TestFeature> privileges = List.of();
+        AccountType<TestFeature> namelessAccountType = new AccountType<>(null, privileges, false);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> accountDao.addAccountType(namelessAccountType));
+
+    }
+
+    @Test
+    @DisplayName("Cannot add an account type with no privileges at all")
+    void testAddingAccountTypeWithNoPrivileges() {
+        List<TestFeature> privileges = List.of();
+        AccountType<TestFeature> unprivileged = new AccountType<>("poor account type", privileges, true);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> accountDao.addAccountType(unprivileged));
+
+    }
+
 
     @Test
     @DisplayName("Can create a non-admin account after an admin one")
@@ -273,7 +245,7 @@ public class AccountTests {
     @DisplayName("Cannot create an employee with illogical work hours")
     void testCreatingEmployeeWithIllogicalWorkhours() {
         String password = "abc123";
-        String hashedPassword = accountValidator.hashPassword(password);
+        String hashedPassword = passwordValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.FeatureB);
         AccountType userType = new AccountType("مبيعات", privileges, false);
         int salary = 300_000;

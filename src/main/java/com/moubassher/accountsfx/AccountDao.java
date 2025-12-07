@@ -320,7 +320,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		boolean maintainerTypeCreated = addAccountType(maintainerAccount);
 		if(maintainerTypeCreated) {
 			String password = "perseverence123$";
-			String hashedPassword = new AccountValidator().hashPassword(password);
+			String hashedPassword = new PasswordValidator().hashPassword(password);
 			Account maintainer = new Account("Moubassher", hashedPassword, maintainerAccount);
 			addNewAccount(maintainer);
 		}
@@ -559,7 +559,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public boolean addAccountTypes(List<AccountType<F>> types) {
+	/*public boolean addAccountTypes(List<AccountType<F>> types) {
 
 		String sql = "INSERT INTO accountTypes (accountType, isAdmin) VALUES (?, ?)";
 
@@ -592,7 +592,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			e.printStackTrace();
 			return false;
 		}
-	}
+	}*/
 
 	public boolean deleteAccountTypes(List<AccountType<TestFeature>> types) {
 

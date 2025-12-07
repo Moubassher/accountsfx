@@ -2,7 +2,7 @@ package com.moubassher.accountsfx;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 
-public class AccountValidator {
+public class PasswordValidator {
 
 
     /**

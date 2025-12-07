@@ -63,7 +63,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
     private AccountDao<F> accountDao;
 
-    private AccountValidator accountValidator;
+    private PasswordValidator passwordValidator;
 
     private boolean isAdminAccount, isAccountCreated;
 
@@ -79,7 +79,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        accountValidator = new AccountValidator();
+        passwordValidator = new PasswordValidator();
 
         if(accountTypeSelector.getItems().isEmpty()) {
             AccountType<F> accountType = new AccountType("مشرف",privileges, true);
@@ -149,7 +149,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             if(hovered) {
                 String password = passwordField.getText();
                 String confirmedPassword = confirmPasswordField.getText();
-                if(!accountValidator.validatePassword(password, confirmedPassword)) {
+                if(!passwordValidator.validatePassword(password, confirmedPassword)) {
                     createAccountBtn.setCursor(new ImageCursor(notAllowedImage));
                 } else {
                     createAccountBtn.setCursor(null);
@@ -193,7 +193,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
 
     private boolean validatePasswordStrength(String password) {
-        PasswordStrength strength = accountValidator.evaluateStrength(password);
+        PasswordStrength strength = passwordValidator.evaluateStrength(password);
         if (strength != STRONG) {
             MyNotifications.getInstance().showErrorAlert(
                     "كلمة المرور ليست قوية ما يكفي",
@@ -206,7 +206,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
 
     private boolean validatePasswordMatch(String password, String confirmed) {
-        boolean match = accountValidator.validatePassword(password, confirmed);
+        boolean match = passwordValidator.validatePassword(password, confirmed);
         if (!match) {
             passwordMismatch.show(confirmPasswordField.getScene().getWindow());
         } else {
@@ -240,7 +240,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
 
     private  void showPasswordStrength(String password) {
-        PasswordStrength strength = accountValidator.evaluateStrength(password);
+        PasswordStrength strength = passwordValidator.evaluateStrength(password);
         if (strength == PasswordStrength.WEAK) {
             strengthLabel.setText("كلمة المرور ضعيفة");
             strengthBar.setStyle("-fx-accent: red;");
@@ -270,7 +270,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         Task<String> hashingTask = new Task<>() {
             @Override
             protected String call() {
-                return accountValidator.hashPassword(password);
+                return passwordValidator.hashPassword(password);
             }
         };
 

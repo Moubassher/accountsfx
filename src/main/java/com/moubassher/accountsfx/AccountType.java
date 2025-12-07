@@ -1,7 +1,6 @@
 package com.moubassher.accountsfx;
 
 import java.util.List;
-import java.util.Objects;
 
 public class AccountType<F extends Enum<F> & Feature<F>> {
 
@@ -27,6 +26,10 @@ public class AccountType<F extends Enum<F> & Feature<F>> {
     public void validate() {
         if(type == null || type.isBlank()) {
             throw new IllegalArgumentException("Cannot add a nameless account type");
+        }
+
+        if(privileges ==null || privileges.isEmpty()) {
+            throw new IllegalArgumentException("Cannot add an account type with NO privileges!");
         }
     }
 
