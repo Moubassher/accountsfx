@@ -81,6 +81,24 @@ public class AccountTests {
     }
 
     @Test
+    @DisplayName("Can delete an account type")
+    void testDeletingAccountType() {
+        List<TestFeature> privileges = List.of(TestFeature.FeatureA);
+        AccountType<TestFeature> accountType = new AccountType<>("deletable account type", privileges, false);
+
+        boolean added = accountDao.addAccountType(accountType);
+        assertTrue(added, "Account type was not added and is required for deletion test");
+
+        int accountTypeId = accountType.getAccountTypeId();
+        boolean deleted = accountDao.deleteAccountType(accountTypeId);
+        assertTrue(deleted, "Account type was not deleted");
+
+        boolean accountTypeExists = accountDao.readAccountTypes().contains(accountType);
+        assertFalse(accountTypeExists, "Account type exists after it was supposedly deleted");
+        
+    }
+
+    @Test
     @DisplayName("Can update an account type's privileges")
     void testUpdatingAccountTypePrivileges() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);

@@ -568,6 +568,40 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		}
 	}
 
+	public boolean deleteAccountType(int accountTypeId) {
+		String deletePrivilegesSql = "DELETE FROM privileges WHERE accountTypeId = ?";
+		String deleteAccountTypeSql = "DELETE FROM accountTypes WHERE accountTypeId = ?";
+
+		try (Connection conn = DriverManager.getConnection(database)) {
+			conn.setAutoCommit(false);
+
+			// 1️⃣ Delete related privileges
+			try (PreparedStatement ps = conn.prepareStatement(deletePrivilegesSql)) {
+				ps.setInt(1, accountTypeId);
+				ps.executeUpdate();
+			}
+
+			// 2️⃣ Delete the account type
+			try (PreparedStatement ps = conn.prepareStatement(deleteAccountTypeSql)) {
+				ps.setInt(1, accountTypeId);
+				int affectedRows = ps.executeUpdate();
+				if (affectedRows == 0) {
+					conn.rollback();
+					return false; // no such account type
+				}
+			}
+
+			conn.commit();
+			return true;
+
+		} catch (Exception e) {
+			try { DriverManager.getConnection(database).rollback(); } catch (Exception ignored) {}
+
+			return false;
+		}
+	}
+
+
 
 	public void addPrivileges(AccountType<F> accountType) throws SQLException {
 		String sql = "INSERT OR IGNORE INTO privileges (accountTypeId, feature) VALUES (?, ?)";
