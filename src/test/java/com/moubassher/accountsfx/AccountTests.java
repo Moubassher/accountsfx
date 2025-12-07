@@ -95,7 +95,7 @@ public class AccountTests {
 
         boolean accountTypeExists = accountDao.readAccountTypes().contains(accountType);
         assertFalse(accountTypeExists, "Account type exists after it was supposedly deleted");
-        
+
     }
 
     @Test

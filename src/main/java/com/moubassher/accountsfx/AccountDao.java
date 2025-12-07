@@ -455,23 +455,6 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public boolean updateEmployee(String attr, String attrValue, String name) {
-		boolean done = false;
-		String command = "UPDATE employees SET ? = ? WHERE name = ?;";
-		try (Connection conn = DriverManager.getConnection(database)) {
-			PreparedStatement stmt = conn.prepareStatement(command);
-			stmt.setString(1, attr);
-			stmt.setString(2, attrValue);
-			stmt.setString(3, name);
-			stmt.executeUpdate();
-
-			done = true;
-		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
-		}
-		return done;
-	}
-
 	public boolean deleteAccounts(List<Account<F>> accounts) {
 		if (accounts == null || accounts.isEmpty()) {
 			return true;

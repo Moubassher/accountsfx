@@ -1,0 +1,10 @@
+.root {
+	
+}
+
+.secondary_btn {
+-fx-background-color: transparent;
+-fx-border-style: solid;
+-fx-border-width: 0 0 1 0;
+
+}

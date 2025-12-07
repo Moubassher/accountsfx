@@ -11,8 +11,14 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox fx:id="root" maxHeight="-Infinity" minHeight="-Infinity" prefWidth="614.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<HBox fx:id="root" maxHeight="-Infinity" minHeight="-Infinity" prefWidth="614.0" stylesheets="@theme.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
+      <VBox prefHeight="200.0" prefWidth="172.0">
+         <children>
+            <Button maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" styleClass="secondary_btn" text="Account types" VBox.vgrow="ALWAYS" />
+            <Button maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" styleClass="secondary_btn" text="Accounts" />
+         </children>
+      </VBox>
       <VBox maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="374.0" spacing="10.0" HBox.hgrow="SOMETIMES">
          <children>
             <JFXTextField fx:id="accountTypeField" labelFloat="true" maxWidth="130.0" prefWidth="50.0" promptText="account type" />
