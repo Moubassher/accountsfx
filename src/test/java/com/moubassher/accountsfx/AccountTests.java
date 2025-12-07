@@ -53,13 +53,12 @@ public class AccountTests {
 
         boolean isAccountTypeRead = accountDao.readAccountTypes().contains(accountType1);
         assertTrue(isAccountTypeRead, "added account type not read successfully");
-
     }
 
 
     @Test
     @DisplayName("Can update an account type's name")
-    void testUpdatingAccountType() {
+    void testUpdatingAccountTypeName() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
         AccountType<TestFeature> accountType = new AccountType<>("accountant", privileges, false);
 
@@ -79,9 +78,31 @@ public class AccountTests {
         assertEquals(newName, readName, "Account type's name was not updated");
 
         testAccountTypes.add(updatedAccountType);
+    }
 
+    @Test
+    @DisplayName("Can update an account type's privileges")
+    void testUpdatingAccountTypePrivileges() {
+        List<TestFeature> privileges = List.of(TestFeature.FeatureA);
+        AccountType<TestFeature> accountType = new AccountType<>("accountant", privileges, false);
+
+        boolean added = accountDao.addAccountType(accountType);
+        assertTrue(added, "Account type was not added and is required for this update test");
+
+        List<TestFeature> updatedPrivileges = List.of(TestFeature.FeatureB);
+        accountType.setPrivileges(updatedPrivileges);
+
+        int accountTypeId = accountType.getAccountTypeId();
+        boolean updated = accountDao.updateAccountType(accountTypeId, accountType);
+        assertTrue(updated, "Account type's privileges were not updated");
+
+        AccountType<TestFeature> readAccountType = accountDao.getAccountType(accountTypeId);
+        privileges = readAccountType.getPrivileges();
+       
+        assertEquals(updatedPrivileges, privileges, "Account type's privileges were not updated");
 
     }
+
         @Test
     @DisplayName("Account CRUD: Delete")
     void testDeletingAccounts() {

@@ -50,6 +50,10 @@ public class AccountType<F extends Enum<F> & Feature<F>> {
         return privileges;
     }
 
+    public void setPrivileges(List<F> privileges) {
+        this.privileges = privileges;
+    }
+
     public boolean isAdmin() {
         return isAdmin;
     }
