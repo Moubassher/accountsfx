@@ -26,6 +26,7 @@ public class AccountTests {
     @BeforeAll
     void setUp() {
         accountDao = new AccountDao<>(TestFeature.class);
+
         testAccountTypes = new ArrayList<>();
         testAccounts = new ArrayList<>();
 
@@ -39,8 +40,6 @@ public class AccountTests {
         accountDao.deleteAccounts(testAccounts);
         accountDao.deleteAccountTypes(testAccountTypes);
     }
-
-
 
 
     @Test
@@ -57,7 +56,33 @@ public class AccountTests {
 
     }
 
+
     @Test
+    @DisplayName("Can update an account type's name")
+    void testUpdatingAccountType() {
+        List<TestFeature> privileges = List.of(TestFeature.FeatureA);
+        AccountType<TestFeature> accountType = new AccountType<>("accountant", privileges, false);
+
+        boolean added = accountDao.addAccountType(accountType);
+        assertTrue(added, "Account type was not added and is required for this update test");
+
+        String updatedName = "Senior accountant";
+        AccountType<TestFeature> updatedAccountType = new AccountType<>(updatedName, privileges, false);
+        int accountTypeId = accountType.getAccountTypeId();
+
+        boolean updated = accountDao.updateAccountType(accountTypeId, updatedAccountType);
+        assertTrue(updated, "Account type's name was not updated");
+
+        String newName = updatedAccountType.getType();
+        AccountType<TestFeature> readAccountType = accountDao.getAccountType(accountTypeId);
+        String readName = readAccountType.getType();
+        assertEquals(newName, readName, "Account type's name was not updated");
+
+        testAccountTypes.add(updatedAccountType);
+
+
+    }
+        @Test
     @DisplayName("Account CRUD: Delete")
     void testDeletingAccounts() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
@@ -174,7 +199,6 @@ public class AccountTests {
                 () -> accountDao.addNewAccount(account));
 
         testAccounts.add(account);
-
     }
 
     @Test
@@ -185,7 +209,6 @@ public class AccountTests {
 
         assertThrows(IllegalArgumentException.class,
                 () -> accountDao.addAccountType(namelessAccountType));
-
     }
 
     @Test
@@ -196,7 +219,6 @@ public class AccountTests {
 
         assertThrows(IllegalArgumentException.class,
                 () -> accountDao.addAccountType(unprivileged));
-
     }
 
 

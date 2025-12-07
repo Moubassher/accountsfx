@@ -222,12 +222,13 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 	 * of the logged-in account:
 	 *
 	 */
-	public void showEditingRestrictionPopup(String restrictedOperations) {
+	public void showFeatureRestrictedPopup(String restrictedOperations) {
 		Label warning = new Label("تنبيه!");
 		warning.setId("warning");
 		warning.setPadding(new Insets(5));
 
-		Label currentAccount = new Label(accountDao.getAccountType());
+		//TODO: update disabling features' logic
+		Label currentAccount = new Label(accountDao.getAccountType(-1)+"");
 		currentAccount.setId("current-account");
 		Label restrictedOps = new Label(restrictedOperations);
 		restrictedOps.setId("restrictedOps");

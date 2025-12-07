@@ -44,8 +44,6 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 	private String name = "(حساب غير مسجل)";
 
-	private String accountType = "مبيعات";
-
 	DateTimeFormatter localTimeformat =
 			DateTimeFormatter.ofPattern("hh:mm a").localizedBy(Locale.forLanguageTag("AR"));
 
@@ -62,8 +60,11 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 
 	//UP allow resetting of users' password from a Maintainer account.
-	public String getAccountType() {
-		return accountType;
+	public AccountType<F> getAccountType(int accountTypeId) {
+		return readAccountTypes().stream()
+				.filter(accountType -> accountType.getAccountTypeId() == accountTypeId)
+				.findFirst().orElse(null);
+
 	}
 
 
@@ -540,6 +541,34 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		}
 	}
 
+
+	public boolean updateAccountType(int accountTypeId, AccountType<F> accountType) {
+		String sqlUpdateType = "UPDATE accountTypes SET accountType = ?, isAdmin = ? WHERE accountTypeId = ?";
+
+		try (Connection connection = DriverManager.getConnection(database);
+			 PreparedStatement stmt = connection.prepareStatement(sqlUpdateType)) {
+
+			stmt.setString(1, accountType.getType());
+			stmt.setBoolean(2, accountType.isAdmin());
+			stmt.setInt(3, accountTypeId);
+			stmt.executeUpdate();
+
+			String sqlDeletePrivileges = "DELETE FROM privileges WHERE accountTypeId = ?";
+			try (PreparedStatement delStmt = connection.prepareStatement(sqlDeletePrivileges)) {
+				delStmt.setInt(1, accountType.getAccountTypeId());
+				delStmt.executeUpdate();
+			}
+
+			addPrivileges(accountType);
+
+			return true; // success
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false; // failure
+		}
+	}
+
+
 	public void addPrivileges(AccountType<F> accountType) throws SQLException {
 		String sql = "INSERT OR IGNORE INTO privileges (accountTypeId, feature) VALUES (?, ?)";
 
@@ -558,41 +587,6 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		}
 	}
 
-
-	/*public boolean addAccountTypes(List<AccountType<F>> types) {
-
-		String sql = "INSERT INTO accountTypes (accountType, isAdmin) VALUES (?, ?)";
-
-		try (Connection conn = DriverManager.getConnection(database);
-			 PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-			conn.setAutoCommit(false);
-
-			for (AccountType<F> accountType : types) {
-				stmt.setString(1, accountType.getType());
-				stmt.setBoolean(2, accountType.isAdmin());
-
-				int affected = stmt.executeUpdate();
-
-				// If row was actually inserted (not ignored), retrieve generated ID
-				if (affected > 0) {
-					try (ResultSet rs = stmt.getGeneratedKeys()) {
-						if (rs.next()) {
-							int id = rs.getInt(1);
-							accountType.setId(id); // store the generated id in the object
-						}
-					}
-				}
-			}
-
-			conn.commit();
-			return true;
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}*/
 
 	public boolean deleteAccountTypes(List<AccountType<TestFeature>> types) {
 
