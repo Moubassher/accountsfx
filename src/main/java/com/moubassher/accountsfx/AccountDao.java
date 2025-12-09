@@ -328,7 +328,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 	}
 
-	public void deleteAllUsers() {
+	public void deleteAllAccounts() {
 		String sql = "DELETE FROM users";
 		try (Connection conn = DriverManager.getConnection(database)
 			 ;PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -389,31 +389,15 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
 		}
 	}
+	
 
-	public ObservableList<String> readAllUserNames() {
-		ObservableList<String> allUsers = FXCollections.observableArrayList();
-		String command = "SELECT name FROM employees;"; //$NON-NLS-1$
-		try(Connection conn = DriverManager.getConnection(database)) {
-			Statement stmt = conn.createStatement();
-			stmt.execute(command);
-			ResultSet results = stmt.getResultSet();
-			while(results.next()) {
-				String oneUser = results.getString("name"); //$NON-NLS-1$
-				allUsers.add(oneUser);
-			}
-		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
-		}
-		return allUsers;
-	}
-
-	public boolean resetPassword(String employeeName, String newPassword) {
+	public boolean resetPassword(Account<F> account, String newPassword) {
 		boolean reset = false;
-		String command = "UPDATE employees SET password = ? WHERE name = ?";
+		String command = "UPDATE users SET password = ? WHERE userId = ?";
 		try (Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
 			stmt.setString(1, newPassword);
-			stmt.setString(2, employeeName);
+			stmt.setInt(2, account.getUserId());
 			stmt.executeUpdate();
 			reset = true;
 
@@ -605,7 +589,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		String sql = "INSERT OR IGNORE INTO privileges (accountTypeId, feature) VALUES (?, ?)";
 
 		try (Connection connection = DriverManager.getConnection(database);
-				PreparedStatement stmt = connection.prepareStatement(sql)) {
+			 PreparedStatement stmt = connection.prepareStatement(sql)) {
 
 			int accountTypeId = accountType.getAccountTypeId();
 
@@ -620,30 +604,30 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public boolean deleteAccountTypes(List<AccountType<TestFeature>> types) {
+	public boolean deleteAllPrivileges() {
 
-		String sql = "DELETE FROM accountTypes WHERE accountTypeId = ?";
-
+		String sql = "DELETE FROM privileges;";
 		try (Connection conn = DriverManager.getConnection(database);
 			 PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-			conn.setAutoCommit(false);
-
-			for (AccountType type : types) {
-				stmt.setInt(1, type.getAccountTypeId());
-				stmt.addBatch();
-			}
-
-			stmt.executeBatch();
-			conn.commit();
+			stmt.execute();
 			return true;
-
-		} catch (SQLException e) {
+		} catch(SQLException e) {
 			e.printStackTrace();
 			return false;
 		}
 	}
 
+	public boolean deleteAllAccountTypes() {
+		String sql = "DELETE FROM accountTypes;";
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(sql)) {
+			stmt.execute();
+			return true;
+		} catch(SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 
 
 	private  boolean isAccountTypeValid(AccountType<F> accountType) {

@@ -286,7 +286,7 @@ public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  imple
 						اختر الحساب الذي طلب إعادة كلمة السر واضغط على الزر أدناه ليتم ضبط كلمة السر إلى 123.
 						ليستخدمها الحساب مرة واحدة للدخول إلى حسابه، ثم تغيير كلمة السر من داخل حسابه.
 				""");
-		ChoiceBox<String> employees = new ChoiceBox<>(accountDao.readAllUserNames());
+		ChoiceBox<Account<F>> employees = new ChoiceBox<>(accountDao.readAccounts());
 		Label nameDisplay = new Label("اسم الحساب");
 		VBox box= new VBox(10, nameDisplay, employees);
 		alert.getDialogPane().setContent(box);
@@ -296,8 +296,8 @@ public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  imple
 		alert.getButtonTypes().add(resetPassword);
 		alert.showAndWait().ifPresent(button -> {
 			if(button == resetPassword) {
-				String name = employees.getSelectionModel().getSelectedItem();
-				accountDao.resetPassword(name, "123");
+				Account<F> account = employees.getSelectionModel().getSelectedItem();
+				accountDao.resetPassword(account, "123");
 			}
 		});
 	}
