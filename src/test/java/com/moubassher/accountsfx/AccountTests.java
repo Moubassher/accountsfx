@@ -19,16 +19,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AccountTests {
 
     private AccountDao<TestFeature> accountDao;
-    private List<AccountType<TestFeature>> testAccountTypes;
-    private List<Account<TestFeature>> testAccounts;
     private PasswordValidator passwordValidator;
 
     @BeforeAll
     void setUp() {
         accountDao = new AccountDao<>(TestFeature.class);
-
-        testAccountTypes = new ArrayList<>();
-        testAccounts = new ArrayList<>();
 
         passwordValidator = new PasswordValidator();
     }
@@ -36,8 +31,9 @@ public class AccountTests {
 
     @AfterAll
     void afterAll() {
-        accountDao.deleteAccounts(testAccounts);
-        accountDao.deleteAccountTypes(testAccountTypes);
+        accountDao.deleteAllAccounts();
+        accountDao.deleteAllPrivileges();
+        accountDao.deleteAllAccountTypes();
     }
 
 
@@ -76,7 +72,6 @@ public class AccountTests {
         String readName = readAccountType.getType();
         assertEquals(newName, readName, "Account type's name was not updated");
 
-        testAccountTypes.add(updatedAccountType);
     }
 
     @Test
@@ -134,7 +129,7 @@ public class AccountTests {
         Account<TestFeature> account = new Account<>("Robert Adams", hashedPassword, accountType);
         boolean added = accountDao.addNewAccount(account);
         assertTrue(added, "test account not added and is required to testing deleting accounts");
-        testAccounts.add(account);
+
 
         boolean deleted = accountDao.deleteAccount(account);
         assertTrue(deleted, "Account deletion failed");
@@ -150,7 +145,7 @@ public class AccountTests {
 
         boolean added = accountDao.addNewAccount(adminAccount);
         assertTrue(added, "Admin account was not added");
-        testAccounts.add(adminAccount);
+
     }
 
     @Test
@@ -167,7 +162,7 @@ public class AccountTests {
 
         boolean created = accountDao.addNewAccount(account);
         if(created) {
-            testAccounts.add(account);
+    
             ObservableList<Account<TestFeature>> accounts = accountDao.readAccounts();
             assertNotNull(accounts, "Users is null");
             assertFalse(accounts.isEmpty());
@@ -202,7 +197,7 @@ public class AccountTests {
     void testCreatingNonAdminAccountWithoutAdmin() {
 
         //clear previous users (esp admins) for the test:
-        accountDao.deleteAllUsers();
+        accountDao.deleteAllAccounts();
 
         boolean isAccountsRemoved = accountDao.readAccounts().isEmpty();
         assertTrue(isAccountsRemoved, "Accounts were not deleted and this is required for the test");
@@ -226,7 +221,7 @@ public class AccountTests {
         assertThrows(UnsupportedOperationException.class,
                 () -> accountDao.addNewAccount(account));
 
-        testAccounts.add(account);
+
     }
 
     @Test
@@ -236,7 +231,7 @@ public class AccountTests {
         assertThrows(IllegalArgumentException.class,
                 () -> accountDao.addNewAccount(account));
 
-        testAccounts.add(account);
+
     }
 
     @Test
@@ -278,7 +273,7 @@ public class AccountTests {
     void testAddingNonAdminAccount() {
         // Create a non-admin account type
 
-        accountDao.deleteAllUsers();
+        accountDao.deleteAllAccounts();
 
         List<TestFeature> employeePrivileges = Arrays.asList(TestFeature.FeatureA, TestFeature.FeatureB);
 
@@ -288,12 +283,10 @@ public class AccountTests {
                 false   // isAdmin = false
         );
         accountDao.addAccountType(employeeType);
-        testAccountTypes.add(employeeType);
 
 // Create a non-admin account (using the short constructor)
         Account nonAdminAccount = new Account("John Doe", "hashedPassword123", employeeType);
 
-        testAccounts.add(nonAdminAccount);
         assertThrows(UnsupportedOperationException.class,
                 () -> accountDao.addNewAccount(nonAdminAccount));
 
@@ -305,7 +298,7 @@ public class AccountTests {
         Account adminAccount = new Account("David Adam", "hashedPassword123", adminType);
         boolean adminAdded = accountDao.addNewAccount(adminAccount);
         assertTrue(adminAdded, "Admin account not added");
-        testAccounts.add(adminAccount);
+        
 
         //now that an admin has been added, a non-admin account can be added:
         boolean nonAdminAdded = accountDao.addNewAccount(nonAdminAccount);
@@ -320,7 +313,7 @@ public class AccountTests {
         String password = "abc123";
         String hashedPassword = passwordValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.FeatureB);
-        AccountType userType = new AccountType("مبيعات", privileges, false);
+        AccountType<TestFeature> userType = new AccountType<>("مبيعات", privileges, false);
         int salary = 300_000;
 
         LocalTime illogicalWorkstart = LocalTime.of(8, 0);
@@ -328,7 +321,7 @@ public class AccountTests {
         int userId = 1234557543;
 
         assertThrows(IllegalArgumentException.class, () ->
-                new Account(userId, "Ahmed Adam", hashedPassword,
+                new Account(userId, "Smith Peterson", hashedPassword,
                         userType, salary,  illogicalWorkstart, illogicalWorkfinish));
     }
 
