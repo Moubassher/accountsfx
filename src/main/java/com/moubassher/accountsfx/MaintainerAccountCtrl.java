@@ -33,7 +33,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
     private JFXTextField accountTypeField;
 
     @FXML
-    private Button addAccountTypeBtn, resetPasswordBtn, refreshAccountsBtn;
+    private Button addAccountTypeBtn, deleteAccountTypeBtn, resetPasswordBtn, refreshAccountsBtn;
 
     @FXML
     private FlowPane featurePane;
@@ -74,10 +74,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
         List<AccountType<F>> accountTypes = accountDao.readAccountTypes();
         accountTypes.forEach(accountType -> {
-            String accountTypeName = accountType.getType();
-            List<F> privileges = accountType.getPrivileges();
-            boolean isAdmin = accountType.isAdmin();
-            displayCreatedAccountType(accountTypeName, privileges, isAdmin);
+            displayCreatedAccountType(accountType);
         });
 
         for (F feature : featureEnumClass.getEnumConstants()) {
@@ -88,6 +85,25 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
         addAccountTypeBtn.setOnAction(x -> {
             addAccountType();
+        });
+
+        deleteAccountTypeBtn.setOnAction( x -> {
+            AccountTitledPane<F> selectedAccountPane = (AccountTitledPane<F>) accountTypeAccordion.getExpandedPane();
+            if(selectedAccountPane != null) {
+                AccountType<F> accountType = selectedAccountPane.getAccountType();
+
+                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmAlert.setTitle("Delete account type(" + accountType.getType() +")?");
+                confirmAlert.showAndWait().ifPresent(action -> {
+                    if(action == ButtonType.OK) {
+                        boolean deleted = accountDao.deleteAccountType(accountType.getAccountTypeId());
+                        if(deleted) {
+                            MyNotifications.getInstance().showMessage("Account type deleted","");
+                        }
+                    }
+                });
+
+            }
         });
 
         accountTypeAccordion.expandedPaneProperty().addListener((a, b, titledPane) -> {
@@ -163,7 +179,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         boolean isValid = validateAccountType(accountType);
         if(!isValid) return;
 
-        displayCreatedAccountType(accountTypeName, selectedPrivileges, isAdmin);
+        displayCreatedAccountType(accountType);
 
         boolean added = accountDao.addAccountType(accountType);
         if(added) {
@@ -197,9 +213,8 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         return true;
     }
 
-    private void displayCreatedAccountType(String accountTypeName, List<F> selectedPrivileges, boolean isAdmin) {
+    private void displayCreatedAccountType(AccountType<F> accountType) {
         AccountTitledPane accountTypePane = new AccountTitledPane();
-        AccountType<F> accountType = new AccountType(accountTypeName, selectedPrivileges, isAdmin);
         accountTypePane.setAccountType(accountType);
 
         accountTypeAccordion.getPanes().add(accountTypePane);

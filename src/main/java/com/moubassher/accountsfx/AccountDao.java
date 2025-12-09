@@ -327,7 +327,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 	}
 
-	public void deleteAllAccounts() {
+	void deleteAllAccounts() {
 		String sql = "DELETE FROM users";
 		try (Connection conn = DriverManager.getConnection(database)
 			 ;PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -438,7 +438,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public boolean deleteAccounts(List<Account<F>> accounts) {
+	boolean deleteAccounts(List<Account<F>> accounts) {
 		if (accounts == null || accounts.isEmpty()) {
 			return true;
 		}
@@ -549,7 +549,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		}
 	}
 
-	public boolean deleteAccountType(int accountTypeId) {
+	boolean deleteAccountType(int accountTypeId) {
 		String deletePrivilegesSql = "DELETE FROM privileges WHERE accountTypeId = ?";
 		String deleteAccountTypeSql = "DELETE FROM accountTypes WHERE accountTypeId = ?";
 
@@ -603,7 +603,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public boolean deleteAllPrivileges() {
+	 boolean deleteAllPrivileges() {
 
 		String sql = "DELETE FROM privileges;";
 		try (Connection conn = DriverManager.getConnection(database);
@@ -616,7 +616,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		}
 	}
 
-	public boolean deleteAllAccountTypes() {
+	boolean deleteAllAccountTypes() {
 		String sql = "DELETE FROM accountTypes;";
 		try (Connection conn = DriverManager.getConnection(database);
 			 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -690,7 +690,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public boolean deleteAccount(Account<F> account) {
+	boolean deleteAccount(Account<F> account) {
 		if (account == null) {
 			return false;
 		}
