@@ -2,15 +2,21 @@ package com.moubassher.accountsfx;
 
 import com.context.our_utilities.MyNotifications;
 import com.jfoenix.controls.JFXTextField;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.Accordion;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -27,7 +33,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
     private JFXTextField accountTypeField;
 
     @FXML
-    private Button addAccountTypeBtn;
+    private Button addAccountTypeBtn, resetPasswordBtn, refreshAccountsBtn;
 
     @FXML
     private FlowPane featurePane;
@@ -40,6 +46,18 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
     @FXML
     private CheckBox isAdminBox;
+
+    @FXML
+    private ToggleButton viewAccountTypesBtn, viewAccountsBtn;
+
+    @FXML
+    private HBox accountTypesPane;
+
+    @FXML
+    private VBox accountsPane;
+
+    @FXML
+    private ListView<Account<F>> accountsListView;
 
     private Class<F> featureEnumClass;
 
@@ -76,6 +94,43 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
             showSelectedAccountTypeDetails((AccountTitledPane) titledPane);
         });
 
+
+        viewAccountTypesBtn.setOnAction(x -> {
+            accountTypesPane.setVisible(true);
+            accountsPane.setVisible(false);
+            accountTypesPane.toFront();
+        });
+
+        viewAccountsBtn.setOnAction(x -> {
+            accountsPane.setVisible(true);
+            accountTypesPane.setVisible(false);
+            accountsPane.toFront();
+        });
+
+        resetPasswordBtn.setOnAction(x -> {
+            Account<F> account = accountsListView.getSelectionModel().getSelectedItem();
+            if(account != null) {
+                Alert resetAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                resetAlert.setTitle("Reset password?");
+                resetAlert.showAndWait().ifPresent(result -> {
+                    if(result == ButtonType.OK) {
+                        accountDao.resetPassword(account, "123");
+                    }
+                });
+            }
+        });
+
+        loadAccounts();
+
+        refreshAccountsBtn.setOnAction(x -> {
+            loadAccounts();
+        });
+
+    }
+
+    private void loadAccounts() {
+        ObservableList<Account<F>> accounts = accountDao.readAccounts();
+        accountsListView.setItems(accounts);
     }
 
     private void showSelectedAccountTypeDetails(AccountTitledPane titledPane) {

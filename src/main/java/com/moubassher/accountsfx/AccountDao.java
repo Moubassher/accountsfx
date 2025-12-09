@@ -59,7 +59,6 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	//UP allow resetting of users' password from a Maintainer account.
 	public AccountType<F> getAccountType(int accountTypeId) {
 		return readAccountTypes().stream()
 				.filter(accountType -> accountType.getAccountTypeId() == accountTypeId)
@@ -389,7 +388,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
 		}
 	}
-	
+
 
 	public boolean resetPassword(Account<F> account, String newPassword) {
 		boolean reset = false;

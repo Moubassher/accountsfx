@@ -111,12 +111,7 @@ public  class Account <F extends Enum<F> & Feature<F>>  {
     public String toString() {
         return "Account{" +
                 "name='" + name + '\'' +
-                ", hashedPassword='" + hashedPassword + '\'' +
                 ", accountType=" + accountType +
-                ", userId=" + userId +
-                ", salary=" + salary +
-                ", shiftStart=" + shiftStart +
-                ", shiftEnd=" + shiftEnd +
                 '}';
     }
 }
