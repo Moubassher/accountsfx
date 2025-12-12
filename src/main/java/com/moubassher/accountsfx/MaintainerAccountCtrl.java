@@ -48,7 +48,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
     private CheckBox isAdminBox;
 
     @FXML
-    private ToggleButton viewAccountTypesBtn, viewAccountsBtn;
+    private ToggleButton viewAccountTypesBtn, viewAccountsBtn, currentAccountTypeToggleBtn, archivedAccountTypeToggleBtn;
 
     @FXML
     private HBox accountTypesPane;
@@ -73,9 +73,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         accountTypeAccordion.getPanes().clear();
 
         List<AccountType<F>> accountTypes = accountDao.readAccountTypes();
-        accountTypes.forEach(accountType -> {
-            displayCreatedAccountType(accountType);
-        });
+        displayCreatedAccountTypes(accountTypes);
 
         for (F feature : featureEnumClass.getEnumConstants()) {
             CheckBox checkBox = new CheckBox(feature.name());
@@ -98,12 +96,25 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
                     if(action == ButtonType.OK) {
                         boolean deleted = accountDao.deleteAccountType(accountType.getAccountTypeId());
                         if(deleted) {
-                            MyNotifications.getInstance().showMessage("Account type deleted","");
+                            accountTypeAccordion.getPanes().remove(selectedAccountPane);
+                            confirmAlert.setContentText("Done!");
+
+                            //MyNotifications.getInstance().showMessage("Account type deleted","");
                         }
                     }
                 });
 
             }
+        });
+
+
+        currentAccountTypeToggleBtn.setOnAction(x -> {
+            displayCreatedAccountTypes(accountDao.readAccountTypes());
+        });
+
+        archivedAccountTypeToggleBtn.setOnAction(x -> {
+            List<AccountType<F>> archivedAccountTypes = accountDao.readArchivedAccountTypes();
+            displayCreatedAccountTypes(archivedAccountTypes);
         });
 
         accountTypeAccordion.expandedPaneProperty().addListener((a, b, titledPane) -> {
@@ -211,6 +222,14 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         }
 
         return true;
+    }
+
+
+    private void displayCreatedAccountTypes(List<AccountType<F>> accountTypes) {
+        accountTypeAccordion.getPanes().clear();
+        accountTypes.forEach(accountType -> {
+            displayCreatedAccountType(accountType);
+        });
     }
 
     private void displayCreatedAccountType(AccountType<F> accountType) {

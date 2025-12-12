@@ -271,6 +271,47 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
+	public  List<AccountType<F>> readArchivedAccountTypes() {
+		List<AccountType<F>> accountTypes = new ArrayList<>();
+
+		String sql =
+				"SELECT a.accountTypeId, a.accountType, a.isAdmin, " +
+						"       GROUP_CONCAT(p.feature) AS privileges " +
+						"FROM accountTypes_archive a " +
+						"LEFT JOIN privileges_archive p ON p.accountTypeId = a.accountTypeId " +
+						"GROUP BY a.accountTypeId";
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(sql);
+			 ResultSet rs = stmt.executeQuery()) {
+
+			while (rs.next()) {
+				int accountTypeId = rs.getInt("accountTypeId");
+				String type = rs.getString("accountType");
+
+				String privilegeString = rs.getString("privileges");
+				List<F> privileges;
+				if (privilegeString == null || privilegeString.isEmpty()) {
+					privileges = new ArrayList<>();
+				} else {
+					privileges = Arrays.stream(privilegeString.split(","))
+							.map(s -> Enum.valueOf(featureEnum, s)) // convert String to enum
+							.toList();
+				}
+
+				boolean isAdmin = rs.getBoolean("isAdmin");
+				AccountType<F> accountType = new AccountType(accountTypeId, type, privileges, isAdmin);
+				accountTypes.add(accountType);
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return accountTypes;
+	}
+
+
 
 	public  List<AccountType<F>> readAccountTypes() {
 		List<AccountType<F>> accountTypes = new ArrayList<>();
@@ -556,19 +597,19 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		try (Connection conn = DriverManager.getConnection(database)) {
 			conn.setAutoCommit(false);
 
-			// 1️⃣ Delete related privileges
+			// Delete related privileges
 			try (PreparedStatement ps = conn.prepareStatement(deletePrivilegesSql)) {
 				ps.setInt(1, accountTypeId);
 				ps.executeUpdate();
 			}
 
-			// 2️⃣ Delete the account type
+			// Delete the account type
 			try (PreparedStatement ps = conn.prepareStatement(deleteAccountTypeSql)) {
 				ps.setInt(1, accountTypeId);
 				int affectedRows = ps.executeUpdate();
 				if (affectedRows == 0) {
 					conn.rollback();
-					return false; // no such account type
+					return false;
 				}
 			}
 
