@@ -4,6 +4,7 @@ import javafx.collections.ObservableList;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -307,7 +308,6 @@ public class AccountTests {
         //now that an admin has been added, a non-admin account can be added:
         boolean nonAdminAdded = accountDao.addNewAccount(nonAdminAccount);
         assertTrue(nonAdminAdded, "Non-admin not added even after an admin has been added");
-
     }
 
 
@@ -329,29 +329,63 @@ public class AccountTests {
                         userType, salary,  illogicalWorkstart, illogicalWorkfinish));
     }
 
-    @Test
-    @DisplayName("Can register a login timestamp")
-    void testRegisteringLogin() {
-        String password = "user123";
-        String hashedPassword = passwordValidator.hashPassword(password);
-        List<TestFeature> privileges = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
-        AccountType accountType = new AccountType("User 154", privileges, true);
-        boolean accountTypeAdded = accountDao.addAccountType(accountType);
+    @Nested
+    class SessionTests {
 
-        if(accountTypeAdded) {
-            Account<TestFeature> account = new Account("Early bird", hashedPassword, accountType);
+        @Test
+        @DisplayName("Can register a login timestamp")
+        void testRegisteringLogin() {
+            String password = "user123";
+            String hashedPassword = passwordValidator.hashPassword(password);
+            List<TestFeature> privileges = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
+            AccountType accountType = new AccountType("User 154", privileges, true);
+            boolean accountTypeAdded = accountDao.addAccountType(accountType);
 
-            //attempt to log in before an account is created
-            boolean isUserLoggedIn = accountDao.loginAccount(account);
-            assertFalse(isUserLoggedIn, "An invalid user was able to log in");
+            if (accountTypeAdded) {
+                Account<TestFeature> account = new Account("Early bird", hashedPassword, accountType);
 
-            //now create the account:
-            boolean created = accountDao.addNewAccount(account);
-            assertTrue(created, "Account was not created and so login test will fail");
+                //attempt to log in before an account is created
+                boolean isUserLoggedIn = accountDao.loginAccount(account);
+                assertFalse(isUserLoggedIn, "An invalid user was able to log in");
 
-            isUserLoggedIn = accountDao.loginAccount(account);
-            assertTrue(isUserLoggedIn, "A valid user was not able to log in");
+                //now create the account:
+                boolean created = accountDao.addNewAccount(account);
+                assertTrue(created, "Account was not created and so login test will fail");
+
+                isUserLoggedIn = accountDao.loginAccount(account);
+                assertTrue(isUserLoggedIn, "A valid user was not able to log in");
+            }
         }
+
+        @Test
+        @DisplayName("Can register logout")
+        void testRegisteringLogout() {
+            String password = "user123";
+            String hashedPassword = passwordValidator.hashPassword(password);
+            List<TestFeature> privileges = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
+            AccountType accountType = new AccountType("User 888", privileges, true);
+            boolean accountTypeAdded = accountDao.addAccountType(accountType);
+
+            if (accountTypeAdded) {
+                Account<TestFeature> account = new Account("Night Owl", hashedPassword, accountType);
+
+                //attempt to log in before an account is created
+                boolean isUserLoggedIn = accountDao.loginAccount(account);
+                assertFalse(isUserLoggedIn, "An invalid user was able to log in");
+
+                //now create the account:
+                boolean created = accountDao.addNewAccount(account);
+                assertTrue(created, "Account was not created and so login test will fail");
+
+                isUserLoggedIn = accountDao.loginAccount(account);
+                assertTrue(isUserLoggedIn, "A valid user was not able to log in");
+
+                boolean isLoggedOut = accountDao.logoutAccount(account);
+                assertTrue(isLoggedOut, "Account was not able to log out");
+            }
+
+        }
+
     }
 
 }

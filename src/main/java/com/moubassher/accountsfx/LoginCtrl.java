@@ -66,6 +66,8 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 
 	private boolean isUserManager;
 
+	private Account<F> currentUser;
+
 	public LoginCtrl(AccountDao<F> accountDao) {
 		this.accountDao = accountDao;
 	}
@@ -171,7 +173,6 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		Account<F> account = registeredUsersSelector.getSelectionModel().getSelectedItem();
 
 		if (account != null) {
-			String name = account.getName();
 			String password = passwordField.getText();
 
 			String hashedPassword = BCrypt.withDefaults()
@@ -193,6 +194,7 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 				boolean validCreds = accountDao.loginAccount(account);
 
 				if(validCreds) {
+					currentUser = account;
 					Stage stage = (Stage) this.loginRootPane.getScene().getWindow();
 					stage.close();
 				}
@@ -210,7 +212,7 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 	}
 
 	public void logOutUser() {
-		accountDao.logoutUser();
+		accountDao.logoutAccount(currentUser);
 		loginWindow(false);
 	}
 
@@ -291,12 +293,11 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 
 	@FXML
 	private void sendPasswordResetRequest() {
-		boolean done = taskDatabase.addTask("طلب إعادة ضبط كلمة سر", "for " + accountDao.getName());
+		boolean done = taskDatabase.addTask("طلب إعادة ضبط كلمة سر", "for " + currentUser.getName());
 		if(done) {
 			//TODO implement all possible ways to reset a password.
 			/* 1. Send the reset request to the server (to be received by an admin).
 				2. Send reset request to local admin, requiring a login with an admin account.
-
 			 */
 			MyNotifications.getInstance().showMessage("تم", "تم إرسال طلب للإدارة لإعادة ضبط كلمة السر إلى 123. وبعدما تتم إعادة الضبط. ادخل إلى حسابك باستخدام 123 (مرة واحدة)، ومن ثم قم بتغييرها من القائمة الرئيسية.");
 

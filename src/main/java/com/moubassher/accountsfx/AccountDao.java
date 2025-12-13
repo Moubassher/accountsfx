@@ -20,7 +20,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -41,8 +40,6 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 	private final String databaseLocation = "file:/C:/pharmaNetResources/databases/"; //$NON-NLS-1$
 	private final String database = driverPrefix + databaseLocation + databaseName;
-
-	private String name = "(حساب غير مسجل)";
 
 	DateTimeFormatter localTimeformat =
 			DateTimeFormatter.ofPattern("hh:mm a").localizedBy(Locale.forLanguageTag("AR"));
@@ -72,12 +69,12 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		String password = account.getHashedPassword();
 		boolean validCredentials = verifyLoginCredentials(userId, password); //$NON-NLS-1$
 		if(validCredentials) {
-			registerLogin(userId);
+			return registerLogin(userId);
 		}
-		return validCredentials;
+		return false;
 	}
 
-	private void registerLogin(int userId) {
+	private boolean registerLogin(int userId) {
 		String command = "INSERT INTO user_sessions (userId, loginAt) VALUES (?, ?)"; //$NON-NLS-1$
 
 		try (Connection conn = DriverManager.getConnection(database);
@@ -92,16 +89,50 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			stmt.setString(2, login.format(dateTimeFormatter));
 
 			stmt.executeUpdate();
+			return true;
 
 		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log")
-					.severe(e.getMessage()
-							+ " culprit is: "
-							+ e.getCause()
-							+ "\nlocation: "
+			Logger.getLogger("pharmacy-log").severe(e.getMessage()+ " culprit is: "+ e.getCause()+ "\nlocation: "
 							+ this.getClass().getEnclosingMethod());
+			return false;
 		}
 	}
+
+	public boolean logoutAccount(Account<F> account) {
+		int userId = account.getUserId();
+		String password = account.getHashedPassword();
+		boolean validCredentials = verifyLoginCredentials(userId, password); //$NON-NLS-1$
+		if(validCredentials) {
+			return registerLogout(userId);
+		}
+		return false;
+	}
+
+	private boolean registerLogout(int userId) {
+		String command =
+				"UPDATE user_sessions " +
+						"SET logoutAt = ? " +
+						"WHERE userId = ? AND logoutAt IS NULL"; //$NON-NLS-1$
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(command)) {
+
+			var dateTimeFormatter =
+					DateTimeFormatter.ofPattern("E yyyy/M/dd HH:mm a")
+							.localizedBy(Locale.forLanguageTag("ar"));
+
+			LocalDateTime logoutTime = LocalDateTime.now();
+			stmt.setString(1, logoutTime.format(dateTimeFormatter));
+			stmt.setInt(2, userId);
+
+			return stmt.executeUpdate() > 0;
+
+		} catch (SQLException e) {
+			Logger.getLogger("pharmacy-log").severe(e.getMessage()+ " culprit is: "+ e.getCause()+ "\nlocation: "+ this.getClass().getEnclosingMethod());
+			return false;
+		}
+	}
+
 
 	public List<Login> readLogins() {
 		List<Login> logins = new ArrayList<>();
@@ -127,14 +158,6 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		}
 
 		return logins;
-	}
-
-
-	public boolean logoutUser() {
-		LocalDateTime logoutTime = LocalDateTime.now();
-		registerLogoutTime(name, logoutTime);
-		name = "";
-		return true;
 	}
 
 
@@ -185,7 +208,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 				nameCipher.init(Cipher.ENCRYPT_MODE, publicKey);
 				passCipher.init(Cipher.ENCRYPT_MODE, publicKey);
 				//Add data to the cipher
-				byte[] nameInput = name.getBytes();
+				byte[] nameInput = "name.getBytes()".getBytes();
 				//    byte [] passInput = pass.getBytes();
 				nameCipher.update(nameInput);
 				//  passCipher.update(passInput);
@@ -222,7 +245,6 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			for(int i = 0; i < encryptedNameList.size(); i++) {
 				encryptStmt.setString(1, encryptedName);
 				encryptStmt.setString(2, encryptedPass);
-				encryptStmt.setString(3, name);
 				encryptStmt.addBatch();
 			}
 
@@ -342,7 +364,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 		String sql =
 				"SELECT a.accountTypeId, a.accountType, a.isAdmin, " +
-						"       GROUP_CONCAT(p.feature) AS privileges " +
+						" GROUP_CONCAT(p.feature) AS privileges " +
 						"FROM accountTypes a " +
 						"LEFT JOIN privileges p ON p.accountTypeId = a.accountTypeId " +
 						"GROUP BY a.accountTypeId";
@@ -401,35 +423,6 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			throw new RuntimeException(e);
 		}
 	}
-
-
-
-	private void registerLogoutTime(String name, LocalDateTime logoutTime) {
-		String command = "UPDATE logins SET logoutTime = ?, logoutDate = ? WHERE Account = ? AND loginDate = ?"; //$NON-NLS-1$
-
-		try(Connection conn = DriverManager.getConnection(database)) {
-			PreparedStatement stmt = conn.prepareStatement(command);
-
-			var dateFormatter =
-					DateTimeFormatter.ofPattern("E yyy/M/dd").localizedBy(Locale.forLanguageTag("AR"));
-			var timeFormatter =
-					DateTimeFormatter.ofPattern("HH:mm a").localizedBy(Locale.forLanguageTag("AR"));
-
-			LocalDate today = LocalDate.now();
-			String formattedLogoutTime = timeFormatter.format(logoutTime);
-			String formattedLoginDate = dateFormatter.format(today);
-
-			stmt.setString(1, formattedLogoutTime);
-			stmt.setString(2, formattedLoginDate);
-			stmt.setString(3, name);
-			stmt.setString(4, formattedLoginDate);
-
-			stmt.executeUpdate();
-		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
-		}
-	}
-
 
 	public boolean resetPassword(Account<F> account, String newPassword) {
 		boolean reset = false;
@@ -506,12 +499,6 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			return false;
 		}
 	}
-
-
-	public String getName() {
-		return name;
-	}
-
 
 
 	public boolean addAccountType(AccountType<F> accountType) {
