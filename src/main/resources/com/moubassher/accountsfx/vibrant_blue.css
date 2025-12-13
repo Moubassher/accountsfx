@@ -1,0 +1,287 @@
+/* ======================================
+   POS Software Main Styles
+   source: flatuicolors.com
+   ====================================== */
+
+/* Root background */
+.root {
+	midnight_blue: rgba(44, 62, 80, 1);
+    wet_asphalt: rgba(52, 73, 94, 1);
+    belize_hole: rgba(41, 128, 185, 1);
+    nephritis: rgba(39, 174, 96, 1);
+    asbestos: rgba(127, 140, 141, 1);
+    concrete: rgba(149, 165, 166, 1);
+    wisteria: rgba(142, 68, 173, 1);
+    amethyst: rgba(155, 89, 182, 1);
+    emerald: rgba(46, 204, 113, 1);
+    turquoise: rgba(26, 188, 156, 1);
+    peter_river: rgba(52, 152, 219, 1);
+    carrot: rgba(230, 126, 34, 1);
+    pumpkin: rgba(211, 84, 0, 1);
+    alizarin: rgba(231, 76, 60, 1);
+    pomegranate: rgba(192, 57, 43, 1);
+    orange: rgba(243, 156, 18, 1);
+    sun_flower: rgba(241, 196, 15, 1);
+    silver: rgba(189, 195, 199, 1);
+    clouds: rgba(236, 240, 241, 1);
+    green_sea: rgba(22, 160, 133, 1);
+	
+    -fx-background-color: peter_river;
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 14px;
+	
+	primary-background: rgb(8,101,255);
+	primary-text: rgb(222, 239, 250);
+		
+	shadow: dropshadow(three-pass-box, black, 10, 0, 3.0, 3.0);	
+	innerShadow: innershadow(three-pass-box, black, 10, 0, 6.0, 3.0);
+
+
+
+}
+
+
+.translucent {
+    -fx-background-color: rgba(0, 0, 0, 0.4); /* black at 50% opacity */
+}
+
+.translucent .label {
+	-fx-text-fill: white;
+}
+
+.pane {
+	-fx-background-color: peter_river;
+}
+
+.sensible_pane {
+	-fx-padding: 5px;
+	-fx-spacing: 5px;
+	-fx-alignment: CENTER;
+}
+
+.background_image {
+	-fx-background-color: red;
+    -fx-background-image: url("medicine-6392470.jpg");
+    -fx-background-repeat: no-repeat;
+    -fx-background-size: cover;    /* fills the VBox */
+    -fx-background-position: center center;
+}
+
+
+.round-edges {
+	-fx-background-radius: 8px;
+}
+
+.border-pane {
+	-fx-background-color: peter_river;
+}
+
+/* Labels */
+.label {
+    -fx-text-fill: clouds; /* light text on dark background */
+}
+
+.notification-label {
+	-fx-background-color: red;
+	-fx-font-size: 13px;
+	-fx-alignment: center;           /* center the text */
+    -fx-background-radius: 50%;      /* makes it circular */
+    -fx-padding: 0;                 /* space inside */
+    -fx-min-width: 20px;
+	-fx-min-height: 20px;
+}
+
+.value-label {
+	-fx-text-fill: black;
+	-fx-font-weight: bold;
+	-fx-padding: 3 0 12 0;
+}
+
+
+.highlight{
+	-fx-background-color: yellow;	
+	-fx-text-fill: black;
+}
+
+.highlight .label {
+	-font-size: 20;
+	-fx-padding: 5;
+	-fx-text-fill: black;
+}
+
+/* Buttons */
+.button, .toggle-button {
+    -fx-background-color: derive(silver, 20%); 
+    -fx-text-fill: wet_asphalt;
+	-fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-padding: 8 15 8 15;
+    -fx-cursor: hand;
+	-fx-effect: shadow;
+}
+
+.button:hover {
+    -fx-background-color: emerald;
+	-fx-text-fill: white;
+}
+
+.button:pressed {
+	-fx-background-color: amethyst;
+	-fx-effect:innerShadow;
+}
+
+.primary-btn {
+	-fx-background-color: wet_asphalt;
+	-fx-text-fill: primary-text;
+}
+
+
+.secondary-btn {
+	-fx-background-color: derive(peter_river, 80%);
+}
+
+.cancel-btn {
+	-fx-background-color: alizarin;
+	-fx-text-fill: white;
+}
+
+.button:disabled {
+    -fx-background-color: concrete;
+    -fx-text-fill: silver;
+}
+
+.side_pane {
+	-fx-spacing: 10px;
+	-fx-background-color: peter_river;
+}
+
+.side_pane .button {
+	-fx-max-width: Infinity;	
+}
+
+.toggle-button:selected {
+	-fx-background-color: primary-background;
+	-fx-text-fill: primary-text;
+}
+
+/* Text Fields */
+.text-field, .password-field {
+    -fx-background-color: clouds;
+    -fx-text-fill: wet_asphalt;
+    -fx-prompt-text-fill: concrete;
+    -fx-background-radius: 3;
+    -fx-border-radius: 3;
+    -fx-border-color: silver;
+    -fx-border-width: 1;
+}
+
+.text-field:focused {
+	-fx-style: innerShadow;
+}
+
+.choice-box {
+	-fx-background-color: transparent;
+	-fx-border-style: solid;
+	-fx-border-color: midnight_blue;
+	-fx-border-width: 0 0 2 0;
+	-fx-pref-width: 100%;
+}
+
+/* Style the popup list itself */
+.choice-box .context-menu {
+    -fx-background-color: peter_river;        /* background of the popup */
+    -fx-border-color: transparent;          /* border around popup */
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 8, 0, 0, 2);
+}
+
+.choice-box .label {
+	-fx-text-fill: white;
+	-fx-font-weight: bold;
+}
+
+/* Style the items inside the popup */
+.choice-box .menu-item {
+    -fx-padding: 8 12;
+    -fx-background-color: transparent;
+	-fx-text-fill: black;
+    -fx-font-size: 14px;
+}
+
+/* Hover effect on items */
+.choice-box .menu-item:focused {
+    -fx-background-color: emerald;
+    -fx-text-fill: black;
+}
+
+
+/* TableView */
+.table-view {
+    -fx-background-color: clouds;
+    -fx-table-cell-border-color: silver;
+    -fx-table-header-border-color: concrete;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: belize_hole;
+}
+
+.table-view .column-header, 
+.table-view .column-header .label {
+    -fx-text-fill: clouds;
+}
+
+/* TabPane styles */
+.tab-pane {
+    -fx-background-color: peter_river;
+}
+
+/* Selected tab */
+.tab-pane .tab-header-area .tab:selected {
+    -fx-background-color: linear-gradient(to bottom, rgb(0, 255, 0), 
+darkgreen);
+}
+
+/* Text color for the label only */
+.tab-pane .tab-header-area .tab:selected .tab-label {
+    -fx-text-fill: white;
+    -fx-background-color: transparent; 
+}
+
+/* Focused tab */
+.tab-pane .tab-header-area .tab:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-focus-width: 0;
+}
+
+/* Hovered tabs */
+.tab-pane .tab-header-area .tab:hover {
+    -fx-background-color: rgba(41, 128, 185, 0.7); /* belize_hole with 
+some transparency */
+
+}
+
+.tab-pane .tab-header-area .tab:hover .tab-label{
+    -fx-text-fill: white;
+
+}
+
+/* ScrollPane */
+.scroll-pane {
+    -fx-background: clouds;
+    -fx-border-color: concrete;
+} 
+
+/* ComboBox */
+.combo-box {
+    -fx-background-color: clouds;
+    -fx-text-fill: wet_asphalt;
+}
+
+.combo-box:hover {
+    -fx-background-color: silver;
+}

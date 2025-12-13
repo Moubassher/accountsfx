@@ -25,6 +25,10 @@ public class AccountTests {
     void setUp() {
         accountDao = new AccountDao<>(TestFeature.class);
 
+        accountDao.deleteAllAccounts();
+        accountDao.deleteAllPrivileges();
+        accountDao.deleteAllAccountTypes();
+
         passwordValidator = new PasswordValidator();
     }
 
@@ -323,6 +327,31 @@ public class AccountTests {
         assertThrows(IllegalArgumentException.class, () ->
                 new Account(userId, "Smith Peterson", hashedPassword,
                         userType, salary,  illogicalWorkstart, illogicalWorkfinish));
+    }
+
+    @Test
+    @DisplayName("Can register a login timestamp")
+    void testRegisteringLogin() {
+        String password = "user123";
+        String hashedPassword = passwordValidator.hashPassword(password);
+        List<TestFeature> privileges = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
+        AccountType accountType = new AccountType("User 154", privileges, true);
+        boolean accountTypeAdded = accountDao.addAccountType(accountType);
+
+        if(accountTypeAdded) {
+            Account<TestFeature> account = new Account("Early bird", hashedPassword, accountType);
+
+            //attempt to log in before an account is created
+            boolean isUserLoggedIn = accountDao.loginAccount(account);
+            assertFalse(isUserLoggedIn, "An invalid user was able to log in");
+
+            //now create the account:
+            boolean created = accountDao.addNewAccount(account);
+            assertTrue(created, "Account was not created and so login test will fail");
+
+            isUserLoggedIn = accountDao.loginAccount(account);
+            assertTrue(isUserLoggedIn, "A valid user was not able to log in");
+        }
     }
 
 }

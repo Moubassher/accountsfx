@@ -1,5 +1,7 @@
 package com.moubassher.accountsfx;
 
+import atlantafx.base.theme.CupertinoDark;
+import atlantafx.base.theme.CupertinoLight;
 import com.context.themes.vibrant_blue.MyThemes;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -34,8 +36,7 @@ public class AccountsFxMain extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
-      //  Application.setUserAgentStylesheet(new CupertinoDark().getUserAgentStylesheet());
-
+        //Application.setUserAgentStylesheet(new CupertinoLight().getUserAgentStylesheet());
 
         AccountDao<TestFeature> accountDao = new AccountDao<>(TestFeature.class);
 
@@ -47,6 +48,7 @@ public class AccountsFxMain extends Application {
         VBox loginRoot = loginLoader.load();
 
         Scene scene = new Scene(loginRoot, 540, 440);
+       // scene.getStylesheets().clear();
         scene.getStylesheets().add(MyThemes.vibrantBlue);
 
         MaintainerAccountCtrl<TestFeature> maintainerAccountCtrl = new MaintainerAccountCtrl<>(accountDao, TestFeature.class);

@@ -27,7 +27,6 @@ dependencies {
 
     implementation 'com.context.themes:my-vibrant-blue-theme:1.0.0'
 
-
     implementation 'io.github.mkpaz:atlantafx-base:2.1.0'
 
     implementation "org.openjfx:javafx-base:${javafxVersion}:win"
@@ -35,8 +34,6 @@ dependencies {
     implementation "org.openjfx:javafx-controls:${javafxVersion}:win"
     implementation "org.openjfx:javafx-fxml:${javafxVersion}:win"
     implementation "org.openjfx:javafx-media:${javafxVersion}:win"
-    implementation "org.openjfx:javafx-web:${javafxVersion}:win"
-    implementation "org.openjfx:javafx-swing:${javafxVersion}:win"
 
     implementation 'org.xerial:sqlite-jdbc:3.40.1.0'
 
@@ -59,7 +56,7 @@ dependencies {
 run {
     jvmArgs = [
             "--module-path", configurations.runtimeClasspath.asPath,
-            "--add-modules", "javafx.controls,javafx.fxml,javafx.media,javafx.web,javafx.swing"
+            "--add-modules", "javafx.controls,javafx.fxml,javafx.media"
     ]
 
     jvmArgs += "--add-opens"

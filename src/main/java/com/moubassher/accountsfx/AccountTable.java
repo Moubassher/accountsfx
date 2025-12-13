@@ -16,7 +16,6 @@ import java.time.LocalTime;
 public class AccountTable<F extends Enum<F> & Feature<F>> extends TableView<Account<F>>{
 
 	TableColumn<Account<F>, String> nameColumn = new TableColumn<>("إسم الحساب");
-	
 	TableColumn<Account<F>, AccountType<F>> accountTypeCol = new TableColumn<>("نوع الحساب");
 	
 	TableColumn<Account<F>, LocalTime> workStartCol = new TableColumn<>("زمن الحضور");
@@ -27,14 +26,11 @@ public class AccountTable<F extends Enum<F> & Feature<F>> extends TableView<Acco
 
 	private AccountDao<F> accountDao;
 
-
 	 AccountTable(AccountDao<F> accountDao) {
 		this.accountDao = accountDao;
 
 		this.setEditable(true);
-		
-		this.setId("employee-table"); //$NON-NLS-1$
-	
+
 		nameColumn.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getName()));
 		accountTypeCol.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getAccountType()));
 		workStartCol.setCellValueFactory(x -> new ReadOnlyObjectWrapper<>(x.getValue().getShiftStart()));

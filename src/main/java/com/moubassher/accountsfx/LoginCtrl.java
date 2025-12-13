@@ -1,6 +1,7 @@
 package com.moubassher.accountsfx;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
+import com.context.our_utilities.MyNotifications;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -168,7 +169,7 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 	private void login() {
 
 		Account<F> account = registeredUsersSelector.getSelectionModel().getSelectedItem();
-		BCrypt.Result result = null;
+
 		if (account != null) {
 			String name = account.getName();
 			String password = passwordField.getText();
@@ -189,12 +190,7 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 
 			boolean passwordMatches = BCrypt.verifyer().verify(password.toCharArray(), hashedPassword).verified;
 			if(passwordMatches) {
-				boolean validCreds;
-				if (isUserManager) {
-					validCreds = accountDao.loginManagement(name, password);
-				} else {
-					validCreds = accountDao.loginAccount(name, password);
-				}
+				boolean validCreds = accountDao.loginAccount(account);
 
 				if(validCreds) {
 					Stage stage = (Stage) this.loginRootPane.getScene().getWindow();
@@ -224,7 +220,6 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 	 */
 	public void showFeatureRestrictedPopup(String restrictedOperations) {
 		Label warning = new Label("تنبيه!");
-		warning.setId("warning");
 		warning.setPadding(new Insets(5));
 
 		//TODO: update disabling features' logic
@@ -298,8 +293,12 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 	private void sendPasswordResetRequest() {
 		boolean done = taskDatabase.addTask("طلب إعادة ضبط كلمة سر", "for " + accountDao.getName());
 		if(done) {
-			//TODO replace with a suitable notification from MyNotification's.
-			//Messages.showNotification("تم", "تم إرسال طلب للإدارة لإعادة ضبط كلمة السر إلى 123. وبعدما تتم إعادة الضبط. ادخل إلى حسابك باستخدام 123 (مرة واحدة)، ومن ثم قم بتغييرها من القائمة الرئيسية.");
+			//TODO implement all possible ways to reset a password.
+			/* 1. Send the reset request to the server (to be received by an admin).
+				2. Send reset request to local admin, requiring a login with an admin account.
+
+			 */
+			MyNotifications.getInstance().showMessage("تم", "تم إرسال طلب للإدارة لإعادة ضبط كلمة السر إلى 123. وبعدما تتم إعادة الضبط. ادخل إلى حسابك باستخدام 123 (مرة واحدة)، ومن ثم قم بتغييرها من القائمة الرئيسية.");
 
 		}
 	}

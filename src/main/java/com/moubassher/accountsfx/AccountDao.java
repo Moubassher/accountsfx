@@ -67,16 +67,40 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public boolean loginAccount(String name, String password) {
-		boolean validLogin = verifyLoginCredentials("users", name, password); //$NON-NLS-1$
-		if(validLogin) {
-			LocalDateTime loginTime = LocalDateTime.now();
-			registerLoginTime(name, loginTime);
+	public boolean loginAccount(Account<F> account) {
+		int userId = account.getUserId();
+		String password = account.getHashedPassword();
+		boolean validCredentials = verifyLoginCredentials(userId, password); //$NON-NLS-1$
+		if(validCredentials) {
+			registerLogin(userId);
 		}
-		return validLogin;
+		return validCredentials;
 	}
-	public boolean loginManagement(String name, String password) {
-		return verifyLoginCredentials("management", name, password);
+
+	private void registerLogin(int userId) {
+		String command = "INSERT INTO user_sessions (userId, loginAt) VALUES (?, ?)"; //$NON-NLS-1$
+
+		try (Connection conn = DriverManager.getConnection(database);
+			 PreparedStatement stmt = conn.prepareStatement(command)) {
+
+			var dateTimeFormatter =
+					DateTimeFormatter.ofPattern("E yyyy/M/dd HH:mm a")
+							.localizedBy(Locale.forLanguageTag("ar"));
+
+			LocalDateTime login = LocalDateTime.now();
+			stmt.setInt(1, userId);
+			stmt.setString(2, login.format(dateTimeFormatter));
+
+			stmt.executeUpdate();
+
+		} catch (SQLException e) {
+			Logger.getLogger("pharmacy-log")
+					.severe(e.getMessage()
+							+ " culprit is: "
+							+ e.getCause()
+							+ "\nlocation: "
+							+ this.getClass().getEnclosingMethod());
+		}
 	}
 
 	public List<Login> readLogins() {
@@ -88,7 +112,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 			ResultSet results = stmt.getResultSet();
 			while(results.next()) {
-				String employee = results.getString("Account"); //$NON-NLS-1$
+				String employee = results.getString("userId"); //$NON-NLS-1$
 				String loginDate = results.getString("loginDate"); //$NON-NLS-1$
 				String loginTime = results.getString("loginTime"); //$NON-NLS-1$
 				String logoutDate = results.getString("logoutDate"); //$NON-NLS-1$
@@ -406,30 +430,6 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		}
 	}
 
-	private void registerLoginTime(String name, LocalDateTime loginTime) {
-		String command = "INSERT into logins (Account, loginDate, loginTime) values (?, ?, ?)"; //$NON-NLS-1$
-		try(Connection conn = DriverManager.getConnection(database)) {
-			PreparedStatement stmt = conn.prepareStatement(command);
-			stmt.setString(1, name);
-
-			var dateFormatter =
-					DateTimeFormatter.ofPattern("E yyy/M/dd").localizedBy(Locale.forLanguageTag("AR"));
-			var timeFormatter =
-					DateTimeFormatter.ofPattern("HH:mm a").localizedBy(Locale.forLanguageTag("AR"));
-
-			String formattedDate = dateFormatter.format(loginTime);
-			String formattedTime = timeFormatter.format(loginTime);
-
-			stmt.setString(2, formattedDate);
-			stmt.setString(3, formattedTime);
-			stmt.executeUpdate();
-
-
-		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
-		}
-	}
-
 
 	public boolean resetPassword(Account<F> account, String newPassword) {
 		boolean reset = false;
@@ -453,27 +453,25 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 				.noneMatch(employee -> employee.isAdmin());
 	}
 
-	private boolean verifyLoginCredentials(String tableName, String name, String hashedPassword) {
+	private boolean verifyLoginCredentials(int userId, String hashedPassword) {
 
-		String command = "SELECT name, password from "+ tableName +" WHERE name = ? AND password = ?;"; //$NON-NLS-1$
+		String command = "SELECT userId, password from users WHERE userId = ? AND password = ?;"; //$NON-NLS-1$
 		boolean validCreds = false;
 
 		try(Connection conn = DriverManager.getConnection(database)) {
 			PreparedStatement stmt = conn.prepareStatement(command);
-			stmt.setString(1, name);
+			stmt.setInt(1, userId);
 			stmt.setString(2, hashedPassword);
 
 			ResultSet results = stmt.executeQuery();
 			while(results.next()) {
-				name = results.getString("name");
-				hashedPassword = results.getString("password");
-				this.name = name;
-
-				validCreds = true;
+				String readHashedPassword = results.getString("password");
+				if(hashedPassword.equals(readHashedPassword)) {
+					return true;
+				}
 			}
 		} catch (SQLException e) {
-
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
+			e.printStackTrace();
 		}
 		return validCreds;
 	}
