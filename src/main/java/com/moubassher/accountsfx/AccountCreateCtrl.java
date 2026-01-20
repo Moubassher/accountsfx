@@ -297,9 +297,6 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
     void showCreateAdminAccountDialog() {
         try {
-            AccountDao<TestFeature> accountDao = new AccountDao<>();
-
-
             FXMLLoader fxmlLoader = new FXMLLoader(AccountCreateCtrl.class.getResource("create_account.fxml"));
             fxmlLoader.setController(this);
             Pane accountCreateRoot = fxmlLoader.load();

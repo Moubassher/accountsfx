@@ -3,19 +3,7 @@ package com.moubassher.accountsfx;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.Signature;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,26 +21,19 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class  AccountDao <F extends Enum<F> & Feature<F>>{
-
-	private final String driverPrefix = "jdbc:sqlite:"; //$NON-NLS-1$
-
-	private final String databaseName = "Users.db"; //$NON-NLS-1$
+	
 
 	private final String databaseLocation = "file:/C:/pharmaNetResources/databases/"; //$NON-NLS-1$
-	private final String database = driverPrefix + databaseLocation + databaseName;
 
 	DateTimeFormatter localTimeformat =
 			DateTimeFormatter.ofPattern("hh:mm a").localizedBy(Locale.forLanguageTag("AR"));
 
-
 	private Class<F> featureEnum;
 
-	public AccountDao(Class<F> featureEnum) {
+	private DbConfig dbConfig;
+	public AccountDao(Class<F> featureEnum, String appName) {
 		this.featureEnum = featureEnum;
-	}
-
-	public AccountDao() {
-
+		dbConfig = new DbConfig(appName, "Users.db", "jdbc:sqlite:");
 	}
 
 
@@ -77,7 +58,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	private boolean registerLogin(int userId) {
 		String command = "INSERT INTO user_sessions (userId, loginAt) VALUES (?, ?)"; //$NON-NLS-1$
 
-		try (Connection conn = DriverManager.getConnection(database);
+		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(command)) {
 
 			var dateTimeFormatter =
@@ -110,11 +91,9 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 	private boolean registerLogout(int userId) {
 		String command =
-				"UPDATE user_sessions " +
-						"SET logoutAt = ? " +
-						"WHERE userId = ? AND logoutAt IS NULL"; //$NON-NLS-1$
+				"UPDATE user_sessions SET logoutAt = ? WHERE userId = ? AND logoutAt IS NULL"; //$NON-NLS-1$
 
-		try (Connection conn = DriverManager.getConnection(database);
+		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(command)) {
 
 			var dateTimeFormatter =
@@ -134,127 +113,41 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public List<Login> readLogins() {
-		List<Login> logins = new ArrayList<>();
-		String command =  "SELECT * FROM logins"; //$NON-NLS-1$
-		try(Connection conn = DriverManager.getConnection(database)) {
-			Statement stmt = conn.createStatement();
-			stmt.execute(command);
+	public List<Session> readSessions() {
+		String query = "SELECT userId, loginAt, logoutAt FROM user_sessions"; //$NON-NLS-1$
+		List<Session> sessions = new ArrayList<>();
 
-			ResultSet results = stmt.getResultSet();
-			while(results.next()) {
-				String employee = results.getString("userId"); //$NON-NLS-1$
-				String loginDate = results.getString("loginDate"); //$NON-NLS-1$
-				String loginTime = results.getString("loginTime"); //$NON-NLS-1$
-				String logoutDate = results.getString("logoutDate"); //$NON-NLS-1$
-				String logoutTime = results.getString("logoutTime"); //$NON-NLS-1$
-				Login login = new Login(employee, loginDate, loginTime, logoutDate, logoutTime);
+		var dateTimeFormatter = DateTimeFormatter.ofPattern("E yyyy/M/dd HH:mm a")
+				.localizedBy(Locale.forLanguageTag("ar"));
 
-				logins.add(login);
+		try (Connection conn = dbConfig.openConnection();
+			 PreparedStatement stmt = conn.prepareStatement(query);
+			 ResultSet rs = stmt.executeQuery()) {
+
+			while (rs.next()) {
+				int userId = rs.getInt("userId");
+
+				String loginStr = rs.getString("loginAt");
+				String logoutStr = rs.getString("logoutAt");
+
+				LocalDateTime login = LocalDateTime.parse(loginStr, dateTimeFormatter);
+				LocalDateTime logout = logoutStr != null ? LocalDateTime.parse(logoutStr, dateTimeFormatter) : null;
+
+				sessions.add(new Session(userId, login, logout));
 			}
-
-		} catch(SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
-		}
-
-		return logins;
-	}
-
-
-	public void encryptDatabase() {
-		String read = "SELECT * from employees;";
-		String encrypt = "UPDATE management SET name = ?, password = ? WHERE name = ?;";
-		ObservableList<String> names = FXCollections.observableArrayList();
-		ObservableList<String> passwords = FXCollections.observableArrayList();
-		try (Connection conn = DriverManager.getConnection(database)) {
-			Statement stmt = conn.createStatement();
-			stmt.execute(read);
-			ResultSet results = stmt.getResultSet();
-			while(results.next()) {
-				String name = results.getString("name");
-				String password = results.getString("password");
-				names.add(name);
-				passwords.add(password);
-			}
-			PreparedStatement encryptStmt = conn.prepareStatement(encrypt);
-
-			String encryptedName = "";
-			String encryptedPass = "";
-			ObservableList<String> encryptedNameList = FXCollections.observableArrayList();
-			ObservableList<String> encryptedPassList = FXCollections.observableArrayList();
-			try {
-
-
-				//Creating a Signature object
-				Signature sign = Signature.getInstance("SHA256withRSA");
-
-				//Creating KeyPair generator object
-				KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
-
-				//Initializing the key pair generator
-				keyPairGen.initialize(2048);
-
-				//Generate the pair of keys
-				KeyPair pair = keyPairGen.generateKeyPair();
-
-				//Getting the public key from the key pair
-				PublicKey publicKey = pair.getPublic();
-
-				//Creating a Cipher object
-				Cipher nameCipher, passCipher;
-				nameCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-				passCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-				//Initializing a Cipher object
-				nameCipher.init(Cipher.ENCRYPT_MODE, publicKey);
-				passCipher.init(Cipher.ENCRYPT_MODE, publicKey);
-				//Add data to the cipher
-				byte[] nameInput = "name.getBytes()".getBytes();
-				//    byte [] passInput = pass.getBytes();
-				nameCipher.update(nameInput);
-				//  passCipher.update(passInput);
-
-				//encrypting the data
-				byte[] nameCipherText = nameCipher.doFinal();
-				byte [] passCipherText = passCipher.doFinal();
-
-				encryptedName = new String (nameCipherText, "UTF8");
-				encryptedPass = new String(passCipherText, "UTF8");
-
-				encryptedNameList.add(encryptedName);
-				encryptedPassList.add(encryptedPass);
-
-				//Initializing the same cipher for decryption
-				nameCipher.init(Cipher.DECRYPT_MODE, pair.getPrivate());
-
-				//Decrypting the text
-				byte[] decipheredText = nameCipher.doFinal(nameCipherText);
-
-
-			} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-				Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
-			} catch (InvalidKeyException e) {
-				Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
-			} catch (IllegalBlockSizeException e) {
-				Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
-			} catch (BadPaddingException e) {
-				Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
-			} catch (UnsupportedEncodingException e) {
-				Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
-			}
-
-			for(int i = 0; i < encryptedNameList.size(); i++) {
-				encryptStmt.setString(1, encryptedName);
-				encryptStmt.setString(2, encryptedPass);
-				encryptStmt.addBatch();
-			}
-
-			encryptStmt.executeUpdate();
-
 
 		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
+			Logger.getLogger("pharmacy-log").severe(
+					e.getMessage() + " culprit is: " + e.getCause() +
+							"\nlocation: " + this.getClass().getEnclosingMethod()
+			);
 		}
+
+		return sessions;
 	}
+
+
+
 
 	public ObservableList<Account<F>> readAccounts() {
 
@@ -272,7 +165,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 				"SELECT userId, name, password, accountTypeId, salary, workStart, workFinish " +
 						"FROM users;";
 
-		try (Connection conn = DriverManager.getConnection(database);
+		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(sql);
 			 ResultSet rs = stmt.executeQuery()) {
 
@@ -327,7 +220,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 						"LEFT JOIN privileges_archive p ON p.accountTypeId = a.accountTypeId " +
 						"GROUP BY a.accountTypeId";
 
-		try (Connection conn = DriverManager.getConnection(database);
+		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(sql);
 			 ResultSet rs = stmt.executeQuery()) {
 
@@ -357,7 +250,10 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		return accountTypes;
 	}
 
-
+	public boolean hasAccountTypes() {
+		boolean hasAccountTypes=  !readAccountTypes().isEmpty();
+		return hasAccountTypes;
+	}
 
 	public  List<AccountType<F>> readAccountTypes() {
 		List<AccountType<F>> accountTypes = new ArrayList<>();
@@ -369,7 +265,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 						"LEFT JOIN privileges p ON p.accountTypeId = a.accountTypeId " +
 						"GROUP BY a.accountTypeId";
 
-		try (Connection conn = DriverManager.getConnection(database);
+		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(sql);
 			 ResultSet rs = stmt.executeQuery()) {
 
@@ -400,7 +296,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public void createMaintainerAccount(Class<F> featureEnum) {
+	public void createMaintainerAccount() {
 		List<F> privileges = List.of(featureEnum.getEnumConstants());
 		AccountType<F> maintainerAccount = new AccountType<>("Maintainer", privileges, true);
 
@@ -416,7 +312,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 	void deleteAllAccounts() {
 		String sql = "DELETE FROM users";
-		try (Connection conn = DriverManager.getConnection(database)
+		try (Connection conn = dbConfig.openConnection()
 			 ;PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.executeUpdate();
 		} catch (SQLException e) {
@@ -427,7 +323,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	public boolean resetPassword(Account<F> account, String newPassword) {
 		boolean reset = false;
 		String command = "UPDATE users SET password = ? WHERE userId = ?";
-		try (Connection conn = DriverManager.getConnection(database)) {
+		try (Connection conn = dbConfig.openConnection()) {
 			PreparedStatement stmt = conn.prepareStatement(command);
 			stmt.setString(1, newPassword);
 			stmt.setInt(2, account.getUserId());
@@ -451,7 +347,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		String command = "SELECT userId, password from users WHERE userId = ? AND password = ?;"; //$NON-NLS-1$
 		boolean validCreds = false;
 
-		try(Connection conn = DriverManager.getConnection(database)) {
+		try(Connection conn = dbConfig.openConnection()) {
 			PreparedStatement stmt = conn.prepareStatement(command);
 			stmt.setInt(1, userId);
 			stmt.setString(2, hashedPassword);
@@ -477,7 +373,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 		String command = "DELETE FROM users WHERE userId = ?;";
 
-		try (Connection conn = DriverManager.getConnection(database);
+		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(command)) {
 
 			conn.setAutoCommit(false);
@@ -513,7 +409,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 		String sql = "INSERT INTO accountTypes (accountType, isAdmin) VALUES (?, ?)";
 
-		try (Connection conn = DriverManager.getConnection(database);
+		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
 			stmt.setString(1, accountType.getType());
@@ -552,7 +448,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	public boolean updateAccountType(int accountTypeId, AccountType<F> accountType) {
 		String sqlUpdateType = "UPDATE accountTypes SET accountType = ?, isAdmin = ? WHERE accountTypeId = ?";
 
-		try (Connection connection = DriverManager.getConnection(database);
+		try (Connection connection = dbConfig.openConnection();
 			 PreparedStatement stmt = connection.prepareStatement(sqlUpdateType)) {
 
 			stmt.setString(1, accountType.getType());
@@ -579,7 +475,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		String deletePrivilegesSql = "DELETE FROM privileges WHERE accountTypeId = ?";
 		String deleteAccountTypeSql = "DELETE FROM accountTypes WHERE accountTypeId = ?";
 
-		try (Connection conn = DriverManager.getConnection(database)) {
+		try (Connection conn = dbConfig.openConnection()) {
 			conn.setAutoCommit(false);
 
 			// Delete related privileges
@@ -602,7 +498,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			return true;
 
 		} catch (Exception e) {
-			try { DriverManager.getConnection(database).rollback(); } catch (Exception ignored) {}
+			try { dbConfig.openConnection().rollback(); } catch (Exception ignored) {}
 
 			return false;
 		}
@@ -613,7 +509,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	public void addPrivileges(AccountType<F> accountType) throws SQLException {
 		String sql = "INSERT OR IGNORE INTO privileges (accountTypeId, feature) VALUES (?, ?)";
 
-		try (Connection connection = DriverManager.getConnection(database);
+		try (Connection connection = dbConfig.openConnection();
 			 PreparedStatement stmt = connection.prepareStatement(sql)) {
 
 			int accountTypeId = accountType.getAccountTypeId();
@@ -632,7 +528,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	 boolean deleteAllPrivileges() {
 
 		String sql = "DELETE FROM privileges;";
-		try (Connection conn = DriverManager.getConnection(database);
+		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.execute();
 			return true;
@@ -644,7 +540,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 	boolean deleteAllAccountTypes() {
 		String sql = "DELETE FROM accountTypes;";
-		try (Connection conn = DriverManager.getConnection(database);
+		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.execute();
 			return true;
@@ -678,7 +574,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		String command = "INSERT INTO users (name, password, accountTypeId, salary, workStart, workFinish) "
 				+ "VALUES (?,?,?,?,?,?)";
 
-		try (Connection conn = DriverManager.getConnection(database);
+		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(command, Statement.RETURN_GENERATED_KEYS)) {
 
 			stmt.setString(1, account.getName());
@@ -723,7 +619,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 		String command = "DELETE FROM users WHERE userId = ?;";
 
-		try (Connection conn = DriverManager.getConnection(database);
+		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(command)) {
 
 			stmt.setInt(1, account.getUserId());

@@ -1,22 +1,12 @@
 package com.moubassher.accountsfx;
 
-import atlantafx.base.theme.CupertinoDark;
-import atlantafx.base.theme.CupertinoLight;
 import com.context.themes.vibrant_blue.MyThemes;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.geometry.NodeOrientation;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
 
 ///Logic Flow:
 /// 1. The first login requires an admin account.
@@ -36,47 +26,11 @@ public class AccountsFxMain extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
-        //Application.setUserAgentStylesheet(new CupertinoLight().getUserAgentStylesheet());
+        AccountsFX<TestFeature> accountsFX = new AccountsFX<>(TestFeature.class, "AccountsFxTest");
+        accountsFX.initialize();
 
-        AccountDao<TestFeature> accountDao = new AccountDao<>(TestFeature.class);
-
-        LoginCtrl<TestFeature> loginCtrl = new LoginCtrl<>(accountDao);
-
-        FXMLLoader loginLoader = new FXMLLoader(this.getClass().getResource("login.fxml"));
-        loginLoader.setController(loginCtrl);
-
-        VBox loginRoot = loginLoader.load();
-
-        Scene scene = new Scene(loginRoot, 540, 440);
-       // scene.getStylesheets().clear();
+        Scene scene = new Scene(new HBox(), 540, 440);
         scene.getStylesheets().add(MyThemes.vibrantBlue);
-
-        MaintainerAccountCtrl<TestFeature> maintainerAccountCtrl = new MaintainerAccountCtrl<>(accountDao, TestFeature.class);
-        FXMLLoader maintainerLoader = new FXMLLoader(this.getClass().getResource("maintainer_account.fxml"));
-        maintainerLoader.setController(maintainerAccountCtrl);
-        HBox maintainerViewRoot = maintainerLoader.load();
-        scene.setRoot(maintainerViewRoot);
-
-        boolean isAdminRequired = accountDao.isAdminRequired();
-        isAdminRequired = false;
-        if(isAdminRequired) {
-            Optional<ButtonType> result = showMissingAdminAlert();
-
-            if(result.isPresent()) {
-                ButtonBar.ButtonData userChoice = result.get().getButtonData();
-                if (userChoice == ButtonBar.ButtonData.CANCEL_CLOSE) {
-                    System.exit(0);
-                }else if (userChoice == ButtonBar.ButtonData.OK_DONE) {
-
-                    accountDao.createMaintainerAccount(TestFeature.class);
-                    AccountCreateCtrl<TestFeature> accountCreateCtrl = new AccountCreateCtrl<>(accountDao,
-                            List.of(), true);
-                    accountCreateCtrl.showCreateAdminAccountDialog();
-
-                }
-            }
-
-        }
 
         stage.setScene(scene);
         stage.show();
@@ -84,20 +38,5 @@ public class AccountsFxMain extends Application {
     }
 
 
-    private Optional<ButtonType> showMissingAdminAlert() {
-        Alert alert =new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("المحاسب الذهبي");
-        alert.setHeaderText("لا يوجد حساب إداري على النظام. يجب إنشاء على الأقل حساب إداري واحد لاستخدام النظام.");
-        alert.getDialogPane().getStylesheets().add("GreyFabric.css");
-        ButtonType ok = new ButtonType("موافق", ButtonBar.ButtonData.OK_DONE);
-        ButtonType quit = new ButtonType("خروج", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-        alert.getButtonTypes().setAll(ok, quit);
-        alert.getDialogPane().setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
-
-        Optional<ButtonType> result = alert.showAndWait();
-
-        return result;
-    }
 
 }
