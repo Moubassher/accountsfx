@@ -1,5 +1,6 @@
 package com.moubassher.accountsfx;
 
+import com.moubassher.accountsfx.testApp.TestFeature;
 import javafx.collections.ObservableList;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,7 +28,7 @@ public class AccountTests {
 
         accountDao.deleteAllAccounts();
         accountDao.deleteAllPrivileges();
-        accountDao.deleteAllAccountTypes();
+        accountDao.deleteAccountTypes();
 
         passwordValidator = new PasswordValidator();
     }
@@ -37,7 +38,7 @@ public class AccountTests {
     void afterAll() {
         accountDao.deleteAllAccounts();
         accountDao.deleteAllPrivileges();
-        accountDao.deleteAllAccountTypes();
+        accountDao.deleteAccountTypes();
     }
 
 
@@ -46,7 +47,7 @@ public class AccountTests {
     void testAddingAccountTypes() {
         List<TestFeature> features = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
 
-        AccountType<TestFeature> accountType1 = new AccountType<>("account type 1", features, true);
+        AccountType<TestFeature> accountType1 = new AccountType<>("account type 1", features, AccountType.Class.ADMIN);
         boolean added = accountDao.addAccountType(accountType1);
         assertTrue(added, "Account type not added");
 
@@ -59,21 +60,21 @@ public class AccountTests {
     @DisplayName("Can update an account type's name")
     void testUpdatingAccountTypeName() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
-        AccountType<TestFeature> accountType = new AccountType<>("salesman", privileges, false);
+        AccountType<TestFeature> accountType = new AccountType<>("salesman", privileges, AccountType.Class.NON_ADMIN);
 
         boolean added = accountDao.addAccountType(accountType);
         assertTrue(added, "Account type was not added and is required for this update test");
 
         String updatedName = "Senior accountant";
-        AccountType<TestFeature> updatedAccountType = new AccountType<>(updatedName, privileges, false);
+        AccountType<TestFeature> updatedAccountType = new AccountType<>(updatedName, privileges, AccountType.Class.NON_ADMIN);
         int accountTypeId = accountType.getAccountTypeId();
 
         boolean updated = accountDao.updateAccountType(accountTypeId, updatedAccountType);
         assertTrue(updated, "Account type's name was not updated");
 
-        String newName = updatedAccountType.getType();
+        String newName = updatedAccountType.getTypeName();
         AccountType<TestFeature> readAccountType = accountDao.getAccountType(accountTypeId);
-        String readName = readAccountType.getType();
+        String readName = readAccountType.getTypeName();
         assertEquals(newName, readName, "Account type's name was not updated");
 
     }
@@ -82,7 +83,7 @@ public class AccountTests {
     @DisplayName("Can delete an account type")
     void testDeletingAccountType() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
-        AccountType<TestFeature> accountType = new AccountType<>("deletable account type", privileges, false);
+        AccountType<TestFeature> accountType = new AccountType<>("deletable account type", privileges, AccountType.Class.NON_ADMIN);
 
         boolean added = accountDao.addAccountType(accountType);
         assertTrue(added, "Account type was not added and is required for deletion test");
@@ -100,7 +101,7 @@ public class AccountTests {
     @DisplayName("Can update an account type's privileges")
     void testUpdatingAccountTypePrivileges() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
-        AccountType<TestFeature> accountType = new AccountType<>("accountant", privileges, false);
+        AccountType<TestFeature> accountType = new AccountType<>("accountant", privileges, AccountType.Class.NON_ADMIN);
 
         boolean added = accountDao.addAccountType(accountType);
         assertTrue(added, "Account type was not added and is required for this update test");
@@ -124,7 +125,7 @@ public class AccountTests {
     void testDeletingAccounts() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
 
-        AccountType<TestFeature> accountType = new AccountType<>("account type x", privileges, true);
+        AccountType<TestFeature> accountType = new AccountType<>("account type x", privileges, AccountType.Class.ADMIN);
         accountDao.addAccountType(accountType);
 
         String password = "addddd234$";
@@ -166,7 +167,7 @@ public class AccountTests {
 
         boolean created = accountDao.addNewAccount(account);
         if(created) {
-    
+
             ObservableList<Account<TestFeature>> accounts = accountDao.readAccounts();
             assertNotNull(accounts, "Users is null");
             assertFalse(accounts.isEmpty());
@@ -181,7 +182,7 @@ public class AccountTests {
         String password = "user123";
         String hashedPassword = passwordValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
-        AccountType accountType = new AccountType("regular accountType", privileges, false);
+        AccountType accountType = new AccountType("regular accountType", privileges, AccountType.Class.NON_ADMIN);
         Account<TestFeature> account = new Account("Robert C. Martin", hashedPassword, accountType);
         return account;
     }
@@ -190,7 +191,7 @@ public class AccountTests {
         String password = "user123$";
         String hashedPassword = passwordValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.All);
-        AccountType<TestFeature> adminAccountType =   new AccountType(name, privileges, true);
+        AccountType<TestFeature> adminAccountType =   new AccountType(name, privileges, AccountType.Class.ADMIN);
         Account<TestFeature> admin = new Account<>("David Adam", hashedPassword, adminAccountType);
 
         return admin;
@@ -211,7 +212,7 @@ public class AccountTests {
 
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
 
-        AccountType accountType =  new AccountType("مبيعات", privileges, false);
+        AccountType accountType =  new AccountType("مبيعات", privileges, AccountType.Class.NON_ADMIN);
         boolean accountTypeAdded = accountDao.addAccountType(accountType);
         assertTrue(accountTypeAdded, "Account type not added, and is required for this test");
 
@@ -242,7 +243,7 @@ public class AccountTests {
     @DisplayName("Cannot add a nameless account type")
     void testAddingNamelessAccountType() {
         List<TestFeature> privileges = List.of();
-        AccountType<TestFeature> namelessAccountType = new AccountType<>(null, privileges, false);
+        AccountType<TestFeature> namelessAccountType = new AccountType<>(null, privileges, AccountType.Class.NON_ADMIN);
 
         assertThrows(IllegalArgumentException.class,
                 () -> accountDao.addAccountType(namelessAccountType));
@@ -252,7 +253,7 @@ public class AccountTests {
     @DisplayName("Cannot add an account type with no privileges at all")
     void testAddingAccountTypeWithNoPrivileges() {
         List<TestFeature> privileges = List.of();
-        AccountType<TestFeature> unprivileged = new AccountType<>("poor account type", privileges, true);
+        AccountType<TestFeature> unprivileged = new AccountType<>("poor account type", privileges, AccountType.Class.ADMIN);
 
         assertThrows(IllegalArgumentException.class,
                 () -> accountDao.addAccountType(unprivileged));
@@ -262,7 +263,7 @@ public class AccountTests {
     @DisplayName("Cannot add a duplicate account type")
     void testAddingDuplicateAccountType() {
         List<TestFeature> privileges = List.of(TestFeature.All);
-        AccountType<TestFeature> accountType = new AccountType<>("Some name", privileges, false);
+        AccountType<TestFeature> accountType = new AccountType<>("Some name", privileges, AccountType.Class.NON_ADMIN);
         boolean added = accountDao.addAccountType(accountType);
         assertTrue(added, "Account type not added and is required for the test");
 
@@ -284,7 +285,7 @@ public class AccountTests {
         AccountType employeeType = new AccountType(
                 "Employee",
                 employeePrivileges,
-                false   // isAdmin = false
+                AccountType.Class.NON_ADMIN   // isAdmin = false
         );
         accountDao.addAccountType(employeeType);
 
@@ -295,14 +296,14 @@ public class AccountTests {
                 () -> accountDao.addNewAccount(nonAdminAccount));
 
         List<TestFeature> privileges = List.of(TestFeature.All);
-        AccountType adminType = new AccountType("Admin Y", privileges, true);
+        AccountType adminType = new AccountType("Admin Y", privileges, AccountType.Class.ADMIN);
         boolean adminTypeAdded = accountDao.addAccountType(adminType);
         assertTrue(adminTypeAdded, "Admin type not added");
 
         Account adminAccount = new Account("David Adam", "hashedPassword123", adminType);
         boolean adminAdded = accountDao.addNewAccount(adminAccount);
         assertTrue(adminAdded, "Admin account not added");
-        
+
 
         //now that an admin has been added, a non-admin account can be added:
         boolean nonAdminAdded = accountDao.addNewAccount(nonAdminAccount);
@@ -316,7 +317,7 @@ public class AccountTests {
         String password = "abc123";
         String hashedPassword = passwordValidator.hashPassword(password);
         List<TestFeature> privileges = List.of(TestFeature.FeatureB);
-        AccountType<TestFeature> userType = new AccountType<>("مبيعات", privileges, false);
+        AccountType<TestFeature> userType = new AccountType<>("مبيعات", privileges, AccountType.Class.NON_ADMIN);
         int salary = 300_000;
 
         LocalTime illogicalWorkstart = LocalTime.of(8, 0);
@@ -337,7 +338,7 @@ public class AccountTests {
             String password = "user123";
             String hashedPassword = passwordValidator.hashPassword(password);
             List<TestFeature> privileges = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
-            AccountType accountType = new AccountType("User 154", privileges, true);
+            AccountType accountType = new AccountType("User 154", privileges, AccountType.Class.ADMIN);
             boolean accountTypeAdded = accountDao.addAccountType(accountType);
 
             if (accountTypeAdded) {
@@ -362,29 +363,29 @@ public class AccountTests {
             String password = "user123";
             String hashedPassword = passwordValidator.hashPassword(password);
             List<TestFeature> privileges = List.of(TestFeature.FeatureB, TestFeature.FeatureA);
-            AccountType accountType = new AccountType("User 888", privileges, true);
+            AccountType accountType = new AccountType("User 888", privileges, AccountType.Class.ADMIN);
             boolean accountTypeAdded = accountDao.addAccountType(accountType);
 
-            if (accountTypeAdded) {
-                Account<TestFeature> account = new Account("Night Owl", hashedPassword, accountType);
+            assertTrue(accountTypeAdded, "Account type not created and is required for this test");
 
-                //attempt to log in before an account is created
-                boolean isUserLoggedIn = accountDao.loginAccount(account);
-                assertFalse(isUserLoggedIn, "An invalid user was able to log in");
+            Account<TestFeature> account = new Account("Night Owl", hashedPassword, accountType);
 
-                //now create the account:
-                boolean created = accountDao.addNewAccount(account);
-                assertTrue(created, "Account was not created and so login test will fail");
+            //attempt to log in before an account is created
+            boolean isUserLoggedIn = accountDao.loginAccount(account);
+            assertFalse(isUserLoggedIn, "An invalid user was able to log in");
 
-                isUserLoggedIn = accountDao.loginAccount(account);
-                assertTrue(isUserLoggedIn, "A valid user was not able to log in");
+            //now create the account:
+            boolean created = accountDao.addNewAccount(account);
+            assertTrue(created, "Account was not created and so login test will fail");
 
-                boolean isLoggedOut = accountDao.logoutAccount(account);
-                assertTrue(isLoggedOut, "Account was not able to log out");
-            }
+            isUserLoggedIn = accountDao.loginAccount(account);
+            assertTrue(isUserLoggedIn, "A valid user was not able to log in");
+
+            boolean isLoggedOut = accountDao.logoutAccount(account);
+            assertTrue(isLoggedOut, "Account was not able to log out");
+
 
         }
-
     }
 
 }

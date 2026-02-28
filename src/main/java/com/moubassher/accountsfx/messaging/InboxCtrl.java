@@ -1,4 +1,4 @@
-package com.moubassher.accountsfx;
+package com.moubassher.accountsfx.messaging;
 
 import com.context.our_utilities.MyNotifications;
 

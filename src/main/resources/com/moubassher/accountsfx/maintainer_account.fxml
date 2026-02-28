@@ -5,7 +5,8 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Accordion?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TitledPane?>
@@ -16,80 +17,97 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox fx:id="root" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="253.0" prefWidth="879.0" spacing="10.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:id="root" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <VBox prefHeight="200.0" prefWidth="172.0">
+      <HBox maxHeight="-Infinity" minHeight="-Infinity" prefHeight="253.0" prefWidth="879.0" spacing="10.0">
          <children>
-            <ToggleButton fx:id="viewAccountTypesBtn" maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" selected="true" text="Account types">
-               <toggleGroup>
-                  <ToggleGroup fx:id="viewPaneGroup" />
-               </toggleGroup>
-            </ToggleButton>
-            <ToggleButton fx:id="viewAccountsBtn" maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" text="Accounts" toggleGroup="$viewPaneGroup" />
-         </children>
-      </VBox>
-      <StackPane HBox.hgrow="SOMETIMES">
-         <children>
-            <HBox fx:id="accountTypesPane" prefHeight="100.0" prefWidth="200.0">
+            <VBox prefHeight="200.0" prefWidth="172.0">
                <children>
-                  <VBox maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="374.0" spacing="10.0">
-                     <children>
-                        <JFXTextField fx:id="accountTypeField" labelFloat="true" maxWidth="130.0" prefWidth="50.0" promptText="account type" />
-                        <FlowPane fx:id="featurePane" hgap="10.0" prefHeight="99.0" prefWidth="600.0" vgap="10.0" />
-                        <CheckBox fx:id="isAdminBox" mnemonicParsing="false" text="Is Admin" />
-                        <HBox prefWidth="200.0" spacing="10.0">
-                           <children>
-                              <Button fx:id="addAccountTypeBtn" mnemonicParsing="false" text="Add Account Type" />
-                              <Button fx:id="deleteAccountTypeBtn" mnemonicParsing="false" text="Delete Account Type" />
-                           </children>
-                        </HBox>
-                     </children>
-                  </VBox>
-                  <VBox spacing="10.0" HBox.hgrow="SOMETIMES">
-                     <children>
-                        <HBox prefWidth="200.0" spacing="10.0">
-                           <children>
-                              <ToggleButton fx:id="currentAccountTypeToggleBtn" mnemonicParsing="false" selected="true" text="Current">
-                                 <toggleGroup>
-                                    <ToggleGroup fx:id="currentAndArchivedGroup" />
-                                 </toggleGroup>
-                              </ToggleButton>
-                              <ToggleButton fx:id="archivedAccountTypeToggleBtn" mnemonicParsing="false" text="Archived" toggleGroup="$currentAndArchivedGroup" />
-                           </children>
-                        </HBox>
-                        <ScrollPane fx:id="accordionContainer" fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" pannable="true" prefWidth="200.0">
-                           <content>
-                              <Accordion fx:id="accountTypeAccordion" minWidth="-Infinity">
-                                <panes>
-                                  <TitledPane animated="false" text="untitled 1" />
-                                  <TitledPane animated="false" text="untitled 2" />
-                                </panes>
-                              </Accordion>
-                           </content>
-                        </ScrollPane>
-                     </children>
-                  </VBox>
-               </children>
-            </HBox>
-            <VBox fx:id="accountsPane" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
-               <children>
-                  <ListView fx:id="accountsListView" prefHeight="200.0" prefWidth="200.0" />
-                  <HBox prefWidth="200.0" spacing="10.0">
-                     <children>
-                        <Button fx:id="resetPasswordBtn" mnemonicParsing="false" text="Reset Password" />
-                        <Button fx:id="refreshAccountsBtn" mnemonicParsing="false" text="Refresh list" />
-                     </children>
-                  </HBox>
+                  <ToggleButton fx:id="viewAccountTypesBtn" maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" selected="true" text="Account types">
+                     <toggleGroup>
+                        <ToggleGroup fx:id="viewPaneGroup" />
+                     </toggleGroup>
+                  </ToggleButton>
+                  <ToggleButton fx:id="viewAccountsBtn" maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" text="Accounts" toggleGroup="$viewPaneGroup" />
                </children>
             </VBox>
+            <StackPane HBox.hgrow="SOMETIMES">
+               <children>
+                  <HBox fx:id="accountTypesPane" prefHeight="100.0" prefWidth="200.0">
+                     <children>
+                        <VBox maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="374.0" spacing="10.0">
+                           <children>
+                              <JFXTextField fx:id="accountTypeField" labelFloat="true" maxWidth="130.0" prefWidth="50.0" promptText="account type" />
+                              <FlowPane fx:id="featurePane" hgap="10.0" prefHeight="99.0" prefWidth="600.0" vgap="10.0" />
+                              <ChoiceBox fx:id="accountTypeClassSelector" minWidth="100.0" prefWidth="150.0" />
+                              <HBox prefWidth="200.0" spacing="10.0">
+                                 <children>
+                                    <Button fx:id="addAccountTypeBtn" mnemonicParsing="false" text="Add Account Type" />
+                                    <Button fx:id="deleteAccountTypeBtn" mnemonicParsing="false" text="Delete Account Type" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <VBox spacing="10.0" HBox.hgrow="SOMETIMES">
+                           <children>
+                              <Label text="Account Types:" />
+                              <HBox prefWidth="200.0" spacing="10.0">
+                                 <children>
+                                    <ToggleButton fx:id="currentAccountTypeToggleBtn" mnemonicParsing="false" selected="true" text="Current">
+                                       <toggleGroup>
+                                          <ToggleGroup fx:id="currentAndArchivedGroup" />
+                                       </toggleGroup>
+                                    </ToggleButton>
+                                    <ToggleButton fx:id="archivedAccountTypeToggleBtn" mnemonicParsing="false" text="Archived" toggleGroup="$currentAndArchivedGroup" />
+                                 </children>
+                              </HBox>
+                              <ScrollPane fx:id="accordionContainer" fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" pannable="true" prefWidth="200.0">
+                                 <content>
+                                    <Accordion fx:id="accountTypeAccordion" minWidth="-Infinity">
+                                      <panes>
+                                        <TitledPane animated="false" text="untitled 1" />
+                                        <TitledPane animated="false" text="untitled 2" />
+                                      </panes>
+                                    </Accordion>
+                                 </content>
+                              </ScrollPane>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <VBox fx:id="accountsPane" prefHeight="200.0" prefWidth="100.0" spacing="10.0" visible="false">
+                     <children>
+                        <ListView fx:id="accountsListView" prefHeight="200.0" prefWidth="200.0" />
+                        <HBox prefWidth="200.0" spacing="10.0">
+                           <children>
+                              <Button fx:id="resetPasswordBtn" mnemonicParsing="false" text="Reset Password" />
+                              <Button fx:id="refreshAccountsBtn" mnemonicParsing="false" text="Refresh list" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+            </StackPane>
          </children>
-      </StackPane>
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+         <stylesheets>
+            <URL value="@theme.css" />
+            <URL value="@vibrant_blue.css" />
+         </stylesheets>
+      </HBox>
+      <HBox alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" minHeight="-Infinity" prefWidth="200.0" VBox.vgrow="ALWAYS">
+         <children>
+            <Button fx:id="doneBtn" mnemonicParsing="false" text="Done" />
+         </children>
+         <VBox.margin>
+            <Insets bottom="50.0" left="50.0" />
+         </VBox.margin>
+      </HBox>
    </children>
-   <padding>
-      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-   </padding>
    <stylesheets>
-      <URL value="@theme.css" />
       <URL value="@vibrant_blue.css" />
+      <URL value="@theme.css" />
    </stylesheets>
-</HBox>
+</VBox>

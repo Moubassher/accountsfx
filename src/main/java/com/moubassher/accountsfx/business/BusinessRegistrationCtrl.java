@@ -1,5 +1,6 @@
-package com.moubassher.accountsfx;
+package com.moubassher.accountsfx.business;
 
+import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -14,47 +15,56 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.net.URL;
 import java.nio.file.Path;
+import java.util.ResourceBundle;
 
 import static java.nio.file.Files.writeString;
 
-public class Pharmacy  {
+public class BusinessRegistrationCtrl implements Initializable {
 
-	private String name, city, address;
-	private int phone1, phone2;
+	private BusinessAddress businessAddress;
 
-	public String getName() {
-		return name;
+	private BusinessType businessType;
+	private String appName;
+
+	public BusinessRegistrationCtrl(String appName, BusinessType businessType) {
+		this.appName = appName;
+		this.businessType = businessType;
 	}
 
-	public void showPharmacyInfo() {
+	@Override
+	public void initialize(URL location, ResourceBundle resources) {
+
+	}
+
+	public void showEstablishmentInfo() {
 		Stage stage = new Stage();
 		stage.initModality(Modality.APPLICATION_MODAL);
 
-		VBox box = pharmacyInfoPane();
+		VBox box = establishmentInfoPane();
 		Scene scene = new Scene(box, 600, 600);
 		stage.setScene(scene);
 		stage.show();
 	}
 
-	private JSONObject pharmacyInfo = null;
 
-	private void readPharmacyInfo() {
+	private void readEstablishmentType() {
 
-		pharmacyInfo = new JSONObject();
+		JSONObject establishmentInfo = new JSONObject();
+/*
 
 		File pharmacyFile = new File("C:pharmaNetResources//pharmacyDetails.json");
 		try {
 			String pharmacyInfoString= Files.readString(pharmacyFile.toPath());
-			pharmacyInfo = new JSONObject(pharmacyInfoString);
+			establishmentInfo = new JSONObject(pharmacyInfoString);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+*/
 	}
 
-	public VBox pharmacyInfoPane() {
+	public VBox establishmentInfoPane() {
 
 		String id = "pharmacyInfo";
 
@@ -87,9 +97,8 @@ public class Pharmacy  {
 
 		Button register = new Button("تسجيل");
 		register.setOnAction(x -> {
-			registerPharmacy(pharmacyNameTF, addressTF, cityCB, phone1TF, phone2TF);
+			registerBusiness(pharmacyNameTF, addressTF, cityCB, phone1TF, phone2TF);
 		});
-
 
 		VBox box = new VBox(20);
 		box.setPadding(new Insets(30));
@@ -98,9 +107,9 @@ public class Pharmacy  {
 		return box;
 	}
 
-	private void registerPharmacy(TextField pharmacyNameTF, TextField addressTF, ChoiceBox<String> cityCB,
+	private void registerBusiness(TextField businessNameField, TextField addressTF, ChoiceBox<String> cityCB,
 								  TextField phone1TF, TextField phone2TF) {
-		String pharmacy = pharmacyNameTF.getText();
+		String pharmacy = businessNameField.getText();
 		String address = addressTF.getText();
 		String city = cityCB.getSelectionModel().getSelectedItem();
 		String phone1 = phone1TF.getText();
@@ -108,7 +117,7 @@ public class Pharmacy  {
 
 		JSONObject pharmacyJson =  new JSONObject();
 
-		pharmacyJson.put("pharmacyName", pharmacy);
+		pharmacyJson.put("businessName", pharmacy);
 		pharmacyJson.put("address", address);
 		pharmacyJson.put("city", city);
 		pharmacyJson.put("phone1", phone1);
@@ -133,16 +142,17 @@ public class Pharmacy  {
 		}
 	}
 
-	private static Pharmacy instance = null;
+	private static BusinessRegistrationCtrl instance = null;
 
-	private Pharmacy() {
-		readPharmacyInfo();
+	private BusinessRegistrationCtrl() {
+		readEstablishmentType();
 	}
 
-	public static Pharmacy getInstance() {
+	public static BusinessRegistrationCtrl getInstance() {
 		if (instance == null) {
-			instance = new Pharmacy();
+			instance = new BusinessRegistrationCtrl();
 		}
 		return instance;
 	}
+
 }

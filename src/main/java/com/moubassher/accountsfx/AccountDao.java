@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	
 
-	private final String databaseLocation = "file:/C:/pharmaNetResources/databases/"; //$NON-NLS-1$
-
 	DateTimeFormatter localTimeformat =
 			DateTimeFormatter.ofPattern("hh:mm a").localizedBy(Locale.forLanguageTag("AR"));
 
@@ -137,16 +135,11 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			}
 
 		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(
-					e.getMessage() + " culprit is: " + e.getCause() +
-							"\nlocation: " + this.getClass().getEnclosingMethod()
-			);
+			Logger.getLogger("pharmacy-log").severe(e.getMessage() + " culprit is: " + e.getCause() + "\nlocation: " + this.getClass().getEnclosingMethod());
 		}
 
 		return sessions;
 	}
-
-
 
 
 	public ObservableList<Account<F>> readAccounts() {
@@ -238,8 +231,8 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 							.toList();
 				}
 
-				boolean isAdmin = rs.getBoolean("isAdmin");
-				AccountType<F> accountType = new AccountType(accountTypeId, type, privileges, isAdmin);
+				AccountType.Class accountClass = AccountType.Class.valueOf(rs.getString("accountClass"));
+				AccountType<F> accountType = new AccountType(accountTypeId, type, privileges, accountClass);
 				accountTypes.add(accountType);
 			}
 
@@ -259,7 +252,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		List<AccountType<F>> accountTypes = new ArrayList<>();
 
 		String sql =
-				"SELECT a.accountTypeId, a.accountType, a.isAdmin, " +
+				"SELECT a.accountTypeId, a.accountTypeName, a.accountClass, " +
 						" GROUP_CONCAT(p.feature) AS privileges " +
 						"FROM accountTypes a " +
 						"LEFT JOIN privileges p ON p.accountTypeId = a.accountTypeId " +
@@ -271,7 +264,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 			while (rs.next()) {
 				int accountTypeId = rs.getInt("accountTypeId");
-				String type = rs.getString("accountType");
+				String type = rs.getString("accountTypeName");
 
 				String privilegeString = rs.getString("privileges");
 				List<F> privileges;
@@ -283,8 +276,8 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 							.toList();
 				}
 
-				boolean isAdmin = rs.getBoolean("isAdmin");
-				AccountType<F> accountType = new AccountType(accountTypeId, type, privileges, isAdmin);
+				AccountType.Class accountClass = AccountType.Class.valueOf(rs.getString("accountClass"));
+				AccountType<F> accountType = new AccountType(accountTypeId, type, privileges, accountClass);
 				accountTypes.add(accountType);
 			}
 
@@ -298,19 +291,19 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 	public void createMaintainerAccount() {
 		List<F> privileges = List.of(featureEnum.getEnumConstants());
-		AccountType<F> maintainerAccount = new AccountType<>("Maintainer", privileges, true);
+		AccountType<F> maintainerAccount = new AccountType<>("Maintainer", privileges, AccountType.Class.MAINTAINER);
 
 		boolean maintainerTypeCreated = addAccountType(maintainerAccount);
 		if(maintainerTypeCreated) {
 			String password = "perseverence123$";
 			String hashedPassword = new PasswordValidator().hashPassword(password);
-			Account maintainer = new Account("Moubassher", hashedPassword, maintainerAccount);
+			Account<F> maintainer = new Account<>("Moubassher", hashedPassword, maintainerAccount);
 			addNewAccount(maintainer);
 		}
 
 	}
 
-	void deleteAllAccounts() {
+	public void deleteAllAccounts() {
 		String sql = "DELETE FROM users";
 		try (Connection conn = dbConfig.openConnection()
 			 ;PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -407,13 +400,13 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		}
 
 
-		String sql = "INSERT INTO accountTypes (accountType, isAdmin) VALUES (?, ?)";
+		String sql = "INSERT OR IGNORE INTO accountTypes (accountTypeName, accountClass) VALUES (?, ?)";
 
 		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-			stmt.setString(1, accountType.getType());
-			stmt.setBoolean(2, accountType.isAdmin());
+			stmt.setString(1, accountType.getTypeName());
+			stmt.setString(2, accountType.getAccountClass().toString());
 
 			int affected = stmt.executeUpdate();
 
@@ -438,21 +431,21 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 	private boolean isAccountTypeNew(AccountType<F> accountType) {
-		String newType = accountType.getType().toLowerCase();
+		String newType = accountType.getTypeName().toLowerCase();
 		return readAccountTypes().stream()
-				.map(type -> type.getType().toLowerCase())
+				.map(type -> type.getTypeName().toLowerCase())
 				.noneMatch(name -> name.equals(newType));
 	}
 
 
 	public boolean updateAccountType(int accountTypeId, AccountType<F> accountType) {
-		String sqlUpdateType = "UPDATE accountTypes SET accountType = ?, isAdmin = ? WHERE accountTypeId = ?";
+		String sqlUpdateType = "UPDATE accountTypes SET accountTypeName = ?, accountClass = ? WHERE accountTypeId = ?";
 
 		try (Connection connection = dbConfig.openConnection();
 			 PreparedStatement stmt = connection.prepareStatement(sqlUpdateType)) {
 
-			stmt.setString(1, accountType.getType());
-			stmt.setBoolean(2, accountType.isAdmin());
+			stmt.setString(1, accountType.getTypeName());
+			stmt.setString(2, accountType.getAccountClass().toString());
 			stmt.setInt(3, accountTypeId);
 			stmt.executeUpdate();
 
@@ -504,7 +497,17 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		}
 	}
 
-
+	public boolean deleteAccountTypes() {
+		String sql = "DELETE FROM accountTypes";
+		try(Connection conn = dbConfig.openConnection();
+		PreparedStatement stmt = conn.prepareStatement(sql)) {
+			int rowsAffected = stmt.executeUpdate();
+			return rowsAffected > 0;
+		} catch (SQLException e) {
+            e.printStackTrace();
+			return false;
+        }
+    }
 
 	public void addPrivileges(AccountType<F> accountType) throws SQLException {
 		String sql = "INSERT OR IGNORE INTO privileges (accountTypeId, feature) VALUES (?, ?)";
@@ -525,21 +528,9 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	 boolean deleteAllPrivileges() {
+	 public boolean deleteAllPrivileges() {
 
 		String sql = "DELETE FROM privileges;";
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.execute();
-			return true;
-		} catch(SQLException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	boolean deleteAllAccountTypes() {
-		String sql = "DELETE FROM accountTypes;";
 		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.execute();
@@ -602,10 +593,8 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			}
 
 		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(
-					e.getMessage() + " culprit: " + e.getCause() +
-							"\nlocation: " + this.getClass().getEnclosingMethod()
-			);
+			Logger.getLogger("pharmacy-log").severe(e.getMessage() + " culprit: " + e.getCause() +
+							"\nlocation: " + this.getClass().getEnclosingMethod());
 		}
 
 		return added;

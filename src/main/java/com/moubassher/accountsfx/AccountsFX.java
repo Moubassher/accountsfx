@@ -7,12 +7,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,52 +18,45 @@ import java.util.Optional;
 
 public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
-
-    private Class<F> featureEnum;
-    private String appName;
+    private final Class<F> featureEnum;
+    private final String appName;
+    private Stage stage;
     private AccountDao<F> accountDao;
+    private LoginCtrl<F> loginCtrl;
 
-    public AccountsFX(Class<F> featureEnum, String appName) {
+    public AccountsFX(Class<F> featureEnum, String appName, Stage stage) {
         this.featureEnum = featureEnum;
         this.appName = appName;
+        this.stage = stage;
         accountDao = new AccountDao<>(featureEnum, appName);
     }
 
-    public AccountDao<F> getAccountDao() {
-        return accountDao;
-    }
-
-    public void initialize() throws IOException {
+    public Account<F> initialize()  {
 
         Pane root;
-        if(! accountDao.hasAccountTypes()) {
-             root = loadMaintainerView(accountDao);
-        } else {
-            root = createLoginView(accountDao);
-        }
-
-        showView(root);
 
         boolean isAdminRequired = accountDao.isAdminRequired();
 
-        if(isAdminRequired) {
-            Optional<ButtonType> result = showMissingAdminAlert();
-
+        if(!accountDao.hasAccountTypes()) {
+            Optional<ButtonType> result = showNoAccountTypesAlert();
             if(result.isPresent() && result.get().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-
-                accountDao.createMaintainerAccount();
-                AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao,
-                        List.of(), true);
-                accountCreateCtrl.showCreateAdminAccountDialog();
+                root = loadMaintainerView(accountDao);
+                showView(root);
             }
+        } else if(isAdminRequired) {
+            Optional<ButtonType> result = showMissingAdminAlert();
+            showAdminCreationView(result);
         }
 
+        root = loadLoginView(accountDao);
+
+        showView(root);
+
+        return loginCtrl.getCurrentUser();
     }
 
-
-
     private void showView(Pane pane) {
-        Stage stage = new Stage(StageStyle.UTILITY);
+        Stage stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
 
         Scene scene = new Scene(pane, 540, 440);
@@ -75,33 +66,61 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         stage.showAndWait();
     }
 
-    private HBox loadMaintainerView(AccountDao<F> accountDao) throws IOException {
+    private Pane loadMaintainerView(AccountDao<F> accountDao)  {
         MaintainerAccountCtrl<F> maintainerAccountCtrl = new MaintainerAccountCtrl<>(accountDao, featureEnum);
         FXMLLoader maintainerLoader = new FXMLLoader(AccountsFX.class.getResource("maintainer_account.fxml"));
         maintainerLoader.setController(maintainerAccountCtrl);
 
-        HBox maintainerViewRoot = maintainerLoader.load();
+        Pane maintainerViewRoot = null;
+        try {
+            maintainerViewRoot = maintainerLoader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         return maintainerViewRoot;
     }
 
-    private VBox createLoginView(AccountDao<F> accountDao) throws IOException {
+    private void showAdminCreationView(Optional<ButtonType> result) {
+        if(result.isPresent() && result.get().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
+            accountDao.createMaintainerAccount();
+            AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao,
+                    List.of(), true);
+            accountCreateCtrl.showCreateAdminAccountDialog();
+        }
+    }
 
-        LoginCtrl<F> loginCtrl = new LoginCtrl<>(accountDao);
+    private VBox loadLoginView(AccountDao<F> accountDao) {
+
+        loginCtrl = new LoginCtrl<>(accountDao);
 
         FXMLLoader loginLoader = new FXMLLoader(AccountsFX.class.getResource("login.fxml"));
         loginLoader.setController(loginCtrl);
 
-        VBox loginRoot = loginLoader.load();
-
+        VBox loginRoot = null;
+        try {
+            loginRoot = loginLoader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return loginRoot;
     }
 
+
     private Optional<ButtonType> showMissingAdminAlert() {
+         String noAdminAccountMsg = "لا يوجد حساب إداري على النظام. يجب إنشاء على الأقل حساب إداري واحد لاستخدام النظام.";
+        return showAlert(noAdminAccountMsg);
+    }
+    private Optional<ButtonType> showNoAccountTypesAlert() {
+         String noAccountTypesMsg = "لا توجد أي أنواع حسابات في النظام، يجب إنشاء على الأقل نوع حساب إداري واحد";
+        return showAlert(noAccountTypesMsg);
+    }
+
+    private Optional<ButtonType> showAlert(String msg) {
         Alert alert =new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("المحاسب الذهبي");
-        alert.setHeaderText("لا يوجد حساب إداري على النظام. يجب إنشاء على الأقل حساب إداري واحد لاستخدام النظام.");
-        alert.getDialogPane().getStylesheets().add("GreyFabric.css");
+        alert.setTitle(appName);
+        alert.setHeaderText(msg);
+
         ButtonType ok = new ButtonType("موافق", ButtonBar.ButtonData.OK_DONE);
         ButtonType quit = new ButtonType("خروج", ButtonBar.ButtonData.CANCEL_CLOSE);
 
@@ -115,6 +134,18 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
                 System.exit(0);
             }
         }
+
         return result;
     }
+
+    public void logOut(Stage stage) {
+        Pane login = loadLoginView(accountDao);
+        Scene scene = new Scene(login, 400, 400);
+        stage.setScene(scene);
+    }
+
+    public AccountDao<F> getAccountDao() {
+        return accountDao;
+    }
+
 }

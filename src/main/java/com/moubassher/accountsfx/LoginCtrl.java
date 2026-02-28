@@ -2,8 +2,6 @@ package com.moubassher.accountsfx;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.context.our_utilities.MyNotifications;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -37,9 +35,7 @@ import java.util.function.Predicate;
  */
 public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable {
 
-	private StringProperty loggedInUser = new SimpleStringProperty();
-
-	private AccountDao<F> accountDao = new AccountDao<>();
+	private AccountDao<F> accountDao;
 
 	TaskDatabase taskDatabase = TaskDatabase.getInstance();
 
@@ -72,6 +68,10 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		this.accountDao = accountDao;
 	}
 
+	public LoginCtrl(Account<F> currentUser) {
+		this.currentUser = currentUser;
+	}
+
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 
@@ -85,7 +85,7 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 
 		accountTypeSelector.getItems().setAll(accountDao.readAccountTypes());
 
-		onAccountTypeSelected(accountType -> getAccountsForType(accountType.getType()));
+		onAccountTypeSelected(accountType -> getAccountsForType(accountType.getTypeName()));
 
 		credsInfoDisplay.setId("error");
 		if(isUserManager) {
@@ -102,13 +102,11 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 			String description = "تم إرسال الطلب للإدارة";
 			Alert alert = new Alert(Alert.AlertType.INFORMATION);
 			alert.setContentText(description);
+			alert.getDialogPane().setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
 			ButtonType okBtn = new ButtonType("موافق");
 			alert.getButtonTypes().setAll(List.of(okBtn));
 			alert.showAndWait().ifPresent(result -> {
 				if( result == okBtn) {
-					MgmtMenuOptions mgmtMenuOptions = new MgmtMenuOptions();
-					mgmtMenuOptions.installManagementWindow();
-
 					loginWindow(true);
 				}
 			});
@@ -125,10 +123,6 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		boolean isAccountCreated = createAccountCtrl.isAccountCreated();
 		return isAccountCreated;
 	}*/
-
-	public String getloggedInUser() {
-		return loggedInUser.get();
-	}
 
 	public void loginWindow(boolean mgmt) {
 
@@ -163,7 +157,7 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		List<Account<F>> allAccounts = accountDao.readAccounts();
 		List<Account<F>> filteredAccounts = allAccounts.stream()
 				.filter(account ->
-						account.getAccountType().getType().equals(accountType))
+						account.getAccountType().getTypeName().equals(accountType))
 				.toList();
 		registeredUsersSelector.setItems(FXCollections.observableList(filteredAccounts));
 	}
@@ -175,20 +169,18 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		if (account != null) {
 			String password = passwordField.getText();
 
-			String hashedPassword = BCrypt.withDefaults()
-					.hashToString(14, password.toCharArray());
-
 			ValidationSupport validationSupport = new ValidationSupport();
 			validationSupport.registerValidator(passwordField,
 					Validator.createEmptyValidator("يجب إدخال كلمة السر"));
 
-			Predicate<String> passwordPredicate = getPasswordPredicate(hashedPassword);
+			Predicate<String> passwordPredicate = getPasswordPredicate(password);
 			String invalidPasswordMsg = "كلمة السر غير صحيحة";
 
 			Validator<String> passwordValidator = Validator.createPredicateValidator(passwordPredicate, invalidPasswordMsg);
 
 			validationSupport.registerValidator(passwordField, passwordValidator);
 
+			String hashedPassword = account.getHashedPassword();
 			boolean passwordMatches = BCrypt.verifyer().verify(password.toCharArray(), hashedPassword).verified;
 			if(passwordMatches) {
 				boolean validCreds = accountDao.loginAccount(account);
@@ -201,6 +193,10 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 			}
 
 		}
+	}
+
+	public Account<F> getCurrentUser() {
+		return currentUser;
 	}
 
 	private Predicate<String> getPasswordPredicate(String hashedPassword) {
@@ -226,7 +222,6 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 
 		//TODO: update disabling features' logic
 		Label currentAccount = new Label(accountDao.getAccountType(-1)+"");
-		currentAccount.setId("current-account");
 		Label restrictedOps = new Label(restrictedOperations);
 		restrictedOps.setId("restrictedOps");
 		String currentIs = "حساب المستخدم الحالي حساب ";

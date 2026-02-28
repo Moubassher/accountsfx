@@ -5,13 +5,12 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.17" xmlns:fx="http://javafx.com/fxml/1">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
         <tabs>
-          <Tab fx:id="pharmacyTab" text="تفاصيل الصيدلية" />
-          <Tab fx:id="employeeTab" text="الحسابين">
+          <Tab fx:id="establishmentTab" text="تفاصيل الصيدلية" />
+          <Tab fx:id="userTab" text="حسابات المستخدمين">
                <content>
                   <VBox prefHeight="200.0" prefWidth="100.0">
                      <children>
@@ -25,7 +24,6 @@
                   <VBox prefHeight="200.0" prefWidth="100.0" />
                </content>
             </Tab>
-            <Tab fx:id="expensesTab" text="مخلص الحسابات" />
         </tabs>
       </TabPane>
    </children>

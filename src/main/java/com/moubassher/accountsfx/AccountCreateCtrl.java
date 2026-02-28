@@ -69,7 +69,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
     private List<F> privileges;
 
-
+    private Account<F> createdAccount;
     public AccountCreateCtrl(AccountDao<F> accountDao, List<F> privileges, boolean isAdminAccount) {
         this.accountDao = accountDao;
         this.privileges = privileges;
@@ -82,7 +82,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         passwordValidator = new PasswordValidator();
 
         if(accountTypeSelector.getItems().isEmpty()) {
-            AccountType<F> accountType = new AccountType("مشرف",privileges, true);
+            AccountType<F> accountType = new AccountType("مشرف",privileges, AccountType.Class.ADMIN);
             accountTypeSelector.getItems().add(accountType);
         }
 
@@ -197,8 +197,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         if (strength != STRONG) {
             MyNotifications.getInstance().showErrorAlert(
                     "كلمة المرور ليست قوية ما يكفي",
-                    "يجب إضافة كلمة مرور قوية حسب الإرشادات لرفع مستوى الحماية"
-            );
+                    "يجب إضافة كلمة مرور قوية حسب الإرشادات لرفع مستوى الحماية");
             return false;
         }
         return true;
@@ -220,7 +219,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         accountTypeSelector.getItems().clear();
         List<AccountType<F>> adminAccountTypes = accountDao.readAccountTypes()
                 .stream()
-                .filter( accountType -> accountType.isAdmin()).toList();
+                .filter( accountType -> accountType.getAccountClass() == AccountType.Class.ADMIN).toList();
 
         accountTypeSelector.setItems(FXCollections.observableArrayList(adminAccountTypes));
     }
@@ -277,17 +276,13 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
         hashingTask.setOnSucceeded(e -> {
             String hashedPassword = hashingTask.getValue();
-            Account<F> account = new Account<>(userName, hashedPassword, userType);
+            createdAccount = new Account<>(userName, hashedPassword, userType);
 
-            isAccountCreated = accountDao.addNewAccount(account);
+            isAccountCreated = accountDao.addNewAccount(createdAccount);
 
             createAccountBtn.setDisable(false);
             createAccountProgress.setVisible(false);
         });
-
-        String hashedPassword = hashingTask.getValue();
-        Account<F> account = new Account(userName, hashedPassword, userType);
-        isAccountCreated = accountDao.addNewAccount(account);
 
         createAccountProgress.setVisible(false);
         createAccountBtn.setDisable(false);
@@ -302,7 +297,6 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             Pane accountCreateRoot = fxmlLoader.load();
 
             Scene scene = new Scene(accountCreateRoot, 540, 440);
-
             Stage stage = new Stage();
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(scene);
@@ -312,6 +306,5 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             e.printStackTrace();
         }
     }
-
 
 }

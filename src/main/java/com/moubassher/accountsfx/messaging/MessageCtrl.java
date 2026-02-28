@@ -1,4 +1,4 @@
-package com.moubassher.accountsfx;
+package com.moubassher.accountsfx.messaging;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;

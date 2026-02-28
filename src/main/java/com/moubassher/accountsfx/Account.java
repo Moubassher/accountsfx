@@ -88,7 +88,7 @@ public  class Account <F extends Enum<F> & Feature<F>>  {
     }
 
     public boolean isAdmin() {
-       return accountType == null ? false : accountType.isAdmin();
+       return accountType != null && accountType.getAccountClass() == AccountType.Class.ADMIN;
     }
 
     @Override

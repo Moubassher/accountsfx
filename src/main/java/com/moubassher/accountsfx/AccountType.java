@@ -4,27 +4,28 @@ import java.util.List;
 
 public class AccountType<F extends Enum<F> & Feature<F>> {
 
-    private int accountTypeId;
-    private String type;
-    private List<F> privileges;
-    private boolean isAdmin;
+    enum Class {MAINTAINER, ADMIN, NON_ADMIN}
 
-    public AccountType(String type, List<F> privileges, boolean isAdmin) {
-        this.type = type;
+    private int accountTypeId;
+    private String accountTypeName;
+    private List<F> privileges;
+    private Class accountClass;
+    public AccountType(String accountTypeName, List<F> privileges, Class accountClass) {
+        this.accountTypeName = accountTypeName;
         this.privileges = privileges;
-        this.isAdmin = isAdmin;
+        this.accountClass = accountClass;
     }
 
-    public AccountType(int accountTypeId, String type, List<F> privileges, boolean isAdmin) {
+    public AccountType(int accountTypeId, String accountTypeName, List<F> privileges, Class accountClass) {
         this.accountTypeId = accountTypeId;
-        this.type = type;
+        this.accountTypeName = accountTypeName;
         this.privileges = privileges;
-        this.isAdmin = isAdmin;
+        this.accountClass = accountClass;
     }
 
 
     public void validate() {
-        if(type == null || type.isBlank()) {
+        if(accountTypeName == null || accountTypeName.isBlank()) {
             throw new IllegalArgumentException("Cannot add a nameless account type");
         }
 
@@ -42,8 +43,12 @@ public class AccountType<F extends Enum<F> & Feature<F>> {
         this.accountTypeId = accountTypeId;
     }
 
-    public String getType() {
-        return type;
+    public String getTypeName() {
+        return accountTypeName;
+    }
+
+    public Class getAccountClass() {
+        return accountClass;
     }
 
     public List<F> getPrivileges() {
@@ -52,10 +57,6 @@ public class AccountType<F extends Enum<F> & Feature<F>> {
 
     public void setPrivileges(List<F> privileges) {
         this.privileges = privileges;
-    }
-
-    public boolean isAdmin() {
-        return isAdmin;
     }
 
     @Override
@@ -74,7 +75,7 @@ public class AccountType<F extends Enum<F> & Feature<F>> {
 
     @Override
     public String toString() {
-        return type;
+        return accountTypeName;
     }
 
     public void setId(int id) {

@@ -2,7 +2,9 @@ package com.moubassher.accountsfx;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.FlowPane;
 
@@ -17,18 +19,18 @@ public class AccountTitledPane <F extends Enum<F> & Feature<F>>  extends TitledP
      * Creates a new TitledPane with no title or content.
      */
     public AccountTitledPane() {
-        CheckBox isAdminBox = new CheckBox("admin:");
-        this.setGraphic(isAdminBox);
+        ChoiceBox<AccountType.Class> accountClassSelector = new ChoiceBox<>(FXCollections.observableArrayList(AccountType.Class.values()));
+        this.setGraphic(accountClassSelector);
 
         FlowPane featurePane = new FlowPane(10, 10);
         featurePane.getStyleClass().add("root");
         this.setContent(featurePane);
 
         accountType.addListener((a, b, accountType) -> {
-            String name = accountType.getType();
+            String name = accountType.getTypeName();
             this.setText(name);
-            boolean isAdmin = accountType.isAdmin();
-            isAdminBox.setSelected(isAdmin);
+            AccountType.Class accountClass = accountType.getAccountClass();
+            accountClassSelector.getSelectionModel().select(accountClass);
 
             List<F> selectedPrivileges = accountType.getPrivileges();
 

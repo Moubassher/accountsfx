@@ -11,12 +11,14 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -27,13 +29,13 @@ import java.util.ResourceBundle;
 public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements Initializable {
 
     @FXML
-    private HBox root;
+    private VBox root;
 
     @FXML
     private JFXTextField accountTypeField;
 
     @FXML
-    private Button addAccountTypeBtn, deleteAccountTypeBtn, resetPasswordBtn, refreshAccountsBtn;
+    private Button addAccountTypeBtn, deleteAccountTypeBtn, resetPasswordBtn, refreshAccountsBtn, doneBtn;
 
     @FXML
     private FlowPane featurePane;
@@ -45,7 +47,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
     private Accordion accountTypeAccordion;
 
     @FXML
-    private CheckBox isAdminBox;
+    private ChoiceBox<AccountType.Class> accountTypeClassSelector;
 
     @FXML
     private ToggleButton viewAccountTypesBtn, viewAccountsBtn, currentAccountTypeToggleBtn, archivedAccountTypeToggleBtn;
@@ -59,9 +61,9 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
     @FXML
     private ListView<Account<F>> accountsListView;
 
-    private Class<F> featureEnumClass;
+    private final Class<F> featureEnumClass;
 
-    private AccountDao<F> accountDao;
+    private final AccountDao<F> accountDao;
     public MaintainerAccountCtrl(AccountDao<F> accountDao, Class<F> featureEnumClass) {
         this.accountDao = accountDao;
         this.featureEnumClass = featureEnumClass;
@@ -81,24 +83,23 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
             featurePane.getChildren().add(checkBox);
         }
 
-        addAccountTypeBtn.setOnAction(x -> {
+        addAccountTypeBtn.setOnAction(_ -> {
             addAccountType();
         });
 
-        deleteAccountTypeBtn.setOnAction( x -> {
+        deleteAccountTypeBtn.setOnAction( _ -> {
             AccountTitledPane<F> selectedAccountPane = (AccountTitledPane<F>) accountTypeAccordion.getExpandedPane();
             if(selectedAccountPane != null) {
                 AccountType<F> accountType = selectedAccountPane.getAccountType();
 
                 Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                confirmAlert.setTitle("Delete account type(" + accountType.getType() +")?");
+                confirmAlert.setTitle("Delete account type(" + accountType.getTypeName() +")?");
                 confirmAlert.showAndWait().ifPresent(action -> {
                     if(action == ButtonType.OK) {
                         boolean deleted = accountDao.deleteAccountType(accountType.getAccountTypeId());
                         if(deleted) {
                             accountTypeAccordion.getPanes().remove(selectedAccountPane);
                             confirmAlert.setContentText("Done!");
-
                             //MyNotifications.getInstance().showMessage("Account type deleted","");
                         }
                     }
@@ -153,6 +154,11 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
             loadAccounts();
         });
 
+        doneBtn.setOnAction(x -> {
+            Stage stage = (Stage) root.getScene().getWindow();
+            stage.close();
+        });
+
     }
 
     private void loadAccounts() {
@@ -160,22 +166,18 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         accountsListView.setItems(accounts);
     }
 
-    private void showSelectedAccountTypeDetails(AccountTitledPane titledPane) {
-        AccountTitledPane accountTitledPane = titledPane;
-        if(accountTitledPane == null) return;
-        AccountType<F> accountType = accountTitledPane.getAccountType();
-        String name = accountType.getType();
+    private void showSelectedAccountTypeDetails(AccountTitledPane<F> titledPane) {
+        if(titledPane == null) return;
+        AccountType<F> accountType = titledPane.getAccountType();
+        String name = accountType.getTypeName();
         accountTypeField.setText(name);
-        boolean isAdmin = accountType.isAdmin();
-        isAdminBox.setSelected(isAdmin);
+        AccountType.Class accountClass = accountType.getAccountClass();
+        accountTypeClassSelector.getSelectionModel().select(accountClass);
+
         List<String> privileges = accountType.getPrivileges().stream().map(feature -> feature.name()).toList();
         for (Node node : featurePane.getChildren()) {
             if (node instanceof CheckBox checkBox) {
-                if (privileges.contains(checkBox.getText())) {
-                    checkBox.setSelected(true);
-                } else {
-                    checkBox.setSelected(false);
-                }
+                checkBox.setSelected(privileges.contains(checkBox.getText()));
             }
         }
     }
@@ -183,9 +185,9 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
     private void addAccountType() {
         String accountTypeName = accountTypeField.getText();
         List<F> selectedPrivileges = readSelectedPrivileges();
-        boolean isAdmin = isAdminBox.isSelected();
+        AccountType.Class accountClass = accountTypeClassSelector.getSelectionModel().getSelectedItem();
 
-        AccountType<F> accountType = new AccountType<>(accountTypeName, selectedPrivileges, isAdmin);
+        AccountType<F> accountType = new AccountType<>(accountTypeName, selectedPrivileges, accountClass);
 
         boolean isValid = validateAccountType(accountType);
         if(!isValid) return;
@@ -195,14 +197,14 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         boolean added = accountDao.addAccountType(accountType);
         if(added) {
             accountTypeField.clear();
-            isAdminBox.setSelected(false);
+            accountTypeClassSelector.getSelectionModel().clearSelection();
             clearSelectedPrivileges();
         }
     }
 
     private boolean validateAccountType(AccountType<F> accountType) {
 
-        String accountTypeName = accountType.getType();
+        String accountTypeName = accountType.getTypeName();
         List<F> selectedPrivileges = accountType.getPrivileges();
 
         if(accountTypeName.isBlank()) {
@@ -210,7 +212,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
             return false;
         }
 
-        List<String> accountTypeNames = accountDao.readAccountTypes().stream().map(AccountType::getType).toList();
+        List<String> accountTypeNames = accountDao.readAccountTypes().stream().map(AccountType::getTypeName).toList();
         if(accountTypeNames.contains(accountTypeName)) {
             MyNotifications.getInstance().showErrorAlert("Account type already exists.","Cannot add 2 account types with the same name");
             return false;
@@ -220,7 +222,6 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
             MyNotifications.getInstance().showErrorAlert("Error!", "Cannot add an account type with zero privileges!");
             return false;
         }
-
         return true;
     }
 
@@ -233,7 +234,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
     }
 
     private void displayCreatedAccountType(AccountType<F> accountType) {
-        AccountTitledPane accountTypePane = new AccountTitledPane();
+        AccountTitledPane<F> accountTypePane = new AccountTitledPane<>();
         accountTypePane.setAccountType(accountType);
 
         accountTypeAccordion.getPanes().add(accountTypePane);
@@ -248,9 +249,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         featurePane.getChildren().stream()
                 .filter(node -> node instanceof CheckBox cb && cb.isSelected())
                 .map(featureBox -> ((CheckBox) featureBox).getText())
-                .forEach(feature -> {
-                    selectedPrivileges.add(F.valueOf(featureEnumClass, feature));
-                });
+                .forEach(feature -> selectedPrivileges.add(F.valueOf(featureEnumClass, feature)));
         return selectedPrivileges;
     }
 

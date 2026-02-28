@@ -1,5 +1,6 @@
 package com.moubassher.accountsfx;
 
+import com.moubassher.accountsfx.business.BusinessRegistrationCtrl;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -35,12 +36,11 @@ import java.net.URL;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  implements Initializable {
+public class AdminPrivileges<F extends Enum<F> & Feature<F>>  implements Initializable {
 
 	private AccountDao<F> accountDao;
 	private AccountTable<F> accountTable;
@@ -51,24 +51,31 @@ public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  imple
 	private TabPane tabPane;
 
 	@FXML
-	private Tab pharmacyTab, userTab, attendanceTab;
+	private Tab establishmentTab, userTab, attendanceTab;
 
-	private List<Tab> tabs;
+	private Class<F> featureEnum;
+
+	private String appName;
+
+	public AdminPrivileges(Class<F> featureEnum, String appName) {
+		this.featureEnum = featureEnum;
+		this.appName = appName;
+		accountDao = new AccountDao<>(featureEnum, appName);
+		accountTable = new AccountTable<>(accountDao);
+	}
 
 	@Override
 	public void initialize(URL url, ResourceBundle resourceBundle) {
-		VBox box = Pharmacy.getInstance().pharmacyInfoPane();
-		pharmacyTab.setContent(box);
+		VBox box = BusinessRegistrationCtrl.getInstance().establishmentInfoPane();
+		establishmentTab.setContent(box);
 
 		VBox employeeTabPane = this.createUserPane();
 		userTab.setContent(employeeTabPane);
 
 		this.installAttendanceTableTab();
-
-		if(tabs != null) {
-			tabPane.getTabs().addAll(tabs);
-		}
 	}
+
+
 
 	private VBox createUserPane() {
 
@@ -263,17 +270,15 @@ public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  imple
 	}
 
 	private void installAttendanceTableTab() {
-		AttendanceCtrl attendanceCtrl = new AttendanceCtrl();
+		UserSessionsOverviewCtrl userSessionsOverviewCtrl = new UserSessionsOverviewCtrl(featureEnum, appName);
 		FXMLLoader fxmlLoader = new FXMLLoader(this.getClass().getResource("attendance_table.fxml"));
-		fxmlLoader.setController(attendanceCtrl);
+		fxmlLoader.setController(userSessionsOverviewCtrl);
 		try {
-			TableView<Login> attendanceTable = fxmlLoader.load();
+			TableView<Session> attendanceTable = fxmlLoader.load();
 			attendanceTab.setContent(attendanceTable);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		//TODO add more insights to attendance table than just showing it: e.g. most hours put in.
 
 	}
 
@@ -303,18 +308,10 @@ public abstract class BaseAdminPrivileges<F extends Enum<F> & Feature<F>>  imple
 	}
 
 
-
-	public BaseAdminPrivileges() {
-
-	}
-
-	public abstract void addCustomTabs(List<Tab> tabs);
-
 	private static class ShiftPane extends HBox{
 
 		IntegerProperty hour, minutes;
 		StringProperty timeOfDay;
-
 
 		public IntegerProperty hourProperty() {
 			return hour;
