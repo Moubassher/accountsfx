@@ -1,6 +1,7 @@
 package com.moubassher.accountsfx;
 
 import com.context.our_utilities.MyNotifications;
+import com.context.themes.vibrant_blue.MyThemes;
 import com.jfoenix.controls.JFXComboBox;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
@@ -238,22 +239,28 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
     }
 
 
-    private  void showPasswordStrength(String password) {
+    private void showPasswordStrength(String password) {
         PasswordStrength strength = passwordValidator.evaluateStrength(password);
+
+        if (strength == null) {
+            strengthLabel.setText("");
+            strengthBar.setProgress(0);
+            strengthBar.setStyle("");
+            return;
+        }
+
         if (strength == PasswordStrength.WEAK) {
             strengthLabel.setText("كلمة المرور ضعيفة");
             strengthBar.setStyle("-fx-accent: red;");
         } else if (strength == PasswordStrength.MEDIUM) {
             strengthLabel.setText("كلمة المرور متوسطة الجودة");
             strengthBar.setStyle("-fx-accent: orange;");
-        } else {
+        } else { 
             strengthLabel.setText("كلمة المرور قوية ✔");
             strengthBar.setStyle("-fx-accent: green;");
         }
-        if(strength != null) {
-            double score = strength.getScore();
-            strengthBar.setProgress(score);
-        }
+
+        strengthBar.setProgress(strength.getScore());
     }
 
 
@@ -297,6 +304,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             Pane accountCreateRoot = fxmlLoader.load();
 
             Scene scene = new Scene(accountCreateRoot, 540, 440);
+            scene.getStylesheets().add(MyThemes.vibrantBlue);
             Stage stage = new Stage();
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(scene);
