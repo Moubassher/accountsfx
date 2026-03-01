@@ -3,6 +3,7 @@ package com.moubassher.accountsfx;
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.context.our_utilities.MyNotifications;
 import javafx.collections.FXCollections;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -16,11 +17,14 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.controlsfx.control.MaskerPane;
 import org.controlsfx.validation.ValidationSupport;
 import org.controlsfx.validation.Validator;
 
@@ -58,11 +62,17 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 	private Hyperlink forgotPasswordLink;
 
 	@FXML
-	private VBox loginRootPane;
+	private StackPane loginRootPane;
+
+	@FXML
+	private MaskerPane masker;
 
 	private boolean isUserManager;
 
 	private Account<F> currentUser;
+
+
+	private ValidationSupport validationSupport;
 
 	public LoginCtrl(AccountDao<F> accountDao) {
 		this.accountDao = accountDao;
@@ -91,6 +101,11 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		if(isUserManager) {
 			credsInfoDisplay.setText("تسجيل دخول للإدارة");
 		}
+
+		validationSupport = new ValidationSupport();
+		validationSupport.registerValidator(passwordField,
+				Validator.createEmptyValidator("يجب إدخال كلمة السر"));
+
 
 		loginBtn.setOnAction(x -> login());
 
@@ -162,49 +177,68 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		registeredUsersSelector.setItems(FXCollections.observableList(filteredAccounts));
 	}
 
+
 	private void login() {
-
 		Account<F> account = registeredUsersSelector.getSelectionModel().getSelectedItem();
-
-		if (account != null) {
-			String password = passwordField.getText();
-
-			ValidationSupport validationSupport = new ValidationSupport();
-			validationSupport.registerValidator(passwordField,
-					Validator.createEmptyValidator("يجب إدخال كلمة السر"));
-
-			Predicate<String> passwordPredicate = getPasswordPredicate(password);
-			String invalidPasswordMsg = "كلمة السر غير صحيحة";
-
-			Validator<String> passwordValidator = Validator.createPredicateValidator(passwordPredicate, invalidPasswordMsg);
-
-			validationSupport.registerValidator(passwordField, passwordValidator);
-
-			String hashedPassword = account.getHashedPassword();
-			boolean passwordMatches = BCrypt.verifyer().verify(password.toCharArray(), hashedPassword).verified;
-			if(passwordMatches) {
-				boolean validCreds = accountDao.loginAccount(account);
-
-				if(validCreds) {
-					currentUser = account;
-					Stage stage = (Stage) this.loginRootPane.getScene().getWindow();
-					stage.close();
-				}
-			}
-
+		if (account == null) {
+			return;
 		}
+
+		String password = passwordField.getText();
+
+		Validator<String> emptyValidator =
+				Validator.createEmptyValidator("يجب إدخال كلمة السر");
+
+		validationSupport.registerValidator(passwordField, emptyValidator);
+
+		if (validationSupport.isInvalid()) {
+			return; // Stop if field is empty
+		}
+
+		masker.setMouseTransparent(false);
+
+		Task<Boolean> task = new Task<>() {
+			@Override
+			protected Boolean call() {
+				boolean passwordMatches =
+						BCrypt.verifyer().verify(password.toCharArray(), account.getHashedPassword()).verified;
+
+				if (!passwordMatches) {
+					return false; // Invalid password
+				}
+
+				return accountDao.loginAccount(account);
+			}
+		};
+
+		loginBtn.disableProperty().bind(task.runningProperty());
+		masker.visibleProperty().bind(task.runningProperty());
+
+		task.setOnSucceeded(e -> {
+			boolean success = task.getValue();
+
+			loginBtn.disableProperty().unbind();
+			masker.visibleProperty().unbind();
+			if (success) {
+				currentUser = account;
+				Stage stage = (Stage) loginRootPane.getScene().getWindow();
+				stage.close();
+			} else {
+				MyNotifications.getInstance().showErrorAlert("كلمة السر غير صحيحة", "حاول مرة أخرى أو أرسل طلب تغيير كلمة السر من أحد مستخدمي الحسابات الإدارية");
+			}
+		});
+
+		task.setOnFailed(e -> {
+			task.getException().printStackTrace();
+			loginBtn.disableProperty().unbind();
+		});
+
+		new Thread(task).start();
 	}
+
 
 	public Account<F> getCurrentUser() {
 		return currentUser;
-	}
-
-	private Predicate<String> getPasswordPredicate(String hashedPassword) {
-		return password -> {
-			if (password == null || password.isBlank()) return false;
-			BCrypt.Result result = BCrypt.verifyer().verify(password.toString().toCharArray(), hashedPassword);
-			return result.verified;
-		};
 	}
 
 	public void logOutUser() {

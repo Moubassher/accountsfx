@@ -10,8 +10,8 @@ group = 'com.moubassher'
 version = '1.0.0'
 
 repositories {
-    mavenLocal()
     mavenCentral()
+    mavenLocal()
 }
 
 application {
@@ -28,7 +28,6 @@ dependencies {
     implementation 'com.context.themes:my-vibrant-blue-theme:1.0.0'
 
     implementation 'io.github.mkpaz:atlantafx-base:2.1.0'
-
     implementation "org.openjfx:javafx-base:${javafxVersion}:win"
     implementation "org.openjfx:javafx-graphics:${javafxVersion}:win"
     implementation "org.openjfx:javafx-controls:${javafxVersion}:win"

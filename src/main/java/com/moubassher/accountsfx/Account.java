@@ -109,9 +109,6 @@ public  class Account <F extends Enum<F> & Feature<F>>  {
 
     @Override
     public String toString() {
-        return "Account{" +
-                "name='" + name + '\'' +
-                ", accountType=" + accountType +
-                '}';
+        return name;
     }
 }

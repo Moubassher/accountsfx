@@ -34,9 +34,9 @@ public class AccountsFxMain extends Application {
         loader.setController(testAppCtrl);
         Pane pane = loader.load();
 
-        AdminPrivileges<TestFeature> adminPrivileges = new AdminPrivileges<>(TestFeature.class, "TestApp");
-        FXMLLoader fxmlLoader = new FXMLLoader(this.getClass().getResource("admin_privileges.fxml"));
-        fxmlLoader.setController(adminPrivileges);
+       // AdminPrivileges<TestFeature> adminPrivileges = new AdminPrivileges<>(TestFeature.class, "TestApp");
+       // FXMLLoader fxmlLoader = new FXMLLoader(this.getClass().getResource("admin_privileges.fxml"));
+        //fxmlLoader.setController(adminPrivileges);
         //Pane pane = fxmlLoader.load();
 
         Scene scene = new Scene(pane, 540, 440);

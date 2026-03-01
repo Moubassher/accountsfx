@@ -24,6 +24,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Duration;
+import org.controlsfx.control.MaskerPane;
+
 
 import java.io.IOException;
 import java.net.URL;
@@ -58,7 +60,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
     private Button showPasswordBtn1, showPasswordBtn2, createAccountBtn;
 
     @FXML
-    private ProgressIndicator createAccountProgress;
+    private MaskerPane masker;
 
     private Tooltip passwordMismatch;
 
@@ -125,7 +127,6 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             confirmPasswordField.setVisible(true);
         });
 
-        createAccountProgress.setVisible(false);
 
         createAccountBtn.setOnAction(x -> {
             boolean isValid = validateAccountDetails();
@@ -267,7 +268,6 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         AccountType userType = accountTypeSelector.getSelectionModel().getSelectedItem();
 
         createAccountBtn.setDisable(true);
-        createAccountProgress.setVisible(true);
 
         Task<Boolean> task = new Task<>() {
             @Override
@@ -278,11 +278,14 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             }
         };
 
+        masker.visibleProperty().bind(task.runningProperty());
+        masker.setMouseTransparent(false);
+
         task.setOnSucceeded(e -> {
             isAccountCreated = task.getValue();
 
             createAccountBtn.setDisable(false);
-            createAccountProgress.setVisible(false);
+            masker.visibleProperty().unbind();
 
             if (isAccountCreated) {
                 Stage theStage = (Stage) root.getScene().getWindow();
@@ -292,7 +295,6 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
         task.setOnFailed(e -> {
             createAccountBtn.setDisable(false);
-            createAccountProgress.setVisible(false);
             task.getException().printStackTrace();
         });
 

@@ -38,7 +38,7 @@ public class PasswordValidator {
         if (hasLetter) types++;
         if (hasDigit) types++;
         if (hasSpecial) types++;
-        
+
         if (length >= 4 && types >= 2) {
             return PasswordStrength.MEDIUM;
         }

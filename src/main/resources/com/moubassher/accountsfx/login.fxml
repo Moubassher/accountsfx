@@ -7,32 +7,40 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import org.controlsfx.control.MaskerPane?>
 
-<VBox fx:id="loginRootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="353.0" prefWidth="600.0" spacing="10.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
-   <padding>
-      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-   </padding>
+
+<StackPane fx:id="loginRootPane" stylesheets="@vibrant_blue.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <Label fx:id="signInDisplay" text="تسجيل الدخول" />
-      <Label id="error" fx:id="credsInfoDisplay" />
-      <Label fx:id="accountTypeDisplay" text="نوع الحساب:" />
-      <ChoiceBox fx:id="accountTypeSelector" minWidth="300.0" prefWidth="150.0" />
-      <Label fx:id="userNameDisplay" text="اسم المستخدم" />
-      <ChoiceBox fx:id="registeredUsersSelector" minWidth="300.0" prefWidth="150.0" />
-      <Label text="كلمة المرور" />
-      <PasswordField fx:id="passwordField" />
-      <HBox fillHeight="false" prefWidth="200.0" spacing="30.0" >
+      <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="353.0" prefWidth="361.0" spacing="10.0">
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
          <children>
-            <Button fx:id="loginBtn" mnemonicParsing="false" text="تسجيل الدخول" />
-            <Button fx:id="createAccountBtn" mnemonicParsing="false" text="انشاء حساب جديد" />
+            <Label fx:id="signInDisplay" text="تسجيل الدخول" />
+            <Label id="error" fx:id="credsInfoDisplay" />
+            <Label fx:id="accountTypeDisplay" text="نوع الحساب:" />
+            <ChoiceBox fx:id="accountTypeSelector" minWidth="300.0" prefWidth="150.0" />
+            <Label fx:id="userNameDisplay" text="اسم المستخدم" />
+            <ChoiceBox fx:id="registeredUsersSelector" minWidth="300.0" prefWidth="150.0" />
+            <Label text="كلمة المرور" />
+            <PasswordField fx:id="passwordField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="300.0" />
+            <HBox fillHeight="false" prefWidth="200.0" spacing="30.0">
+               <children>
+                  <Button fx:id="loginBtn" mnemonicParsing="false" text="تسجيل الدخول" />
+                  <Button fx:id="createAccountBtn" mnemonicParsing="false" text="انشاء حساب جديد" />
+               </children>
+            </HBox>
+            <Hyperlink id="forgot-password" fx:id="forgotPasswordLink" text="نسيت كلمة المرور؟" underline="true">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Hyperlink>
          </children>
-      </HBox>
-      <Hyperlink id="forgot-password" fx:id="forgotPasswordLink"  text="نسيت كلمة المرور؟" underline="true">
-         <font>
-            <Font size="14.0" />
-         </font>
-      </Hyperlink>
+      </VBox>
+      <MaskerPane fx:id="masker" text="جاري التحقّق" viewOrder="1.0" visible="false" />
    </children>
-</VBox>
+</StackPane>
