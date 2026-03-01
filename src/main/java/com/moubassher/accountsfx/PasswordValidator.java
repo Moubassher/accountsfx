@@ -38,10 +38,11 @@ public class PasswordValidator {
         if (hasLetter) types++;
         if (hasDigit) types++;
         if (hasSpecial) types++;
-
-        if (length >= 4 && length < 6 && types >= 2) {
+        
+        if (length >= 4 && types >= 2) {
             return PasswordStrength.MEDIUM;
         }
+
 
         // fallback: anything else is weak
         return PasswordStrength.WEAK;

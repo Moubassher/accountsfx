@@ -130,11 +130,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         createAccountBtn.setOnAction(x -> {
             boolean isValid = validateAccountDetails();
             if(isValid) {
-                isAccountCreated = createAccount();
-                if(isAccountCreated) {
-                    Stage theStage = (Stage) root.getScene().getWindow();
-                    theStage.close();
-                }
+                createAccount();
             }
         });
 
@@ -255,7 +251,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         } else if (strength == PasswordStrength.MEDIUM) {
             strengthLabel.setText("كلمة المرور متوسطة الجودة");
             strengthBar.setStyle("-fx-accent: orange;");
-        } else { 
+        } else {
             strengthLabel.setText("كلمة المرور قوية ✔");
             strengthBar.setStyle("-fx-accent: green;");
         }
@@ -264,7 +260,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
     }
 
 
-    private boolean createAccount() {
+    private void createAccount() {
 
         String userName = userNameField.getText();
         String password = passwordField.getText();
@@ -273,29 +269,36 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         createAccountBtn.setDisable(true);
         createAccountProgress.setVisible(true);
 
-        Task<String> hashingTask = new Task<>() {
+        Task<Boolean> task = new Task<>() {
             @Override
-            protected String call() {
-                return passwordValidator.hashPassword(password);
+            protected Boolean call() {
+                String hashed = passwordValidator.hashPassword(password);
+                Account<F> account = new Account<>(userName, hashed, userType);
+                return accountDao.addNewAccount(account);
             }
         };
 
-
-        hashingTask.setOnSucceeded(e -> {
-            String hashedPassword = hashingTask.getValue();
-            createdAccount = new Account<>(userName, hashedPassword, userType);
-
-            isAccountCreated = accountDao.addNewAccount(createdAccount);
+        task.setOnSucceeded(e -> {
+            isAccountCreated = task.getValue();
 
             createAccountBtn.setDisable(false);
             createAccountProgress.setVisible(false);
+
+            if (isAccountCreated) {
+                Stage theStage = (Stage) root.getScene().getWindow();
+                theStage.close();
+            }
         });
 
-        createAccountProgress.setVisible(false);
-        createAccountBtn.setDisable(false);
+        task.setOnFailed(e -> {
+            createAccountBtn.setDisable(false);
+            createAccountProgress.setVisible(false);
+            task.getException().printStackTrace();
+        });
 
-        return isAccountCreated;
+        new Thread(task).start();
     }
+
 
     void showCreateAdminAccountDialog() {
         try {
