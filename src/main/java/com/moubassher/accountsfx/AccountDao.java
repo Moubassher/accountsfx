@@ -1,5 +1,6 @@
 package com.moubassher.accountsfx;
 
+import com.context.our_utilities.MyNotifications;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -142,9 +143,18 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	}
 
 
-	public ObservableList<Account<F>> readAccounts() {
+	public List<Account<F>> readPendingAccounts() {
+		return readAccounts("users_pending");
+	}
 
-		ObservableList<Account<F>> allAccounts = FXCollections.observableArrayList();
+	public List<Account<F>> readAccounts() {
+		return readAccounts("users");
+	}
+
+
+	private List<Account<F>> readAccounts(String table) {
+
+		List<Account<F>> allAccounts = new ArrayList<>();
 
 		// Load all account types once
 		Map<Integer, AccountType<F>> accountTypeMap = readAccountTypes()
@@ -156,7 +166,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 				));
 		String sql =
 				"SELECT userId, name, password, accountTypeId, salary, workStart, workFinish " +
-						"FROM users;";
+						"FROM " + table + ";";
 
 		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(sql);
@@ -243,8 +253,8 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		return accountTypes;
 	}
 
-	public boolean hasAccountTypes() {
-		boolean hasAccountTypes=  !readAccountTypes().isEmpty();
+	public boolean hasNonMaintainerAccountType() {
+		boolean hasAccountTypes=  ! readAccountTypes().stream().allMatch(accountType -> accountType.getAccountClass().equals(AccountType.Class.MAINTAINER));
 		return hasAccountTypes;
 	}
 
@@ -252,11 +262,18 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		List<AccountType<F>> accountTypes = new ArrayList<>();
 
 		String sql =
-				"SELECT a.accountTypeId, a.accountTypeName, a.accountClass, " +
-						" GROUP_CONCAT(p.feature) AS privileges " +
-						"FROM accountTypes a " +
-						"LEFT JOIN privileges p ON p.accountTypeId = a.accountTypeId " +
-						"GROUP BY a.accountTypeId";
+				"""
+						SELECT a.accountTypeId,
+						       a.accountTypeName,
+						       a.accountClass,
+						       GROUP_CONCAT(p.feature) AS privileges
+						FROM accountTypes a
+						LEFT JOIN privileges p
+						       ON p.accountTypeId = a.accountTypeId
+						GROUP BY a.accountTypeId,
+						         a.accountTypeName,
+						         a.accountClass
+						""";
 
 		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(sql);
@@ -298,7 +315,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			String password = "perseverence123$";
 			String hashedPassword = new PasswordValidator().hashPassword(password);
 			Account<F> maintainer = new Account<>("Moubassher", hashedPassword, maintainerAccount);
-			addNewAccount(maintainer);
+			approveNewAccount(maintainer);
 		}
 
 	}
@@ -332,7 +349,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 	public  boolean isAdminRequired() {
 		return readAccounts().stream()
-				.noneMatch(employee -> employee.isAdmin());
+				.noneMatch(account -> account.isAdmin());
 	}
 
 	private boolean verifyLoginCredentials(int userId, String hashedPassword) {
@@ -546,7 +563,35 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		return readAccountTypes().contains(accountType);
 	}
 
-	public boolean addNewAccount(Account<F> account) {
+	public boolean approveNewAccount(Account<F> account) {
+		int pendingId = account.getUserId();
+		boolean added = addAccountDetails(account, "users");
+		if (added) {
+			return deletePendingUser(pendingId);
+		}
+		return false;
+	}
+
+	public boolean requestAccountApproval(Account<F> account) {
+		return addAccountDetails(account, "users_pending");
+	}
+
+	public boolean deletePendingUser(int userId)  {
+		String sql = "DELETE FROM users_pending WHERE userId = ?";
+
+		try (Connection connection = dbConfig.openConnection();
+			 PreparedStatement ps = connection.prepareStatement(sql)) {
+
+			ps.setInt(1, userId);
+			int affected = ps.executeUpdate();
+			return affected > 0;
+		} catch (SQLException e) {
+            e.printStackTrace();
+			return false;
+        }
+    }
+
+	private boolean addAccountDetails(Account<F> account, String table) {
 		boolean added = false;
 
 		if (account.getName() == null || account.getName().isBlank()) {
@@ -558,11 +603,11 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			throw new IllegalArgumentException("Account type is invalid when inserting account");
 		}
 
-		if (isAdminRequired() && !account.isAdmin()) {
+		if (isAdminRequired() && !account.isAdmin() && !(accountType.getAccountClass() == AccountType.Class.MAINTAINER)) {
 			throw new UnsupportedOperationException("Cannot create a non-admin account without an admin account present first");
 		}
 
-		String command = "INSERT INTO users (name, password, accountTypeId, salary, workStart, workFinish) "
+		String command = "INSERT INTO "+ table +"  (name, password, accountTypeId, salary, workStart, workFinish) "
 				+ "VALUES (?,?,?,?,?,?)";
 
 		try (Connection conn = dbConfig.openConnection();
@@ -593,11 +638,11 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 			}
 
 		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + " culprit: " + e.getCause() +
-							"\nlocation: " + this.getClass().getEnclosingMethod());
+			e.printStackTrace();
 		}
 
 		return added;
+
 	}
 
 

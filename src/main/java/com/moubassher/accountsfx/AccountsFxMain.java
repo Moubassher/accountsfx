@@ -63,7 +63,7 @@ public class AccountsFxMain extends Application {
 
         Account<TestFeature> adminAccount = new Account<>("Kuroro", hashedPassword, adminAccountType);
 
-        accountDao.addNewAccount(adminAccount);
+        accountDao.approveNewAccount(adminAccount);
     }
 
 }

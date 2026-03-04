@@ -1,6 +1,7 @@
 package com.moubassher.accountsfx;
 
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.collections.FXCollections;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableCell;
@@ -53,7 +54,7 @@ public class AccountTable<F extends Enum<F> & Feature<F>> extends TableView<Acco
 
 	public void reloadTable() {
 		this.getItems().clear();
-		this.setItems(accountDao.readAccounts());
+		this.setItems(FXCollections.observableArrayList(accountDao.readAccounts()));
 	}
 	
 	private TableCell<Account<F>, String> createCell() {

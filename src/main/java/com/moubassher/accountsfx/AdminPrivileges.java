@@ -90,7 +90,7 @@ public class AdminPrivileges<F extends Enum<F> & Feature<F>>  implements Initial
 	public HBox installActionPane() {
 		HBox actionsPane = new HBox(10);
 		ChoiceBox<Account<F>> accounts = new ChoiceBox<>();
-		accounts.setItems(accountDao.readAccounts());
+		accounts.setItems(FXCollections.observableArrayList(accountDao.readAccounts()));
 		addNewUser = new Button("إضافة حساب");
 		modifyUser = new Button("تعديل");
 		Button resetPasswordBtn = new Button("اعادة ضبط كلمة المرور");
@@ -182,7 +182,7 @@ public class AdminPrivileges<F extends Enum<F> & Feature<F>>  implements Initial
 			LocalTime shiftFinish= shiftEndPane.setTimestamp(finishHour, finishMinutes, finishTimeOfDay);
 
 			Account<F> account = new Account<>(-1, name, defaultPassword, dpt, salary, shiftStart, shiftFinish);
-			boolean success = accountDao.addNewAccount(account);
+			boolean success = accountDao.approveNewAccount(account);
 
 			Alert employeeAdded = new Alert(AlertType.INFORMATION);
 
@@ -291,7 +291,7 @@ public class AdminPrivileges<F extends Enum<F> & Feature<F>>  implements Initial
 						اختر الحساب الذي طلب إعادة كلمة السر واضغط على الزر أدناه ليتم ضبط كلمة السر إلى 123.
 						ليستخدمها الحساب مرة واحدة للدخول إلى حسابه، ثم تغيير كلمة السر من داخل حسابه.
 				""");
-		ChoiceBox<Account<F>> employees = new ChoiceBox<>(accountDao.readAccounts());
+		ChoiceBox<Account<F>> employees = new ChoiceBox<>(FXCollections.observableArrayList(accountDao.readAccounts()));
 		Label nameDisplay = new Label("اسم الحساب");
 		VBox box= new VBox(10, nameDisplay, employees);
 		alert.getDialogPane().setContent(box);

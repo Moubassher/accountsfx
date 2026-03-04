@@ -20,8 +20,8 @@ public class AccountTitledPane <F extends Enum<F> & Feature<F>>  extends TitledP
      */
     public AccountTitledPane() {
         ChoiceBox<AccountType.Class> accountClassSelector = new ChoiceBox<>(FXCollections.observableArrayList(AccountType.Class.values()));
+        accountClassSelector.setMinWidth(120);
         this.setGraphic(accountClassSelector);
-
         FlowPane featurePane = new FlowPane(10, 10);
         featurePane.getStyleClass().add("root");
         this.setContent(featurePane);

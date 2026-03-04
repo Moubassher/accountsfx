@@ -8,7 +8,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -16,6 +15,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * The system starts by checking if there are account types in the database. If there are none,
+ * a maintainer is required to log in to assign some, with at least one being of the admin class.
+ * Once there is at least one admin, non-admin accounts can be created (approval of which,
+ * is obtained by an admin user logging in and approving each account individually).
+ *
+ * @param <F>
+ */
 public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     private final Class<F> featureEnum;
@@ -29,26 +36,41 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         this.appName = appName;
         this.stage = stage;
         accountDao = new AccountDao<>(featureEnum, appName);
+        loginCtrl = new LoginCtrl<>(accountDao);
     }
 
     public Account<F> initialize()  {
 
         Pane root;
 
-        boolean isAdminRequired = accountDao.isAdminRequired();
+        root = loadMaintainerView(accountDao);
+        showView(root);
 
-        if(!accountDao.hasAccountTypes()) {
+        while(!accountDao.hasNonMaintainerAccountType()) {
             Optional<ButtonType> result = showNoAccountTypesAlert();
             if(result.isPresent() && result.get().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-                root = loadMaintainerView(accountDao);
-                showView(root);
+                accountDao.createMaintainerAccount();
+
+                Account<F> loggedInUser = loginCtrl.getCurrentUser();
+                if (loggedInUser == null) {
+                    root = loadLoginView();
+                    showView(root);
+                } else {
+                    AccountType<F> accountType = loggedInUser.getAccountType();
+                    if(accountType.getAccountClass().equals(AccountType.Class.MAINTAINER)) {
+                        root = loadMaintainerView(accountDao);
+                        showView(root);
+                    }
+                }
             }
-        } else if(isAdminRequired) {
+        }
+
+        if(accountDao.isAdminRequired()) {
             Optional<ButtonType> result = showMissingAdminAlert();
             showAdminCreationView(result);
         }
 
-        root = loadLoginView(accountDao);
+        root = loadLoginView();
 
         showView(root);
 
@@ -64,6 +86,11 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
         stage.setScene(scene);
         stage.showAndWait();
+    }
+
+    public void showLoginWindow() {
+        Pane root = loadLoginView();
+        showView(root);
     }
 
     private Pane loadMaintainerView(AccountDao<F> accountDao)  {
@@ -83,21 +110,18 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     private void showAdminCreationView(Optional<ButtonType> result) {
         if(result.isPresent() && result.get().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-            accountDao.createMaintainerAccount();
             AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao,
                     List.of(), true);
             accountCreateCtrl.showCreateAdminAccountDialog();
         }
     }
 
-    private VBox loadLoginView(AccountDao<F> accountDao) {
-
-        loginCtrl = new LoginCtrl<>(accountDao);
+    public Pane loadLoginView() {
 
         FXMLLoader loginLoader = new FXMLLoader(AccountsFX.class.getResource("login.fxml"));
         loginLoader.setController(loginCtrl);
 
-        VBox loginRoot = null;
+        Pane loginRoot = null;
         try {
             loginRoot = loginLoader.load();
         } catch (IOException e) {
@@ -108,11 +132,11 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
 
     private Optional<ButtonType> showMissingAdminAlert() {
-         String noAdminAccountMsg = "لا يوجد حساب إداري على النظام. يجب إنشاء على الأقل حساب إداري واحد لاستخدام النظام.";
+        String noAdminAccountMsg = "لا يوجد حساب إداري على النظام. يجب إنشاء على الأقل حساب إداري واحد لاستخدام النظام.";
         return showAlert(noAdminAccountMsg);
     }
     private Optional<ButtonType> showNoAccountTypesAlert() {
-         String noAccountTypesMsg = "لا توجد أي أنواع حسابات في النظام، يجب إنشاء على الأقل نوع حساب إداري واحد";
+        String noAccountTypesMsg = "لا توجد أي أنواع حسابات في النظام، يجب إنشاء على الأقل نوع حساب إداري واحد";
         return showAlert(noAccountTypesMsg);
     }
 
@@ -139,9 +163,9 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     }
 
     public void logOut(Stage stage) {
-        Pane login = loadLoginView(accountDao);
-        Scene scene = new Scene(login, 400, 400);
-        stage.setScene(scene);
+        stage.hide();
+        showLoginWindow();
+
     }
 
     public AccountDao<F> getAccountDao() {

@@ -132,7 +132,7 @@ public class AccountTests {
         String hashedPassword = passwordValidator.hashPassword(password);
 
         Account<TestFeature> account = new Account<>("Robert Adams", hashedPassword, accountType);
-        boolean added = accountDao.addNewAccount(account);
+        boolean added = accountDao.approveNewAccount(account);
         assertTrue(added, "test account not added and is required to testing deleting accounts");
 
 
@@ -148,7 +148,7 @@ public class AccountTests {
         boolean accountTypeAdded = accountDao.addAccountType(adminAccount.getAccountType());
         assertTrue(accountTypeAdded, "Admin account type was not added and is required for inserting admin");
 
-        boolean added = accountDao.addNewAccount(adminAccount);
+        boolean added = accountDao.approveNewAccount(adminAccount);
         assertTrue(added, "Admin account was not added");
 
     }
@@ -165,10 +165,10 @@ public class AccountTests {
         assertTrue(accountTypeAdded, "Account type not added and is required for test reading accounts");
 
 
-        boolean created = accountDao.addNewAccount(account);
+        boolean created = accountDao.approveNewAccount(account);
         if(created) {
 
-            ObservableList<Account<TestFeature>> accounts = accountDao.readAccounts();
+            List<Account<TestFeature>> accounts = accountDao.readAccounts();
             assertNotNull(accounts, "Users is null");
             assertFalse(accounts.isEmpty());
         } else {
@@ -224,7 +224,7 @@ public class AccountTests {
         Account<TestFeature> account = new Account<>(userId, "Mohammed Ahmed", hashedPassword,
                 accountType, salary,  workStart, workFinish);
         assertThrows(UnsupportedOperationException.class,
-                () -> accountDao.addNewAccount(account));
+                () -> accountDao.approveNewAccount(account));
 
 
     }
@@ -234,7 +234,7 @@ public class AccountTests {
     void testAddingNamelessAccount() {
         Account<TestFeature> account = new Account<>();
         assertThrows(IllegalArgumentException.class,
-                () -> accountDao.addNewAccount(account));
+                () -> accountDao.approveNewAccount(account));
 
 
     }
@@ -293,7 +293,7 @@ public class AccountTests {
         Account nonAdminAccount = new Account("John Doe", "hashedPassword123", employeeType);
 
         assertThrows(UnsupportedOperationException.class,
-                () -> accountDao.addNewAccount(nonAdminAccount));
+                () -> accountDao.approveNewAccount(nonAdminAccount));
 
         List<TestFeature> privileges = List.of(TestFeature.All);
         AccountType adminType = new AccountType("Admin Y", privileges, AccountType.Class.ADMIN);
@@ -301,12 +301,12 @@ public class AccountTests {
         assertTrue(adminTypeAdded, "Admin type not added");
 
         Account adminAccount = new Account("David Adam", "hashedPassword123", adminType);
-        boolean adminAdded = accountDao.addNewAccount(adminAccount);
+        boolean adminAdded = accountDao.approveNewAccount(adminAccount);
         assertTrue(adminAdded, "Admin account not added");
 
 
         //now that an admin has been added, a non-admin account can be added:
-        boolean nonAdminAdded = accountDao.addNewAccount(nonAdminAccount);
+        boolean nonAdminAdded = accountDao.approveNewAccount(nonAdminAccount);
         assertTrue(nonAdminAdded, "Non-admin not added even after an admin has been added");
     }
 
@@ -349,7 +349,7 @@ public class AccountTests {
                 assertFalse(isUserLoggedIn, "An invalid user was able to log in");
 
                 //now create the account:
-                boolean created = accountDao.addNewAccount(account);
+                boolean created = accountDao.approveNewAccount(account);
                 assertTrue(created, "Account was not created and so login test will fail");
 
                 isUserLoggedIn = accountDao.loginAccount(account);
@@ -375,7 +375,7 @@ public class AccountTests {
             assertFalse(isUserLoggedIn, "An invalid user was able to log in");
 
             //now create the account:
-            boolean created = accountDao.addNewAccount(account);
+            boolean created = accountDao.approveNewAccount(account);
             assertTrue(created, "Account was not created and so login test will fail");
 
             isUserLoggedIn = accountDao.loginAccount(account);

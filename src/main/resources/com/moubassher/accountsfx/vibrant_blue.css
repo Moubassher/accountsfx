@@ -231,7 +231,7 @@
 
 .table-view .column-header, 
 .table-view .column-header .label {
-    -fx-text-fill: clouds;
+    -fx-text-fill: black;
 }
 
 /* TabPane styles */

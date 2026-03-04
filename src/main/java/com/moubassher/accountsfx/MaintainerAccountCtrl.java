@@ -2,8 +2,10 @@ package com.moubassher.accountsfx;
 
 import com.context.our_utilities.MyNotifications;
 import com.jfoenix.controls.JFXTextField;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.Accordion;
@@ -14,12 +16,14 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +39,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
     private JFXTextField accountTypeField;
 
     @FXML
-    private Button addAccountTypeBtn, deleteAccountTypeBtn, resetPasswordBtn, refreshAccountsBtn, doneBtn;
+    private Button addAccountTypeBtn, deleteAccountTypeBtn, doneBtn;
 
     @FXML
     private FlowPane featurePane;
@@ -58,9 +62,6 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
     @FXML
     private VBox accountsPane;
 
-    @FXML
-    private ListView<Account<F>> accountsListView;
-
     private final Class<F> featureEnumClass;
 
     private final AccountDao<F> accountDao;
@@ -69,10 +70,13 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         this.featureEnumClass = featureEnumClass;
     }
 
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
         accountTypeAccordion.getPanes().clear();
+
+        accountTypeClassSelector.setItems(FXCollections.observableArrayList(AccountType.Class.values()));
 
         List<AccountType<F>> accountTypes = accountDao.readAccountTypes();
         displayCreatedAccountTypes(accountTypes);
@@ -125,34 +129,33 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
         viewAccountTypesBtn.setOnAction(x -> {
             accountTypesPane.setVisible(true);
+            accountTypesPane.setManaged(true);
+
             accountsPane.setVisible(false);
+            accountsPane.setManaged(false);
+
             accountTypesPane.toFront();
         });
 
         viewAccountsBtn.setOnAction(x -> {
             accountsPane.setVisible(true);
+            accountsPane.setManaged(true);
+
             accountTypesPane.setVisible(false);
+            accountTypesPane.setManaged(false);
             accountsPane.toFront();
         });
 
-        resetPasswordBtn.setOnAction(x -> {
-            Account<F> account = accountsListView.getSelectionModel().getSelectedItem();
-            if(account != null) {
-                Alert resetAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                resetAlert.setTitle("Reset password?");
-                resetAlert.showAndWait().ifPresent(result -> {
-                    if(result == ButtonType.OK) {
-                        accountDao.resetPassword(account, "123");
-                    }
-                });
-            }
-        });
+        AccountOverviewCtrl<F> accountOverviewCtrl = new AccountOverviewCtrl<>(accountDao);
+        FXMLLoader loader = new FXMLLoader(this.getClass().getResource("account_overview.fxml"));
+        loader.setController(accountOverviewCtrl);
+        try {
+            TabPane tabPane = loader.load();
+            accountsPane.getChildren().set(0, tabPane);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        loadAccounts();
-
-        refreshAccountsBtn.setOnAction(x -> {
-            loadAccounts();
-        });
 
         doneBtn.setOnAction(x -> {
             Stage stage = (Stage) root.getScene().getWindow();
@@ -161,10 +164,6 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
     }
 
-    private void loadAccounts() {
-        ObservableList<Account<F>> accounts = accountDao.readAccounts();
-        accountsListView.setItems(accounts);
-    }
 
     private void showSelectedAccountTypeDetails(AccountTitledPane<F> titledPane) {
         if(titledPane == null) return;

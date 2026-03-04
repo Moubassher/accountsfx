@@ -14,12 +14,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -39,7 +38,7 @@ import static com.moubassher.accountsfx.PasswordStrength.STRONG;
 public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initializable {
 
     @FXML
-    private VBox root;
+    private StackPane root;
 
     @FXML
     private TextField userNameField, visiblePasswordField, visibleConfirmPasswordField;
@@ -127,6 +126,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             confirmPasswordField.setVisible(true);
         });
 
+        masker.setMouseTransparent(false);
 
         createAccountBtn.setOnAction(x -> {
             boolean isValid = validateAccountDetails();
@@ -274,7 +274,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             protected Boolean call() {
                 String hashed = passwordValidator.hashPassword(password);
                 Account<F> account = new Account<>(userName, hashed, userType);
-                return accountDao.addNewAccount(account);
+                return accountDao.requestAccountApproval(account);
             }
         };
 

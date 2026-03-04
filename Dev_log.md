@@ -7,7 +7,7 @@ Well, first there has to exist at least 3 types of accounts in the system:
 3. Maintainer accounts: These are for me and whoever I decide to have help me run some 
 maintenances tasks in the future inshallah.
 
-- Every system has to have a maintainer account built-in. With access to maintenance-related features. Even though I haven't had these clearly defined yet.
+- Every system has to have a maintainer account built-in. With access to maintenance-related features, which I decide for each client respectively, in the client programs' codebase.
 - A maintainer account is created before anything else, including an admin account.
   A maintainer account can create ACCOUNT TYPES and assign access to features for each
   type of account. The feature list is an enum provided by the dependent project.
@@ -25,7 +25,8 @@ OR
 
 ```mermaid
 flowchart TD
-    A((No account types specified)) --> B[maintainer account specifies account types and assigns roles] 
+    A((No account types specified)) --> A1[Maintainer login]  --> 
+    B[Maintainer panel] --> B1[maintainer account specifies account types and assigns roles] 
   C((No admin account)) --> D[Admin account required popup] --> E[create admin account] --> F[Admin login]
 
   F --> G[Create non-admin account] --> H[Send approval request to admin]
