@@ -14,6 +14,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TabPane;
@@ -137,6 +139,12 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
             accountTypesPane.toFront();
         });
 
+        Label notificationLbl = new Label();
+        notificationLbl.setStyle("-fx-background-color: red; -fx-text-fill: white;");
+
+        viewAccountsBtn.setGraphic(notificationLbl);
+        viewAccountsBtn.setContentDisplay(ContentDisplay.RIGHT);
+
         viewAccountsBtn.setOnAction(x -> {
             accountsPane.setVisible(true);
             accountsPane.setManaged(true);
@@ -145,6 +153,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
             accountTypesPane.setManaged(false);
             accountsPane.toFront();
         });
+
 
         AccountOverviewCtrl<F> accountOverviewCtrl = new AccountOverviewCtrl<>(accountDao);
         FXMLLoader loader = new FXMLLoader(this.getClass().getResource("account_overview.fxml"));
@@ -155,6 +164,16 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        List<Account<F>> pendingAccounts = accountDao.readPendingAccounts();
+        if(!pendingAccounts.isEmpty()) {
+            boolean oked = MyNotifications.getInstance().showConfirmAlert("", "هنالك حسابات مستخدمين قيد الإنشاء. الرجاء الموافقة عليها أو رفضها");
+            if(oked) {
+                accountOverviewCtrl.goToPendingUsersTab();
+            }
+
+        }
+
 
 
         doneBtn.setOnAction(x -> {
