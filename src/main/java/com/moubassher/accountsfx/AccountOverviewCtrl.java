@@ -18,8 +18,12 @@ import java.util.ResourceBundle;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.Pane;
 
 public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Initializable{
+
+    @FXML
+    private TabPane rootTabPane;
 
     @FXML TableView<Account<F>> accountApprovalTable;
 
@@ -34,8 +38,10 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
     private ListView<Account<F>> accountsListView;
 
     @FXML Button approveAllBtn, approveSelectedBtn, createAccountBtn, denyUnselectedBtn, refreshPendingBtn,
-            refreshAccountsBtn, resetPasswordBtn;
+            refreshAccountsBtn, resetPasswordBtn, deleteSelectedAccountBtn;
 
+    @FXML
+    private Tab pendingUsersTab;
 
     private AccountDao<F> accountDao;
 
@@ -100,6 +106,10 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
             }
         });
 
+        deleteSelectedAccountBtn.setOnAction(x -> {
+            deleteSelectedAccount();
+        });
+
         refreshPendingBtn.setOnAction(x -> {
             loadPendingAccounts();
         });
@@ -153,13 +163,33 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
         loadPendingAccounts();
     }
 
+    private void deleteSelectedAccount() {
+        boolean confirmed = MyNotifications.getInstance().showConfirmAlert("هل أنت متأكد؟", "عند حذف الحساب، سيتم إضافته للأرشيف حيث يمكنك إسترجاعه من جديد");
+        if(confirmed) {
+           Account<F> accountToDelete= accountsListView.getSelectionModel().getSelectedItem();
+           boolean deleted = accountDao.deleteAccount(accountToDelete);
+           if(deleted) {
+               MyNotifications.getInstance().showSimpleToast( "تم حذف الحساب وإضافته للأرشيف", (Pane) rootTabPane.getParent());
+            loadAccounts();
+           }
+        }
+    }
+
 
     private void loadPendingAccounts() {
         pendingAccounts = accountDao.readPendingAccounts();
+
+        Label noPendingAccountsLbl = new Label("ليس هنالك أي حسابات قيد الإنشاء/للتصديق عليها في النظام حالياً");
+        noPendingAccountsLbl.setStyle("-fx-text-fill: black;");
+        accountApprovalTable.setPlaceholder(noPendingAccountsLbl);
         accountApprovalTable.setItems(FXCollections.observableArrayList(pendingAccounts));
     }
 
     private void loadAccounts() {
+        Label noActiveAccountsLbl = new Label("ليس هنالك أي حسابات نشطة على النظام حالياً");
+        noActiveAccountsLbl.setStyle("-fx-text-fill: black;");
+        accountsListView.setPlaceholder(noActiveAccountsLbl);
+
         List<Account<F>> accounts = accountDao.readAccounts();
         accountsListView.setItems(FXCollections.observableArrayList(accounts));
     }
@@ -195,5 +225,9 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
                 }
             }
         };
+    }
+
+    void goToPendingUsersTab() {
+        rootTabPane.getSelectionModel().select(pendingUsersTab);
     }
 }
