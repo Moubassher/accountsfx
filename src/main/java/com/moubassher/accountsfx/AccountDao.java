@@ -216,12 +216,18 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	public  List<AccountType<F>> readArchivedAccountTypes() {
 		List<AccountType<F>> accountTypes = new ArrayList<>();
 
-		String sql =
-				"SELECT a.accountTypeId, a.accountType, a.isAdmin, " +
-						"       GROUP_CONCAT(p.feature) AS privileges " +
-						"FROM accountTypes_archive a " +
-						"LEFT JOIN privileges_archive p ON p.accountTypeId = a.accountTypeId " +
-						"GROUP BY a.accountTypeId";
+		String sql = """
+						SELECT a.accountTypeId,
+						       a.accountTypeName,
+						       a.accountClass,
+						       GROUP_CONCAT(p.feature) AS privileges
+						FROM accountTypes a
+						LEFT JOIN privileges p
+						       ON p.accountTypeId = a.accountTypeId
+						GROUP BY a.accountTypeId,
+						         a.accountTypeName,
+						         a.accountClass
+						""";
 
 		try (Connection conn = dbConfig.openConnection();
 			 PreparedStatement stmt = conn.prepareStatement(sql);
@@ -350,6 +356,10 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	public  boolean isAdminRequired() {
 		return readAccounts().stream()
 				.noneMatch(account -> account.isAdmin());
+	}
+
+	public boolean hasPendingAccounts() {
+		return !readPendingAccounts().isEmpty();
 	}
 
 	private boolean verifyLoginCredentials(int userId, String hashedPassword) {
