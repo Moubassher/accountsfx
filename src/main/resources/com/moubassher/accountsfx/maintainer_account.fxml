@@ -27,7 +27,7 @@
                         <ToggleGroup fx:id="viewPaneGroup" />
                      </toggleGroup>
                   </ToggleButton>
-                  <ToggleButton fx:id="viewAccountsBtn" maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" text="Accounts" toggleGroup="$viewPaneGroup" />
+                  <ToggleButton fx:id="viewAccountsBtn" maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" selected="true" text="Accounts" toggleGroup="$viewPaneGroup" />
                </children>
             </VBox>
             <StackPane maxHeight="1.7976931348623157E308" minHeight="-Infinity" HBox.hgrow="SOMETIMES">

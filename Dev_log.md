@@ -25,14 +25,24 @@ OR
 
 ```mermaid
 flowchart TD
-    A((No account types specified)) --> A1[Maintainer login]  --> 
-    B[Maintainer panel] --> B1[maintainer account specifies account types and assigns roles] 
-  C((No admin account)) --> D[Admin account required popup] --> E[create admin account] --> F[Admin login]
+    A{account types specified?} 
+    A -- No --> A1[Maintainer login]  -->  B0{Success?} --Yes --> B[Maintainer panel] 
+    B0 -- No --> B1[Exit system]
+    B --> B2["maintainer account:<br/>✔ specifies account types & assigns privileges <br/>✔ creates accounts <br/>✔ approves accounts"] --> C1
+    
+    
+  A -- Yes --> C1{admin accounts exist?} 
+  C1 -- No --> D[Admin account required popup] --> E[create admin account] -->  F[Admin login] 
+  C1 -- Yes --> C2(Login screen) --> C3(Main App)
 
   F --> G[Create non-admin account] --> H[Send approval request to admin]
-  H --> I["Admin login"]
+  H --> I["Admin/maintainer login"]
   I --> J[Approve account]
-  J --> K[Non-admin account login]
+  J --> K[Non-admin account login] --> C3
+  
+  classDef tested fill: green
+ class A,A1,B,B2 tested
+  
 ```
 
 ```mermaid

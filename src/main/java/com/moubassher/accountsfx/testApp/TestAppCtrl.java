@@ -33,12 +33,13 @@ public class TestAppCtrl implements Initializable {
         accountsFX = new AccountsFX<>(TestFeature.class,
                 "AccountsFxTest", stage);
         Account<TestFeature> loggedInUser = accountsFX.initialize();
-
-        loggedInUserDisplay.setText(loggedInUser.toString());
-
+        if(loggedInUser != null) {
+            loggedInUserDisplay.setText(loggedInUser.toString());
+        } else {
+            System.exit(0);
+        }
         logOut.setOnAction(x -> {
             accountsFX.logOut(stage);
-
         });
 
     }

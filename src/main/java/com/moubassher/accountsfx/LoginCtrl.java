@@ -17,7 +17,6 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -32,7 +31,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 /**
  * A controller for the login window. The user
@@ -128,17 +126,6 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		});
 	}
 
-/*	private boolean createAccount() throws IOException {
-		AccountCreateCtrl createAccountCtrl = new AccountCreateCtrl(List.of(),false);
-		FXMLLoader loader = new FXMLLoader(this.getClass().getResource("/accessControl/create_account.fxml"));
-		loader.setController(createAccountCtrl);
-		Pane createAccountPane = loader.load();
-		createAccountCtrl.enforceAdminAccountCreation();
-
-		boolean isAccountCreated = createAccountCtrl.isAccountCreated();
-		return isAccountCreated;
-	}*/
-
 	public void loginWindow(boolean mgmt) {
 
 		Stage stage = new Stage();
@@ -177,6 +164,23 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		registeredUsersSelector.setItems(FXCollections.observableList(filteredAccounts));
 	}
 
+
+	public void enforceAccountClass(AccountType.Class accountClass) {
+
+		AccountType<F> maintainerType = accountTypeSelector.getItems()
+				.stream()
+				.filter(type -> type.getAccountClass().equals(accountClass))
+				.findFirst()
+				.orElse(null);
+
+		if (maintainerType != null) {
+			accountTypeSelector.getSelectionModel().select(maintainerType);
+			accountTypeSelector.setDisable(true);
+
+			// ensure accounts list is populated immediately
+			getAccountsForType(maintainerType.getTypeName());
+		}
+	}
 
 	private void login() {
 		Account<F> account = registeredUsersSelector.getSelectionModel().getSelectedItem();

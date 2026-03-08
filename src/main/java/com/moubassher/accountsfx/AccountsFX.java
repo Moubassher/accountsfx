@@ -1,5 +1,6 @@
 package com.moubassher.accountsfx;
 
+import com.context.our_utilities.FxmlHelper;
 import com.context.our_utilities.MyNotifications;
 import com.context.themes.vibrant_blue.MyThemes;
 import javafx.fxml.FXMLLoader;
@@ -57,15 +58,15 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
                 if (loggedInUser != null) {
                     AccountType<F> accountType = loggedInUser.getAccountType();
                     if (accountType.getAccountClass().equals(AccountType.Class.MAINTAINER)) {
-                        showMaintainerView(accountDao);
+                        showMaintainerView();
                     }
                 }
             } else {
                 System.exit(0);
             }
         }
-        //TODO: if there are admin accounts pending approval, ask the user whether he would like
-        //to approve them, or create a new admin account,
+
+
         while(accountDao.isAdminRequired()) {
             Optional<ButtonType> result = showMissingAdminAlert();
 
@@ -78,7 +79,9 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
                     if (loggedInUser != null) {
                         AccountType<F> accountType = loggedInUser.getAccountType();
                         if (accountType.getAccountClass().equals(AccountType.Class.MAINTAINER)) {
-                            showMaintainerView(accountDao);
+                            showMaintainerView();
+                        } else if(accountType.getAccountClass().equals(AccountType.Class.ADMIN)) {
+                            showUserOverviewWindow();
                         }
                     }
                 } else if(button.getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
@@ -90,6 +93,11 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         showLoginWindow();
 
         return loginCtrl.getCurrentUser();
+    }
+
+    private void showUserOverviewWindow() {
+        Pane pane = FxmlHelper.loadFxml("account_overview.fxml", new AccountOverviewCtrl<>(accountDao)).getKey();
+        showView(pane);
     }
 
     private void showView(Pane pane) {
@@ -122,28 +130,17 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         showLoginWindow(null);
     }
 
-    private void showMaintainerView(AccountDao<F> accountDao)  {
+    private void showMaintainerView()  {
         MaintainerAccountCtrl<F> maintainerAccountCtrl = new MaintainerAccountCtrl<>(accountDao, featureEnum);
-        FXMLLoader maintainerLoader = new FXMLLoader(AccountsFX.class.getResource("maintainer_account.fxml"));
-        maintainerLoader.setController(maintainerAccountCtrl);
-
-        Pane maintainerViewRoot = null;
-        try {
-            maintainerViewRoot = maintainerLoader.load();
-            showView(maintainerViewRoot);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Pane maintainerViewRoot = FxmlHelper.loadFxml("maintainer_account.fxml", maintainerAccountCtrl).getKey();
+        showView(maintainerViewRoot);
     }
 
     private void showAdminCreationView() {
-
         AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao,
                 List.of(), true);
         accountCreateCtrl.showCreateAdminAccountDialog();
     }
-
-
 
     private Optional<ButtonType> showMissingAdminAlert() {
         String noAdminAccountMsg = "لا يوجد حساب إداري نشط على النظام. يجب إنشاء حساب إداري واحد على الأقل لاستخدام النظام.";

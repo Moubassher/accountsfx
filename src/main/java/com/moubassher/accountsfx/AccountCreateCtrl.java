@@ -288,8 +288,13 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             masker.visibleProperty().unbind();
 
             if (isAccountCreated) {
-                Stage theStage = (Stage) root.getScene().getWindow();
-                theStage.close();
+                boolean oked = MyNotifications.getInstance().showConfirmAlert("نجاح", "تم إرسال طلب إنشاء الحساب إلى المشرفين. يمكنك تسجيل الدخول فور الموافقة عليه");
+                if(oked) {
+                    Stage theStage = (Stage) root.getScene().getWindow();
+                    theStage.close();
+                } else {
+                    System.exit(0);
+                }
             }
         });
 

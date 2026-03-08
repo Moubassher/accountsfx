@@ -1,5 +1,6 @@
 package com.moubassher.accountsfx;
 
+import com.context.our_utilities.FxmlHelper;
 import com.context.our_utilities.MyNotifications;
 import com.jfoenix.controls.JFXTextField;
 import javafx.collections.FXCollections;
@@ -11,6 +12,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
@@ -22,6 +24,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -29,6 +32,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 
@@ -94,26 +98,8 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         });
 
         deleteAccountTypeBtn.setOnAction( _ -> {
-            AccountTitledPane<F> selectedAccountPane = (AccountTitledPane<F>) accountTypeAccordion.getExpandedPane();
-            if(selectedAccountPane != null) {
-                AccountType<F> accountType = selectedAccountPane.getAccountType();
-
-                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                confirmAlert.setTitle("Delete account type(" + accountType.getTypeName() +")?");
-                confirmAlert.showAndWait().ifPresent(action -> {
-                    if(action == ButtonType.OK) {
-                        boolean deleted = accountDao.deleteAccountType(accountType.getAccountTypeId());
-                        if(deleted) {
-                            accountTypeAccordion.getPanes().remove(selectedAccountPane);
-                            confirmAlert.setContentText("Done!");
-                            //MyNotifications.getInstance().showMessage("Account type deleted","");
-                        }
-                    }
-                });
-
-            }
+            deleteAccountType();
         });
-
 
         currentAccountTypeToggleBtn.setOnAction(x -> {
             displayCreatedAccountTypes(accountDao.readAccountTypes());
@@ -128,7 +114,6 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
             showSelectedAccountTypeDetails((AccountTitledPane) titledPane);
         });
 
-
         viewAccountTypesBtn.setOnAction(x -> {
             accountTypesPane.setVisible(true);
             accountTypesPane.setManaged(true);
@@ -138,6 +123,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
             accountTypesPane.toFront();
         });
+
 
         Label notificationLbl = new Label();
         notificationLbl.setStyle("-fx-background-color: red; -fx-text-fill: white;");
@@ -156,31 +142,64 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
 
         AccountOverviewCtrl<F> accountOverviewCtrl = new AccountOverviewCtrl<>(accountDao);
-        FXMLLoader loader = new FXMLLoader(this.getClass().getResource("account_overview.fxml"));
-        loader.setController(accountOverviewCtrl);
-        try {
-            TabPane tabPane = loader.load();
-            accountsPane.getChildren().set(0, tabPane);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Pane tabPane = FxmlHelper.loadFxml("account_overview.fxml", accountOverviewCtrl).getKey();
+        accountsPane.getChildren().set(0, tabPane);
 
         List<Account<F>> pendingAccounts = accountDao.readPendingAccounts();
         if(!pendingAccounts.isEmpty()) {
-            boolean oked = MyNotifications.getInstance().showConfirmAlert("", "هنالك حسابات مستخدمين قيد الإنشاء. الرجاء الموافقة عليها أو رفضها");
-            if(oked) {
+            boolean ok = MyNotifications.getInstance().showConfirmAlert("", "هنالك حسابات مستخدمين قيد الإنشاء. الرجاء الموافقة عليها أو رفضها");
+            if(ok) {
                 accountOverviewCtrl.goToPendingUsersTab();
             }
-
         }
 
-
-
         doneBtn.setOnAction(x -> {
-            Stage stage = (Stage) root.getScene().getWindow();
-            stage.close();
+            if(accountDao.isAdminRequired()) {
+                promptForAdminCreation();
+            } else {
+                Stage stage = (Stage) root.getScene().getWindow();
+                stage.close();
+            }
         });
 
+    }
+
+    private void promptForAdminCreation() {
+        String closeMsg = "هل تريد إغلاق البرنامج؟";
+        String adminRequiredMsg = "لم تتم إضافة أي حساب إداري. لا يمكن استخدام النظام بدون حساب إداري. متابعة؟";
+        ButtonType createAdmin = new ButtonType("إنشاء حساب إداري");
+        ButtonType closeProgram = new ButtonType("إغلاق البرنامج", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        Optional<ButtonType> result = MyNotifications.getInstance().showConfirmAlert(closeMsg, adminRequiredMsg, List.of(createAdmin, closeProgram));
+        result.ifPresent(button -> {
+            if(button == createAdmin) {
+                AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao,
+                        List.of(), true);
+                accountCreateCtrl.showCreateAdminAccountDialog();
+            } else if(button.getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
+                System.exit(0);
+            }
+        });
+    }
+
+    private void deleteAccountType() {
+        AccountTitledPane<F> selectedAccountPane = (AccountTitledPane<F>) accountTypeAccordion.getExpandedPane();
+        if(selectedAccountPane != null) {
+            AccountType<F> accountType = selectedAccountPane.getAccountType();
+
+            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmAlert.setTitle("Delete account type(" + accountType.getTypeName() +")?");
+            confirmAlert.showAndWait().ifPresent(action -> {
+                if(action == ButtonType.OK) {
+                    boolean deleted = accountDao.deleteAccountType(accountType.getAccountTypeId());
+                    if(deleted) {
+                        accountTypeAccordion.getPanes().remove(selectedAccountPane);
+                        confirmAlert.setContentText("Done!");
+                        //MyNotifications.getInstance().showMessage("Account type deleted","");
+                    }
+                }
+            });
+        }
     }
 
 
