@@ -1,10 +1,10 @@
 package com.moubassher.accountsfx;
 
+import com.context.our_utilities.MyNotifications;
 import com.context.themes.vibrant_blue.MyThemes;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.layout.Pane;
@@ -31,6 +31,10 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     private AccountDao<F> accountDao;
     private LoginCtrl<F> loginCtrl;
 
+    private ButtonType approveAdmin = new ButtonType("تنشيط حسابات");
+    private ButtonType createAdmin = new ButtonType("إنشاء حسابات");
+    private ButtonType cancel = new ButtonType("إغلاق البرنامج", ButtonBar.ButtonData.CANCEL_CLOSE);
+
     public AccountsFX(Class<F> featureEnum, String appName, Stage stage) {
         this.featureEnum = featureEnum;
         this.appName = appName;
@@ -41,38 +45,49 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     public Account<F> initialize()  {
 
-        Pane root;
-
-        root = loadMaintainerView(accountDao);
-        showView(root);
+        accountDao.createMaintainerAccount();
 
         while(!accountDao.hasNonMaintainerAccountType()) {
-            Optional<ButtonType> result = showNoAccountTypesAlert();
-            if(result.isPresent() && result.get().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-                accountDao.createMaintainerAccount();
+
+            boolean confirmed = promptAccountTypesCreation();
+            if (confirmed) {
+                showLoginWindow(AccountType.Class.MAINTAINER);
 
                 Account<F> loggedInUser = loginCtrl.getCurrentUser();
-                if (loggedInUser == null) {
-                    root = loadLoginView();
-                    showView(root);
-                } else {
+                if (loggedInUser != null) {
                     AccountType<F> accountType = loggedInUser.getAccountType();
-                    if(accountType.getAccountClass().equals(AccountType.Class.MAINTAINER)) {
-                        root = loadMaintainerView(accountDao);
-                        showView(root);
+                    if (accountType.getAccountClass().equals(AccountType.Class.MAINTAINER)) {
+                        showMaintainerView(accountDao);
                     }
                 }
+            } else {
+                System.exit(0);
             }
         }
-
-        if(accountDao.isAdminRequired()) {
+        //TODO: if there are admin accounts pending approval, ask the user whether he would like
+        //to approve them, or create a new admin account,
+        while(accountDao.isAdminRequired()) {
             Optional<ButtonType> result = showMissingAdminAlert();
-            showAdminCreationView(result);
+
+            result.ifPresent(button -> {
+                if(button == createAdmin) {
+                    showAdminCreationView();
+                } else if(button == approveAdmin) {
+                    showLoginWindow();
+                    Account<F> loggedInUser = loginCtrl.getCurrentUser();
+                    if (loggedInUser != null) {
+                        AccountType<F> accountType = loggedInUser.getAccountType();
+                        if (accountType.getAccountClass().equals(AccountType.Class.MAINTAINER)) {
+                            showMaintainerView(accountDao);
+                        }
+                    }
+                } else if(button.getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
+                    System.exit(0);
+                }
+            });
         }
 
-        root = loadLoginView();
-
-        showView(root);
+        showLoginWindow();
 
         return loginCtrl.getCurrentUser();
     }
@@ -83,17 +98,31 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
         Scene scene = new Scene(pane, 540, 440);
         scene.getStylesheets().add(MyThemes.vibrantBlue);
-
         stage.setScene(scene);
+        stage.setMaximized(true);
         stage.showAndWait();
+
+    }
+
+    public void showLoginWindow(AccountType.Class accountClass) {
+        FXMLLoader loginLoader = new FXMLLoader(AccountsFX.class.getResource("login.fxml"));
+        loginLoader.setController(loginCtrl);
+        try {
+            Pane loginRoot = loginLoader.load();
+            if(accountClass != null) {
+                loginCtrl.enforceAccountClass(accountClass);
+            }
+            showView(loginRoot);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void showLoginWindow() {
-        Pane root = loadLoginView();
-        showView(root);
+        showLoginWindow(null);
     }
 
-    private Pane loadMaintainerView(AccountDao<F> accountDao)  {
+    private void showMaintainerView(AccountDao<F> accountDao)  {
         MaintainerAccountCtrl<F> maintainerAccountCtrl = new MaintainerAccountCtrl<>(accountDao, featureEnum);
         FXMLLoader maintainerLoader = new FXMLLoader(AccountsFX.class.getResource("maintainer_account.fxml"));
         maintainerLoader.setController(maintainerAccountCtrl);
@@ -101,66 +130,31 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         Pane maintainerViewRoot = null;
         try {
             maintainerViewRoot = maintainerLoader.load();
+            showView(maintainerViewRoot);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return maintainerViewRoot;
     }
 
-    private void showAdminCreationView(Optional<ButtonType> result) {
-        if(result.isPresent() && result.get().getButtonData() == ButtonBar.ButtonData.OK_DONE) {
-            AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao,
-                    List.of(), true);
-            accountCreateCtrl.showCreateAdminAccountDialog();
-        }
+    private void showAdminCreationView() {
+
+        AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao,
+                List.of(), true);
+        accountCreateCtrl.showCreateAdminAccountDialog();
     }
 
-    public Pane loadLoginView() {
-
-        FXMLLoader loginLoader = new FXMLLoader(AccountsFX.class.getResource("login.fxml"));
-        loginLoader.setController(loginCtrl);
-
-        Pane loginRoot = null;
-        try {
-            loginRoot = loginLoader.load();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return loginRoot;
-    }
 
 
     private Optional<ButtonType> showMissingAdminAlert() {
-        String noAdminAccountMsg = "لا يوجد حساب إداري على النظام. يجب إنشاء على الأقل حساب إداري واحد لاستخدام النظام.";
-        return showAlert(noAdminAccountMsg);
-    }
-    private Optional<ButtonType> showNoAccountTypesAlert() {
-        String noAccountTypesMsg = "لا توجد أي أنواع حسابات في النظام، يجب إنشاء على الأقل نوع حساب إداري واحد";
-        return showAlert(noAccountTypesMsg);
+        String noAdminAccountMsg = "لا يوجد حساب إداري نشط على النظام. يجب إنشاء حساب إداري واحد على الأقل لاستخدام النظام.";
+        return MyNotifications.getInstance().showConfirmAlert("", noAdminAccountMsg, List.of(approveAdmin, createAdmin, cancel), NodeOrientation.RIGHT_TO_LEFT);
     }
 
-    private Optional<ButtonType> showAlert(String msg) {
-        Alert alert =new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(appName);
-        alert.setHeaderText(msg);
-
-        ButtonType ok = new ButtonType("موافق", ButtonBar.ButtonData.OK_DONE);
-        ButtonType quit = new ButtonType("خروج", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-        alert.getButtonTypes().setAll(ok, quit);
-        alert.getDialogPane().setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
-        Optional<ButtonType> result = alert.showAndWait();
-
-        if(result.isPresent()) {
-            ButtonBar.ButtonData userChoice = result.get().getButtonData();
-            if (userChoice == ButtonBar.ButtonData.CANCEL_CLOSE) {
-                System.exit(0);
-            }
-        }
-
-        return result;
+    private boolean promptAccountTypesCreation() {
+        String noAccountTypesMsg = "لا توجد أي أنواع حسابات في النظام، يجب إنشاء نوع حساب إداري واحد على الأقل";
+        return MyNotifications.getInstance().showConfirmAlert(appName, noAccountTypesMsg);
     }
+
 
     public void logOut(Stage stage) {
         stage.hide();
