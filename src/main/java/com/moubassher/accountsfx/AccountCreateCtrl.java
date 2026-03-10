@@ -1,5 +1,6 @@
 package com.moubassher.accountsfx;
 
+import com.context.our_utilities.FxmlHelper;
 import com.context.our_utilities.MyNotifications;
 import com.context.themes.vibrant_blue.MyThemes;
 import com.jfoenix.controls.JFXComboBox;
@@ -9,6 +10,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.ImageCursor;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -69,12 +71,9 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
     private boolean isAdminAccount, isAccountCreated;
 
-    private List<F> privileges;
-
     private Account<F> createdAccount;
-    public AccountCreateCtrl(AccountDao<F> accountDao, List<F> privileges, boolean isAdminAccount) {
+    public AccountCreateCtrl(AccountDao<F> accountDao, boolean isAdminAccount) {
         this.accountDao = accountDao;
-        this.privileges = privileges;
         this.isAdminAccount = isAdminAccount;
     }
 
@@ -82,11 +81,6 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
     public void initialize(URL location, ResourceBundle resources) {
 
         passwordValidator = new PasswordValidator();
-
-        if(accountTypeSelector.getItems().isEmpty()) {
-            AccountType<F> accountType = new AccountType("مشرف",privileges, AccountType.Class.ADMIN);
-            accountTypeSelector.getItems().add(accountType);
-        }
 
         visiblePasswordField.managedProperty().bind(visiblePasswordField.visibleProperty());
 
@@ -280,6 +274,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
         masker.visibleProperty().bind(task.runningProperty());
         masker.setMouseTransparent(false);
+        masker.toFront();
 
         task.setOnSucceeded(e -> {
             isAccountCreated = task.getValue();
@@ -308,21 +303,15 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
 
     void showCreateAdminAccountDialog() {
-        try {
-            FXMLLoader fxmlLoader = new FXMLLoader(AccountCreateCtrl.class.getResource("create_account.fxml"));
-            fxmlLoader.setController(this);
-            Pane accountCreateRoot = fxmlLoader.load();
+        Parent accountCreateRoot = FxmlHelper.loadFxml("create_account.fxml", this, MyThemes.vibrantBlue).getKey();
 
-            Scene scene = new Scene(accountCreateRoot, 540, 440);
-            scene.getStylesheets().add(MyThemes.vibrantBlue);
-            Stage stage = new Stage();
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(scene);
-            stage.showAndWait();
+        Scene scene = new Scene(accountCreateRoot, 540, 440);
+        scene.getStylesheets().add(MyThemes.vibrantBlue);
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setScene(scene);
+        stage.showAndWait();
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
 }

@@ -85,11 +85,12 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
         loadPendingAccounts();
 
         createAccountBtn.setOnAction(x -> {
-            AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao, List.of(), true);
+            AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao, true);
             accountCreateCtrl.showCreateAdminAccountDialog();
         });
 
         approveAllBtn.setOnAction(x -> {
+            loadPendingAccounts();
             pendingAccounts.forEach(account -> {
                 accountDao.approveNewAccount(account);
             });

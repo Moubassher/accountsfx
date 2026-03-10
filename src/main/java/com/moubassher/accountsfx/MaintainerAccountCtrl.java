@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -142,7 +143,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
 
         AccountOverviewCtrl<F> accountOverviewCtrl = new AccountOverviewCtrl<>(accountDao);
-        Pane tabPane = FxmlHelper.loadFxml("account_overview.fxml", accountOverviewCtrl).getKey();
+        Parent tabPane = FxmlHelper.loadFxml("account_overview.fxml", accountOverviewCtrl).getKey();
         accountsPane.getChildren().set(0, tabPane);
 
         List<Account<F>> pendingAccounts = accountDao.readPendingAccounts();
@@ -173,8 +174,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         Optional<ButtonType> result = MyNotifications.getInstance().showConfirmAlert(closeMsg, adminRequiredMsg, List.of(createAdmin, closeProgram));
         result.ifPresent(button -> {
             if(button == createAdmin) {
-                AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao,
-                        List.of(), true);
+                AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao, true);
                 accountCreateCtrl.showCreateAdminAccountDialog();
             } else if(button.getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
                 System.exit(0);

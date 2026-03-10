@@ -30,8 +30,7 @@ public class TestAppCtrl implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        accountsFX = new AccountsFX<>(TestFeature.class,
-                "AccountsFxTest", stage);
+        accountsFX = new AccountsFX<>(TestFeature.class, "AccountsFxTest");
         Account<TestFeature> loggedInUser = accountsFX.initialize();
         if(loggedInUser != null) {
             loggedInUserDisplay.setText(loggedInUser.toString());
