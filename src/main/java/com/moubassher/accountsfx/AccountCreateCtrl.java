@@ -7,7 +7,6 @@ import com.jfoenix.controls.JFXComboBox;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.ImageCursor;
 import javafx.scene.Parent;
@@ -19,7 +18,6 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -28,7 +26,6 @@ import javafx.util.Duration;
 import org.controlsfx.control.MaskerPane;
 
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -69,12 +66,12 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
     private PasswordValidator passwordValidator;
 
-    private boolean isAdminAccount, isAccountCreated;
+    private boolean isAdminRequired, isAccountCreated;
 
     private Account<F> createdAccount;
-    public AccountCreateCtrl(AccountDao<F> accountDao, boolean isAdminAccount) {
+    public AccountCreateCtrl(AccountDao<F> accountDao, boolean isAdminRequired) {
         this.accountDao = accountDao;
-        this.isAdminAccount = isAdminAccount;
+        this.isAdminRequired = isAdminRequired;
     }
 
     @Override
@@ -83,10 +80,6 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         passwordValidator = new PasswordValidator();
 
         visiblePasswordField.managedProperty().bind(visiblePasswordField.visibleProperty());
-
-        visiblePasswordField.textProperty().bindBidirectional(passwordField.textProperty());
-
-        visibleConfirmPasswordField.textProperty().bindBidirectional(confirmPasswordField.textProperty());
 
         onPasswordTyped(this::showPasswordStrength);
 
@@ -99,6 +92,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
         passwordMismatch.setShowDelay(Duration.ZERO);
         passwordMismatch.setHideDelay(Duration.INDEFINITE);
 
+/*
         showPasswordBtn1.setOnMousePressed(e -> {
             visiblePasswordField.setVisible(true);
             passwordField.setVisible(false);
@@ -119,6 +113,37 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             visibleConfirmPasswordField.setVisible(false);
             confirmPasswordField.setVisible(true);
         });
+*/
+
+        showPasswordBtn1.setOnMousePressed(e -> {
+            // Sync hidden to visible before showing
+            visiblePasswordField.setText(passwordField.getText());
+            visiblePasswordField.setVisible(true);
+            passwordField.setVisible(false);
+        });
+
+        showPasswordBtn1.setOnMouseReleased(e -> {
+            // Sync visible back to hidden before hiding
+            passwordField.setText(visiblePasswordField.getText());
+            visiblePasswordField.setVisible(false);
+            passwordField.setVisible(true);
+        });
+
+        showPasswordBtn2.setOnMousePressed(x -> {
+            visibleConfirmPasswordField.setText(confirmPasswordField.getText());
+            visibleConfirmPasswordField.setVisible(true);
+            confirmPasswordField.setVisible(false);
+            visibleConfirmPasswordField.requestFocus();
+            visibleConfirmPasswordField.positionCaret(visibleConfirmPasswordField.getText().length());
+        });
+
+        showPasswordBtn2.setOnMouseReleased(x -> {
+            confirmPasswordField.setText(visibleConfirmPasswordField.getText());
+            visibleConfirmPasswordField.setVisible(false);
+            confirmPasswordField.setVisible(true);
+            confirmPasswordField.requestFocus();
+            confirmPasswordField.positionCaret(confirmPasswordField.getText().length());
+        });
 
         masker.setMouseTransparent(false);
 
@@ -129,7 +154,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
             }
         });
 
-        if(isAdminAccount) {
+        if(isAdminRequired) {
             enforceAdminAccountCreation();
         } else {
             accountTypeSelector.getItems().setAll(accountDao.readAccountTypes());
