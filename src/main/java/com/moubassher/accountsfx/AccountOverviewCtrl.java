@@ -60,11 +60,24 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
 
         loadAccounts();
 
+        pendingUsersTab.selectedProperty().addListener((a, b, selected) -> {
+            if(selected) {
+                loadPendingAccounts();
+            }
+        });
+
+        activeUsersTab.selectedProperty().addListener((a, b, selected) -> {
+            if(selected) {
+                loadAccounts();
+            }
+        });
+
         createAccountBtn.setOnAction(x -> {
             if(!accountDao.hasNonMaintainerAccountType()) {
                 promptAccountTypesCreation();
             } else {
-                AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao, true);
+                boolean isAdminRequired = accountDao.isAdminRequired();
+                AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao, isAdminRequired);
                 accountCreateCtrl.showCreateAdminAccountDialog();
             }
         });
