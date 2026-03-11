@@ -29,7 +29,7 @@
             <PasswordField fx:id="passwordField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="300.0" />
             <HBox fillHeight="false" prefWidth="200.0" spacing="30.0">
                <children>
-                  <Button fx:id="loginBtn" mnemonicParsing="false" text="تسجيل الدخول" />
+                  <Button fx:id="loginBtn" mnemonicParsing="false" styleClass="primary-btn" text="تسجيل الدخول" />
                   <Button fx:id="createAccountBtn" mnemonicParsing="false" text="انشاء حساب جديد" />
                </children>
             </HBox>

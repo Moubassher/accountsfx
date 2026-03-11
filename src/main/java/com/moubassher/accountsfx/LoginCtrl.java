@@ -161,6 +161,12 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 				.filter(account ->
 						account.getAccountType().getTypeName().equals(accountType))
 				.toList();
+		System.out.println("filtered accounts: " + filteredAccounts.size());
+		if(filteredAccounts.isEmpty()) {
+			MyNotifications.getInstance().showConfirmAlert("لا يوجد حساب لهذه الفئة", "اختر فئة حسابات أخرى أو قم بمراجعة الإدراة لإنشاء حساب لهذه الفئة");
+			accountTypeSelector.getSelectionModel().clearSelection();
+			return;
+		}
 		registeredUsersSelector.setItems(FXCollections.observableList(filteredAccounts));
 	}
 
@@ -250,55 +256,7 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		loginWindow(false);
 	}
 
-	/**This method explains to the user why certain functionalities are disabled due to the nature 
-	 * of the logged-in account:
-	 *
-	 */
-	public void showFeatureRestrictedPopup(String restrictedOperations) {
-		Label warning = new Label("تنبيه!");
-		warning.setPadding(new Insets(5));
 
-		//TODO: update disabling features' logic
-		Label currentAccount = new Label(accountDao.getAccountType(-1)+"");
-		Label restrictedOps = new Label(restrictedOperations);
-		restrictedOps.setId("restrictedOps");
-		String currentIs = "حساب المستخدم الحالي حساب ";
-		Label pleaseLogWith = new Label("يجب تسجيل الدخول بحساب مناسب لعمليات ");
-
-		Label operationsDisabled = new Label("النافذة الحالية للعرض فقط/ تم تعطيل خيارات التعديل.");
-		Label restrictionLabel = new Label("");
-		restrictionLabel.setText(currentIs);
-		restrictionLabel.setId("restriction-label"); //$NON-NLS-1$
-
-		FlowPane messagePane = new FlowPane();
-		messagePane.getChildren().addAll(restrictionLabel, currentAccount, pleaseLogWith,
-				restrictedOps, operationsDisabled);
-
-		Button OK = new Button("موافق");
-		OK.setOnAction(x -> {
-			//stage.close();
-		});
-		Button logOut = new Button("تسجيل الخروج");
-		logOut.setOnAction(x -> {
-			logOutUser();
-		});
-
-		HBox actionsPane = new HBox(10);
-		actionsPane.setAlignment(Pos.CENTER);
-		actionsPane.getChildren().addAll(OK, logOut);
-		VBox popupPane = new VBox(10);
-		popupPane.setPadding(new Insets(10));
-		popupPane.setAlignment(Pos.TOP_CENTER);
-		popupPane.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
-
-		popupPane.getChildren().addAll(warning, messagePane, actionsPane);
-
-		Scene popupScene = new Scene(popupPane, 400, 250);
-
-		//	stage.setScene(popupScene);
-		//	stage.show();
-
-	}
 
 	public static void trialVersionEnded() {
 

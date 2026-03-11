@@ -44,8 +44,6 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
         accountDao.createMaintainerAccount();
 
-        showFeatureRestrictedAlert();
-
         while(!accountDao.hasNonMaintainerAccountType()) {
             ensureAccountTypesCreated();
         }

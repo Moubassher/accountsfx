@@ -32,13 +32,13 @@
             </VBox>
             <StackPane maxHeight="1.7976931348623157E308" minHeight="-Infinity" HBox.hgrow="SOMETIMES">
                <children>
-                  <HBox fx:id="accountTypesPane" prefHeight="100.0" prefWidth="200.0" visible="false">
+                  <HBox fx:id="accountTypesPane" prefHeight="100.0" prefWidth="200.0">
                      <children>
                         <VBox maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="374.0" spacing="10.0">
                            <children>
                               <JFXTextField fx:id="accountTypeField" labelFloat="true" maxWidth="130.0" prefWidth="50.0" promptText="account type" />
                               <FlowPane fx:id="featurePane" hgap="10.0" prefHeight="99.0" prefWidth="600.0" vgap="10.0" />
-                              <ChoiceBox fx:id="accountTypeClassSelector" minWidth="100.0" prefWidth="150.0" />
+                              <ChoiceBox fx:id="accountTypeClassSelector" minWidth="200.0" prefHeight="29.0" prefWidth="165.0" />
                               <HBox prefWidth="200.0" spacing="10.0">
                                  <children>
                                     <Button fx:id="addAccountTypeBtn" mnemonicParsing="false" text="Add Account Type" />
@@ -74,7 +74,7 @@
                         </VBox>
                      </children>
                   </HBox>
-                  <VBox fx:id="accountsPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" prefWidth="100.0" spacing="10.0">
+                  <VBox fx:id="accountsPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" prefWidth="100.0" spacing="10.0" visible="false">
                      <children>
                         <fx:include source="account_overview.fxml" />
                      </children>
