@@ -40,6 +40,8 @@ public class AccountsFxMain extends Application {
         //Pane pane = fxmlLoader.load();
 
         Scene scene = new Scene(pane, 540, 440);
+        Application.setUserAgentStylesheet(Application.STYLESHEET_CASPIAN);
+
         scene.getStylesheets().add(MyThemes.vibrantBlue);
 
         stage.setScene(scene);

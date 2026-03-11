@@ -235,7 +235,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 			while (rs.next()) {
 				int accountTypeId = rs.getInt("accountTypeId");
-				String type = rs.getString("accountType");
+				String type = rs.getString("accountTypeName");
 
 				String privilegeString = rs.getString("privileges");
 				List<F> privileges;

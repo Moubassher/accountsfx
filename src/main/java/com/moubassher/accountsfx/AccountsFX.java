@@ -44,6 +44,8 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
         accountDao.createMaintainerAccount();
 
+        showFeatureRestrictedAlert();
+
         while(!accountDao.hasNonMaintainerAccountType()) {
             ensureAccountTypesCreated();
         }
@@ -144,14 +146,18 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     }
 
     private boolean promptAccountTypesCreation() {
-        String noAccountTypesMsg = "لا توجد أي أنواع حسابات في النظام، يجب إنشاء نوع حساب إداري واحد على الأقل";
-        return MyNotifications.getInstance().showConfirmAlert(appName, noAccountTypesMsg);
+        String noAccountTypesMsg = "لا توجد أي فئات حسابات في النظام، يجب إنشاء فئة حساب إدارية واحدة على الأقل";
+        return MyNotifications.getInstance().showConfirmAlert("لا يوجد فئات حسابات", noAccountTypesMsg);
     }
 
 
     public void logOut(Stage stage) {
         stage.hide();
         showLoginWindow();
+    }
+
+    public void showFeatureRestrictedAlert() {
+        MyNotifications.getInstance().showConfirmAlert("ليس لديك صلاحية لإجراء هذه العملية", "الرجاء تسجيل الدخول بحساب له صلاحية أو مراجعة الإدارة لإضافة الصلاحية إلى حسابك");
     }
 
     public AccountDao<F> getAccountDao() {

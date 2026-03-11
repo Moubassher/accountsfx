@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javafx.fxml.FXML;
+import javafx.geometry.NodeOrientation;
 import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 
@@ -41,19 +42,32 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
             refreshAccountsBtn, resetPasswordBtn, deleteSelectedAccountBtn;
 
     @FXML
-    private Tab pendingUsersTab;
-
-    private AccountDao<F> accountDao;
+    private Tab activeUsersTab, pendingUsersTab;
 
     private List<Account<F>> pendingAccounts;
 
     private Map<Account<F>, Boolean> approvedAccountsMap = new HashMap<>();
+
+    private AccountDao<F> accountDao;
+
+
     public AccountOverviewCtrl(AccountDao<F> accountDao) {
         this.accountDao = accountDao;
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
+        loadAccounts();
+
+        createAccountBtn.setOnAction(x -> {
+            if(!accountDao.hasNonMaintainerAccountType()) {
+                promptAccountTypesCreation();
+            } else {
+                AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao, true);
+                accountCreateCtrl.showCreateAdminAccountDialog();
+            }
+        });
 
         resetPasswordBtn.setOnAction(x -> {
             Account<F> account = accountsListView.getSelectionModel().getSelectedItem();
@@ -68,7 +82,6 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
             }
         });
 
-        loadAccounts();
 
         refreshAccountsBtn.setOnAction(x -> {
             loadAccounts();
@@ -84,10 +97,6 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
 
         loadPendingAccounts();
 
-        createAccountBtn.setOnAction(x -> {
-            AccountCreateCtrl<F> accountCreateCtrl = new AccountCreateCtrl<>(accountDao, true);
-            accountCreateCtrl.showCreateAdminAccountDialog();
-        });
 
         approveAllBtn.setOnAction(x -> {
             loadPendingAccounts();
@@ -115,6 +124,14 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
             loadPendingAccounts();
         });
 
+    }
+
+    private boolean promptAccountTypesCreation() {
+        String noAccountTypesMsg = "لا توجد أي فئات حسابات في النظام، يجب إنشاء فئة حساب إدارية واحدة على الأقل";
+        ButtonType ok = new ButtonType("موافق", ButtonBar.ButtonData.OK_DONE);
+        Optional<ButtonType> result =  MyNotifications.getInstance()
+                .showConfirmAlert("لا يوجد فئات حسابات", noAccountTypesMsg, List.of(ok), NodeOrientation.RIGHT_TO_LEFT);
+        return result.isPresent() && result.get().getButtonData() == ButtonBar.ButtonData.OK_DONE;
     }
 
     private boolean confirmDeletePending() {
