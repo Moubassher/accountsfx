@@ -1,13 +1,10 @@
 package com.moubassher.accountsfx.testApp;
 
 import com.moubassher.accountsfx.Account;
-import com.moubassher.accountsfx.AccountDao;
-import com.moubassher.accountsfx.AccountsFX;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
-import javafx.stage.Stage;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -20,32 +17,27 @@ public class TestAppCtrl implements Initializable {
     @FXML
     private Label loggedInUserDisplay;
 
-    private Stage stage;
 
-    private AccountsFX<TestFeature> accountsFX;
-    public TestAppCtrl(Stage stage) {
-        this.stage = stage;
+    public void onUserLogin(Account<TestFeature> loggedInUser) {
+        loggedInUserDisplay.setText(loggedInUser.toString());
     }
 
-    @Override
+    private Runnable logoutRunnable;
+    public void onLogout(Runnable logoutRunnable) {
+        this.logoutRunnable = logoutRunnable;
+    }
+
+        @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        accountsFX = new AccountsFX<>(TestFeature.class, "AccountsFxTest");
-        Account<TestFeature> loggedInUser = accountsFX.initialize();
-        if(loggedInUser != null) {
-            loggedInUserDisplay.setText(loggedInUser.toString());
-        } else {
-            System.exit(0);
-        }
         logOut.setOnAction(x -> {
-            accountsFX.logOut(stage);
+            logout();
         });
 
     }
-    public void deleteTestData() {
-        AccountDao<TestFeature> accountDao = accountsFX.getAccountDao();
-        accountDao.deleteAllAccounts();
-        accountDao.deleteAllPrivileges();
-        accountDao.deleteAccountTypes();
+
+    private void logout() {
+        logoutRunnable.run();
     }
+
 }

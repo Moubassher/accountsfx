@@ -1,15 +1,12 @@
 package com.moubassher.accountsfx;
 
+import com.context.our_utilities.FxmlHelper;
 import com.context.themes.vibrant_blue.MyThemes;
 import com.moubassher.accountsfx.testApp.TestAppCtrl;
 import com.moubassher.accountsfx.testApp.TestFeature;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.util.List;
 
 ///Logic Flow:
@@ -25,31 +22,32 @@ public class AccountsFxMain extends Application {
         launch(args);
     }
 
+    private AccountsFX<TestFeature> accountsFX;
 
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage primaryStage) {
 
-        TestAppCtrl testAppCtrl = new TestAppCtrl(stage);
-        FXMLLoader loader = new FXMLLoader(TestAppCtrl.class.getResource("testApp.fxml"));
-        loader.setController(testAppCtrl);
-        Pane pane = loader.load();
+        TestAppCtrl testAppCtrl = new TestAppCtrl();
 
-       // AdminPrivileges<TestFeature> adminPrivileges = new AdminPrivileges<>(TestFeature.class, "TestApp");
-       // FXMLLoader fxmlLoader = new FXMLLoader(this.getClass().getResource("admin_privileges.fxml"));
-        //fxmlLoader.setController(adminPrivileges);
-        //Pane pane = fxmlLoader.load();
+        accountsFX = new AccountsFX<>(TestFeature.class,
+                "AccountsFxTest", primaryStage);
 
-        Scene scene = new Scene(pane, 540, 440);
-        Application.setUserAgentStylesheet(Application.STYLESHEET_CASPIAN);
+        accountsFX.onLogin(() ->
+                FxmlHelper.loadFxml("testApp.fxml", testAppCtrl, MyThemes.vibrantBlue).getKey());
 
-        scene.getStylesheets().add(MyThemes.vibrantBlue);
-
-        stage.setScene(scene);
-        stage.setOnCloseRequest(close -> {
-           // testAppCtrl.deleteTestData();
+        testAppCtrl.onLogout(() -> {
+            accountsFX.showLoginWindow();
         });
 
-        stage.show();
+        accountsFX.initialize();;
+
+    }
+
+    public void deleteTestData() {
+        AccountDao<TestFeature> accountDao = accountsFX.getAccountDao();
+        accountDao.deleteAllAccounts();
+        accountDao.deleteAllPrivileges();
+        accountDao.deleteAccountTypes();
     }
 
     void createTestAccounts() {

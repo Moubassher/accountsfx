@@ -6,10 +6,7 @@ import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.geometry.NodeOrientation;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -17,12 +14,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import org.controlsfx.control.MaskerPane;
 import org.controlsfx.validation.ValidationSupport;
 import org.controlsfx.validation.Validator;
@@ -36,8 +28,6 @@ import java.util.function.Consumer;
  * A controller for the login window. The user
  */
 public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable {
-
-	private AccountDao<F> accountDao;
 
 	TaskDatabase taskDatabase = TaskDatabase.getInstance();
 
@@ -67,18 +57,17 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 
 	private boolean isUserManager;
 
-	private Account<F> currentUser;
-
-
 	private ValidationSupport validationSupport;
 
-	public LoginCtrl(AccountDao<F> accountDao) {
+	private AccountDao<F> accountDao;
+	private Account<F> loggedInUser;
+
+	private AccountsFX<F> accountsFX;
+	public LoginCtrl(AccountDao<F> accountDao, AccountsFX<F> accountsFX) {
 		this.accountDao = accountDao;
+		this.accountsFX = accountsFX;
 	}
 
-	public LoginCtrl(Account<F> currentUser) {
-		this.currentUser = currentUser;
-	}
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -120,33 +109,13 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 			alert.getButtonTypes().setAll(List.of(okBtn));
 			alert.showAndWait().ifPresent(result -> {
 				if( result == okBtn) {
-					loginWindow(true);
+					//navigator.toLoginScreen(this);
 				}
 			});
 		});
+
 	}
 
-	public void loginWindow(boolean mgmt) {
-
-		Stage stage = new Stage();
-		stage.initModality(Modality.APPLICATION_MODAL);
-		stage.setAlwaysOnTop(true);
-
-		Scene loginScene = new Scene(loginRootPane, 450, 500);
-		loginScene.getStylesheets().add("GreyFabric.css");
-		stage.setScene(loginScene);
-
-		stage.setOnCloseRequest(close -> {
-			if(mgmt) {
-				stage.close();
-			} else {
-				close.consume();
-			}
-		});
-
-		stage.setResizable(false);
-		stage.showAndWait();
-	}
 
 	private void onAccountTypeSelected(Consumer<AccountType> accountTypeSelectedFunc) {
 		accountTypeSelector.getSelectionModel().selectedItemProperty()
@@ -161,7 +130,6 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 				.filter(account ->
 						account.getAccountType().getTypeName().equals(accountType))
 				.toList();
-		System.out.println("filtered accounts: " + filteredAccounts.size());
 		if(filteredAccounts.isEmpty()) {
 			MyNotifications.getInstance().showConfirmAlert("لا يوجد حساب لهذه الفئة", "اختر فئة حسابات أخرى أو قم بمراجعة الإدراة لإنشاء حساب لهذه الفئة");
 			accountTypeSelector.getSelectionModel().clearSelection();
@@ -230,9 +198,8 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 			loginBtn.disableProperty().unbind();
 			masker.visibleProperty().unbind();
 			if (success) {
-				currentUser = account;
-				Stage stage = (Stage) loginRootPane.getScene().getWindow();
-				stage.close();
+				loggedInUser = account;
+				accountsFX.showMainWindow();
 			} else {
 				MyNotifications.getInstance().showErrorAlert("كلمة السر غير صحيحة", "حاول مرة أخرى أو أرسل طلب تغيير كلمة السر من أحد مستخدمي الحسابات الإدارية");
 			}
@@ -246,16 +213,9 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 		new Thread(task).start();
 	}
 
-
-	public Account<F> getCurrentUser() {
-		return currentUser;
+	public Account<F> getLoggedInUser() {
+		return loggedInUser;
 	}
-
-	public void logOutUser() {
-		accountDao.logoutAccount(currentUser);
-		loginWindow(false);
-	}
-
 
 
 	public static void trialVersionEnded() {
@@ -284,14 +244,18 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 
 	@FXML
 	private void sendPasswordResetRequest() {
-		boolean done = taskDatabase.addTask("طلب إعادة ضبط كلمة سر", "for " + currentUser.getName());
-		if(done) {
-			//TODO implement all possible ways to reset a password.
+		if(loggedInUser == null) {
+			MyNotifications.getInstance()
+					.showConfirmAlert("اختر اسم المستخدم الذي تود إرسال طلب تغيير كلمة السر من أجله", "");
+		} else {
+			boolean done = taskDatabase.addTask("طلب إعادة ضبط كلمة سر", "for " + loggedInUser.getName());
+			if (done) {
+				//TODO implement all possible ways to reset a password.
 			/* 1. Send the reset request to the server (to be received by an admin).
 				2. Send reset request to local admin, requiring a login with an admin account.
 			 */
-			MyNotifications.getInstance().showMessage("تم", "تم إرسال طلب للإدارة لإعادة ضبط كلمة السر إلى 123. وبعدما تتم إعادة الضبط. ادخل إلى حسابك باستخدام 123 (مرة واحدة)، ومن ثم قم بتغييرها من القائمة الرئيسية.");
-
+				MyNotifications.getInstance().showMessage("تم", "تم إرسال طلب للإدارة لإعادة ضبط كلمة السر إلى 123. وبعدما تتم إعادة الضبط. ادخل إلى حسابك باستخدام 123 (مرة واحدة)، ومن ثم قم بتغييرها من القائمة الرئيسية.");
+			}
 		}
 	}
 }

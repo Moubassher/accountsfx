@@ -1,5 +1,6 @@
 package com.moubassher.accountsfx.business;
 
+import com.context.our_utilities.MyNotifications;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -134,11 +135,10 @@ public class BusinessRegistrationCtrl implements Initializable {
 		}
 
 		if(exportSuccess) {
-			String notification = "تم تسجيل بيانات الصيدلية بنجاح." + "\n";
-			notification += "يمكنك الآن اجراء طلبات من المورّدين المسجلين، كما يمكن استقبال العروض منهم." + "\n";
+			String title = "تم التسجيل بنجاح." + "\n";
+			String msg = "يمكنك الآن اجراء طلبات من المورّدين المسجلين، كما يمكن استقبال العروض منهم." + "\n";
 			//UP add "know more" button showcasing what it means for a retailer to be registered.
-			//TODO: show a toast for successfully registering a retailer.
-			//MyNotifications.getInstance().showSimpleToast("نجاح!", notification);
+			MyNotifications.getInstance().showConfirmAlert(title, msg);
 		}
 	}
 

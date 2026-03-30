@@ -1,5 +1,6 @@
 package com.moubassher.accountsfx;
 
+import com.context.our_utilities.FxmlHelper;
 import com.context.our_utilities.MyNotifications;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -18,6 +19,7 @@ import java.util.ResourceBundle;
 
 import javafx.fxml.FXML;
 import javafx.geometry.NodeOrientation;
+import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 
@@ -260,5 +262,10 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
 
     void goToPendingUsersTab() {
         rootTabPane.getSelectionModel().select(pendingUsersTab);
+    }
+
+    public Parent load() {
+        Parent pane = FxmlHelper.loadFxml("account_overview.fxml", this).getKey();
+        return pane;
     }
 }
