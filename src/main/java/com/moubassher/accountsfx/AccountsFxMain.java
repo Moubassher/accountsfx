@@ -1,9 +1,7 @@
 package com.moubassher.accountsfx;
 
 import com.context.our_utilities.FxmlHelper;
-import com.context.themes.vibrant_blue.MyThemes;
-import com.moubassher.accountsfx.testApp.TestAppCtrl;
-import com.moubassher.accountsfx.testApp.TestFeature;
+import com.context.our_utilities.ThemeUtils;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -29,11 +27,16 @@ public class AccountsFxMain extends Application {
 
         TestAppCtrl testAppCtrl = new TestAppCtrl();
 
+        primaryStage.setOnCloseRequest(close -> {
+            // close.consume();
+            //deleteTestData();
+        });
+
         accountsFX = new AccountsFX<>(TestFeature.class,
-                "AccountsFxTest", primaryStage);
+                "AccountsFxTest", primaryStage, ThemeUtils.themeProperty);
 
         accountsFX.onLogin(() ->
-                FxmlHelper.loadFxml("testApp.fxml", testAppCtrl, MyThemes.vibrantBlue).getKey());
+                FxmlHelper.loadFxml("testApp/testApp.fxml", testAppCtrl).getKey());
 
         testAppCtrl.onLogout(() -> {
             accountsFX.showLoginWindow();

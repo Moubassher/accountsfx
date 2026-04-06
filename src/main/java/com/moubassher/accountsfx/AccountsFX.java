@@ -2,8 +2,10 @@ package com.moubassher.accountsfx;
 
 import com.context.our_utilities.FxmlHelper;
 import com.context.our_utilities.MyNotifications;
-import com.context.themes.vibrant_blue.MyThemes;
+import com.context.our_utilities.ThemeUtils;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -32,25 +34,27 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     private LoginCtrl<F> loginCtrl;
     private Supplier<Parent> mainPaneFunc;
 
+    private ObjectProperty<String> themeProperty;
 
     private Stage mainStage, loginStage;
     private ButtonType approveAdmin = new ButtonType("تنشيط حسابات");
     private ButtonType createAdmin = new ButtonType("إنشاء حسابات");
     private ButtonType cancel = new ButtonType("إغلاق البرنامج", ButtonBar.ButtonData.CANCEL_CLOSE);
 
-    public AccountsFX(Class<F> featureEnum, String appName, Stage mainStage) {
+    public AccountsFX(Class<F> featureEnum, String appName, Stage mainStage, ObjectProperty<String> themeProperty) {
         this.featureEnum = featureEnum;
         this.appName = appName;
         this.mainStage = mainStage;
         accountDao = new AccountDao<>(featureEnum, appName);
         loginCtrl = new LoginCtrl<>(accountDao, this);
+        this.themeProperty = themeProperty;
     }
 
     public void onLogin(Supplier<Parent> mainPaneFunc) {
         this.mainPaneFunc = mainPaneFunc;
     }
 
-    void initialize()  {
+    public void initialize()  {
 
         accountDao.createMaintainerAccount();
 
@@ -62,8 +66,9 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
             ensureAdminAccountCreated();
         }
 
-        showLoginWindow();
+        prepareMainWindowInBackground();
 
+        showLoginWindow();
     }
 
 
@@ -77,14 +82,14 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
                 showLoginWindow();
 
                 Account<F> loggedInUser = loginCtrl.getLoggedInUser();
-                    if (loggedInUser != null) {
-                        AccountType<F> accountType = loggedInUser.getAccountType();
-                        if (accountType.getAccountClass().equals(AccountType.Class.MAINTAINER)) {
-                            showMaintainerView();
-                        } else if(accountType.getAccountClass().equals(AccountType.Class.ADMIN)) {
-                            showUserOverviewWindow();
-                        }
+                if (loggedInUser != null) {
+                    AccountType<F> accountType = loggedInUser.getAccountType();
+                    if (accountType.getAccountClass().equals(AccountType.Class.MAINTAINER)) {
+                        showMaintainerView();
+                    } else if(accountType.getAccountClass().equals(AccountType.Class.ADMIN)) {
+                        showUserOverviewWindow();
                     }
+                }
 
             } else if(button.getButtonData() == ButtonBar.ButtonData.CANCEL_CLOSE) {
                 System.exit(0);
@@ -109,42 +114,44 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     public void showMainWindow() {
         loginStage.hide();
+        mainStage.show();
+    }
+
+    private void prepareMainWindowInBackground() {
         Parent root = mainPaneFunc.get();
+
         Scene scene = new Scene(root);
+        ThemeUtils.applyTheme(scene);
         Application.setUserAgentStylesheet(Application.STYLESHEET_CASPIAN);
 
-        scene.getStylesheets().add(MyThemes.vibrantBlue);
-
         mainStage.setScene(scene);
-        mainStage.setOnCloseRequest(close -> {
-            // close.consume();
-            //deleteTestData();
-        });
-        mainStage.show();
+        mainStage.setMaximized(true);
 
     }
 
     public void showLoginWindow(AccountType.Class accountClass) {
-        Parent loginRoot = FxmlHelper.loadFxml("login.fxml", loginCtrl, MyThemes.vibrantBlue).getKey();
+        Parent loginRoot = FxmlHelper.loadFxml("login.fxml", loginCtrl).getKey();
         if(accountClass != null) {
             loginCtrl.enforceAccountClass(accountClass);
         }
 
         loginStage = new Stage();
-        loginStage.initModality(Modality.WINDOW_MODAL);
-        loginStage.initOwner(mainStage);
-        Scene scene = new Scene(loginRoot);
+        loginStage.initModality(Modality.APPLICATION_MODAL);
+       Scene scene = new Scene(loginRoot);
+        ThemeUtils.applyTheme(scene);
         loginStage.setScene(scene);
         loginStage.showAndWait();
 
         Account<F> loggedInUser = loginCtrl.getLoggedInUser();
+        System.out.println("logged in user is: " + loggedInUser);
         if (loggedInUser != null) {
             AccountType<F> accountType = loggedInUser.getAccountType();
             if (accountType.getAccountClass().equals(AccountType.Class.MAINTAINER)) {
                 showMaintainerView();
             }
         } else {
-            mainStage.hide();
+            Platform.exit();
+            System.exit(0);
         }
     }
 
@@ -162,8 +169,9 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     void show(Parent root) {
         Scene scene = new Scene(root);
-        scene.getStylesheets().add(MyThemes.vibrantBlue);
+        ThemeUtils.applyTheme(scene);
         mainStage.setScene(scene);
+        mainStage.setMaximized(true);
         mainStage.show();
     }
 
@@ -189,6 +197,10 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     public AccountDao<F> getAccountDao() {
         return accountDao;
+    }
+
+    public Account<F> getLoggedInUser() {
+        return loginCtrl.getLoggedInUser();
     }
 
 }
