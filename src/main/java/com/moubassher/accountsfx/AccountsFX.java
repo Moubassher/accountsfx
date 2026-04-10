@@ -13,6 +13,7 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +37,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     private ObjectProperty<String> themeProperty;
 
-    private Stage mainStage, loginStage;
+    private Stage mainStage, loginStage, setupPage;
     private ButtonType approveAdmin = new ButtonType("تنشيط حسابات");
     private ButtonType createAdmin = new ButtonType("إنشاء حسابات");
     private ButtonType cancel = new ButtonType("إغلاق البرنامج", ButtonBar.ButtonData.CANCEL_CLOSE);
@@ -45,6 +46,9 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         this.featureEnum = featureEnum;
         this.appName = appName;
         this.mainStage = mainStage;
+        this.setupPage = new Stage();
+        setupPage.initModality(Modality.APPLICATION_MODAL);
+
         accountDao = new AccountDao<>(featureEnum, appName);
         loginCtrl = new LoginCtrl<>(accountDao, this);
         this.themeProperty = themeProperty;
@@ -100,7 +104,16 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     private void ensureAccountTypesCreated() {
         boolean confirmed = promptAccountTypesCreation();
         if (confirmed) {
-            showLoginWindow(AccountType.Class.MAINTAINER);
+            Account<F> loggedInUser = showLoginWindow(AccountType.Class.MAINTAINER);
+            if (loggedInUser != null) {
+                AccountType<F> accountType = loggedInUser.getAccountType();
+                if (accountType.getAccountClass().equals(AccountType.Class.MAINTAINER)) {
+                    showMaintainerView();
+                }
+            } else {
+                Platform.exit();
+                System.exit(0);
+            }
         } else {
             System.exit(0);
         }
@@ -114,6 +127,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     public void showMainWindow() {
         loginStage.hide();
+        setupPage.hide();
         mainStage.show();
     }
 
@@ -126,53 +140,49 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
         mainStage.setScene(scene);
         mainStage.setMaximized(true);
-
     }
 
-    public void showLoginWindow(AccountType.Class accountClass) {
+    public Account<F> showLoginWindow(AccountType.Class accountClass) {
+        mainStage.hide();
         Parent loginRoot = FxmlHelper.loadFxml("login.fxml", loginCtrl).getKey();
         if(accountClass != null) {
             loginCtrl.enforceAccountClass(accountClass);
         }
 
-        loginStage = new Stage();
+        loginStage = new Stage(StageStyle.UTILITY);
         loginStage.initModality(Modality.APPLICATION_MODAL);
-       Scene scene = new Scene(loginRoot);
+        loginStage.setResizable(false);
+        Scene scene = new Scene(loginRoot);
         ThemeUtils.applyTheme(scene);
         loginStage.setScene(scene);
+        loginStage.setOnCloseRequest(x -> {
+            mainStage.getOnCloseRequest().handle(x);
+        });
         loginStage.showAndWait();
 
-        Account<F> loggedInUser = loginCtrl.getLoggedInUser();
-        System.out.println("logged in user is: " + loggedInUser);
-        if (loggedInUser != null) {
-            AccountType<F> accountType = loggedInUser.getAccountType();
-            if (accountType.getAccountClass().equals(AccountType.Class.MAINTAINER)) {
-                showMaintainerView();
-            }
-        } else {
-            Platform.exit();
-            System.exit(0);
-        }
+        return loginCtrl.getLoggedInUser();
     }
 
 
-    public void showLoginWindow() {
+    public Account<F> showLoginWindow() {
         mainStage.hide();
-        showLoginWindow(null);
+        return showLoginWindow(null);
     }
 
     private void showMaintainerView()  {
         MaintainerAccountCtrl<F> maintainerAccountCtrl = new MaintainerAccountCtrl<>(accountDao, featureEnum);
         Parent maintainerViewRoot = FxmlHelper.loadFxml("maintainer_account.fxml", maintainerAccountCtrl).getKey();
         show(maintainerViewRoot);
+
     }
 
     void show(Parent root) {
+        mainStage.hide();
         Scene scene = new Scene(root);
         ThemeUtils.applyTheme(scene);
-        mainStage.setScene(scene);
-        mainStage.setMaximized(true);
-        mainStage.show();
+        setupPage.setScene(scene);
+        setupPage.setMaximized(true);
+        setupPage.showAndWait();
     }
 
     private void showAdminCreationView() {
@@ -191,8 +201,10 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     }
 
 
-    public void showFeatureRestrictedAlert() {
-        MyNotifications.getInstance().showConfirmAlert("ليس لديك صلاحية لإجراء هذه العملية", "الرجاء تسجيل الدخول بحساب له صلاحية أو مراجعة الإدارة لإضافة الصلاحية إلى حسابك");
+    public void showFeatureRestrictedAlert(F feature) {
+        MyNotifications.getInstance()
+                .showConfirmAlert("ليس لديك صلاحية لإجراء هذه العملية " + "(" +feature + ")",
+                        "الرجاء تسجيل الدخول بحساب له صلاحية أو مراجعة الإدارة لإضافة الصلاحية إلى حسابك");
     }
 
     public AccountDao<F> getAccountDao() {
