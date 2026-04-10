@@ -91,6 +91,10 @@ public  class Account <F extends Enum<F> & Feature<F>>  {
        return accountType != null && accountType.getAccountClass() == AccountType.Class.ADMIN;
     }
 
+    public boolean hasPrivilege(F privilege) {
+        return getAccountType().getPrivileges().contains(privilege);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
