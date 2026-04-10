@@ -12,7 +12,7 @@
 <?import javafx.scene.text.Font?>
 <?import org.controlsfx.control.MaskerPane?>
 
-<StackPane fx:id="loginRootPane" stylesheets="@vibrant_blue.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<StackPane fx:id="loginRootPane" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefHeight="353.0" prefWidth="361.0" spacing="10.0">
          <padding>
@@ -29,7 +29,7 @@
             <PasswordField fx:id="passwordField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="300.0" />
             <HBox fillHeight="false" prefWidth="200.0" spacing="30.0">
                <children>
-                  <Button fx:id="loginBtn" mnemonicParsing="false" styleClass="primary-btn" text="تسجيل الدخول" />
+                  <Button fx:id="loginBtn" defaultButton="true" mnemonicParsing="false" styleClass="primary-btn" text="تسجيل الدخول" />
                   <Button fx:id="createAccountBtn" mnemonicParsing="false" text="انشاء حساب جديد" />
                </children>
             </HBox>

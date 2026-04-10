@@ -15,7 +15,7 @@
 <?import org.controlsfx.control.MaskerPane?>
 
 
-<StackPane fx:id="root" stylesheets="@vibrant_blue.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<StackPane fx:id="root"  xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <MaskerPane fx:id="masker" visible="false" />
       <VBox alignment="CENTER_LEFT" nodeOrientation="RIGHT_TO_LEFT" prefHeight="200.0" prefWidth="589.0" spacing="10.0">
