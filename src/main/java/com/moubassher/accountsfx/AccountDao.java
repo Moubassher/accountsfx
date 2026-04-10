@@ -1,9 +1,6 @@
 package com.moubassher.accountsfx;
 
 import com.context.our_utilities.DbConfig;
-import com.context.our_utilities.MyNotifications;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,7 +30,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	private DbConfig dbConfig;
 	public AccountDao(Class<F> featureEnum, String appName) {
 		this.featureEnum = featureEnum;
-		dbConfig = new DbConfig(appName, "Users.db", "jdbc:sqlite:");
+		dbConfig = new DbConfig(appName, "Users.db", "jdbc:sqlite:", this.getClass());
 	}
 
 
