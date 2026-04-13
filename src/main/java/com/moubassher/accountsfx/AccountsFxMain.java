@@ -35,6 +35,8 @@ public class AccountsFxMain extends Application {
         accountsFX = new AccountsFX<>(TestFeature.class,
                 "AccountsFxTest", primaryStage, ThemeUtils.themeProperty);
 
+        accountsFX.enableDevelopmentMode();
+
         accountsFX.onLogin(() ->
                 FxmlHelper.loadFxml("testApp/testApp.fxml", testAppCtrl).getKey());
 

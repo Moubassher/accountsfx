@@ -37,6 +37,8 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     private ObjectProperty<String> themeProperty;
 
+    private boolean isDevelopmentMode;
+
     private Stage mainStage, loginStage, setupPage;
     private ButtonType approveAdmin = new ButtonType("تنشيط حسابات");
     private ButtonType createAdmin = new ButtonType("إنشاء حسابات");
@@ -48,7 +50,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         this.mainStage = mainStage;
         this.setupPage = new Stage();
         setupPage.initModality(Modality.APPLICATION_MODAL);
-
+        prepareLoginStage();
         accountDao = new AccountDao<>(featureEnum, appName);
         loginCtrl = new LoginCtrl<>(accountDao, this);
         this.themeProperty = themeProperty;
@@ -72,7 +74,11 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
         prepareMainWindowInBackground();
 
-        showLoginWindow();
+        if(isDevelopmentMode) {
+            showMainWindow();
+        } else {
+            showLoginWindow();
+        }
     }
 
 
@@ -149,18 +155,22 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
             loginCtrl.enforceAccountClass(accountClass);
         }
 
-        loginStage = new Stage(StageStyle.UTILITY);
-        loginStage.initModality(Modality.APPLICATION_MODAL);
-        loginStage.setResizable(false);
         Scene scene = new Scene(loginRoot);
         ThemeUtils.applyTheme(scene);
         loginStage.setScene(scene);
-        loginStage.setOnCloseRequest(x -> {
-            mainStage.getOnCloseRequest().handle(x);
-        });
+
         loginStage.showAndWait();
 
         return loginCtrl.getLoggedInUser();
+    }
+
+    private void prepareLoginStage() {
+        loginStage = new Stage(StageStyle.UTILITY);
+        loginStage.initModality(Modality.APPLICATION_MODAL);
+        loginStage.setResizable(false);
+        loginStage.setOnCloseRequest(x -> {
+            mainStage.getOnCloseRequest().handle(x);
+        });
     }
 
 
@@ -213,6 +223,10 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     public Account<F> getLoggedInUser() {
         return loginCtrl.getLoggedInUser();
+    }
+
+    public void enableDevelopmentMode() {
+        isDevelopmentMode = true;
     }
 
 }
