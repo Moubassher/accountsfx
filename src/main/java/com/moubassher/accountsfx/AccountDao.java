@@ -30,7 +30,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 	private DbConfig dbConfig;
 	public AccountDao(Class<F> featureEnum, String appName) {
 		this.featureEnum = featureEnum;
-		dbConfig = new DbConfig(appName, "Users.db", "jdbc:sqlite:", this.getClass());
+		dbConfig = new DbConfig(appName, "Users.db", "jdbc:sqlite:", this.getClass(), false);
 	}
 
 
