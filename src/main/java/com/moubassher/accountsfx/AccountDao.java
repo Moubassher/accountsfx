@@ -41,6 +41,12 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 	}
 
+	public Account<F> getAccount(int accountId) {
+		return readAccounts().stream()
+				.filter(account -> account.getUserId() == accountId)
+				.findFirst().get();
+	}
+
 
 	public boolean loginAccount(Account<F> account) {
 		int userId = account.getUserId();
