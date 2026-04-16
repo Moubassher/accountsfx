@@ -12,16 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 public class ExpenseDao {
 
-	private DbConfig dbConfig;
-	public ExpenseDao(String appName) {
-		dbConfig = new DbConfig(appName, "Users.db", "jdbc:sqlite:", this.getClass(), true);
+	private DbConfig userDbConfig;
+	public ExpenseDao(DbConfig userDbConfig) {
+		this.userDbConfig = userDbConfig;
 	}
 
 	public List<Expense> readExpenses() {
 		String sql = "SELECT expenseId, expenseTitle, cost, date, madeByUserId, note FROM expenses";
 		List<Expense> expenses = new ArrayList<>();
 
-		try (Connection connection = dbConfig.openConnection();
+		try (Connection connection = userDbConfig.openConnection();
 			 Statement stmt = connection.createStatement();
 			 ResultSet rs = stmt.executeQuery(sql)) {
 
@@ -46,7 +46,7 @@ public class ExpenseDao {
 	public boolean addExpense(Expense expense) {
 		String sql = "INSERT INTO expenses (expenseTitle, note, cost, date, madeByUserId) VALUES (?, ?, ?, ?, ?)";
 
-		try (Connection connection = dbConfig.openConnection();
+		try (Connection connection = userDbConfig.openConnection();
 			 PreparedStatement ps = connection.prepareStatement(sql)) {
 			int index = 1;
 			ps.setString(index++, expense.getExpense());
@@ -68,7 +68,7 @@ public class ExpenseDao {
 
 		String sql = "DELETE FROM expenses WHERE expenseId = ?";
 
-		try (Connection connection = dbConfig.openConnection();
+		try (Connection connection = userDbConfig.openConnection();
 			 PreparedStatement ps = connection.prepareStatement(sql)) {
 
 			ps.setInt(1, expense.getExpenseId());

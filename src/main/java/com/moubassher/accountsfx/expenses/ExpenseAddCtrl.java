@@ -1,7 +1,8 @@
 package com.moubassher.accountsfx.expenses;
 
 import com.context.our_utilities.MyNotifications;
-import core.GlobalConfig;
+import com.moubassher.accountsfx.Account;
+import com.moubassher.accountsfx.Feature;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -13,7 +14,7 @@ import javafx.scene.layout.VBox;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class ExpenseAddCtrl implements Initializable {
+public class ExpenseAddCtrl <F extends Enum<F> & Feature<F>> implements Initializable {
 
     @FXML
     private Button addExpenseBtn;
@@ -33,12 +34,22 @@ public class ExpenseAddCtrl implements Initializable {
     @FXML
     private VBox root;
 
+
+    private ExpenseDao expenseDao;
+
+    private String appName;
+    private Account<F> loggedInUser;
+
+    public ExpenseAddCtrl(String appName, Account<F> loggedInUser, ExpenseDao expenseDao) {
+        this.appName = appName;
+        this.loggedInUser = loggedInUser;
+        this.expenseDao = expenseDao;
+    }
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        GlobalConfig.getInstance().applyIntegerFormatting(amountField);
-
-        employeeDisplay.setText(GlobalConfig.getInstance().getLoggedInAccount().toString());
+        employeeDisplay.setText(loggedInUser.toString());
 
         addExpenseBtn.setOnAction(x -> {
             addExpense();
@@ -54,14 +65,17 @@ public class ExpenseAddCtrl implements Initializable {
         }
 
         int amount = Integer.valueOf(amountField.getText());
+
+        int madeByUserId = loggedInUser.getUserId();
+
         Expense expense;
         if(noteField.getText().isEmpty()) {
-            expense = new Expense(expenseTitle, amount);
+            expense = new Expense(expenseTitle, amount, madeByUserId);
         } else {
             String note = noteField.getText();
-            expense = new Expense(expenseTitle, amount, note);
+            expense = new Expense(expenseTitle, amount, madeByUserId, note);
         }
-        boolean added = ExpenseDao.getInstance().addExpense(expense);
+        boolean added = expenseDao.addExpense(expense);
         if(added) {
             MyNotifications.getInstance().showSimpleToast("تم إضافة المنصرف بنجاح", root);
         }
