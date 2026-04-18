@@ -61,7 +61,7 @@ public class PasswordValidator {
     }
 
 
-    String hashPassword(String password) {
+   public String hashPassword(String password) {
         return BCrypt.withDefaults()
                 .hashToString(14, password.toCharArray());
     }

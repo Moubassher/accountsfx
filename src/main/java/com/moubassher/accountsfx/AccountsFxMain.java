@@ -3,6 +3,7 @@ package com.moubassher.accountsfx;
 import com.context.our_utilities.FxmlHelper;
 import com.context.our_utilities.ThemeUtils;
 import javafx.application.Application;
+import javafx.scene.Parent;
 import javafx.stage.Stage;
 
 import java.util.List;
@@ -37,8 +38,8 @@ public class AccountsFxMain extends Application {
 
         accountsFX.enableDevelopmentMode();
 
-        accountsFX.onLogin(() ->
-                FxmlHelper.loadFxml("testApp/testApp.fxml", testAppCtrl).getKey());
+        Parent root = FxmlHelper.loadFxml("testApp/testApp.fxml", testAppCtrl).getKey();
+        accountsFX.onLogin(() -> root, account -> testAppCtrl.onUserLogin(account));
 
         testAppCtrl.onLogout(() -> {
             accountsFX.showLoginWindow();

@@ -4,7 +4,7 @@ import java.util.List;
 
 public class AccountType<F extends Enum<F> & Feature<F>> {
 
-    enum Class {MAINTAINER, ADMIN, NON_ADMIN}
+   public enum Class {MAINTAINER, ADMIN, NON_ADMIN}
 
     private int accountTypeId;
     private String accountTypeName;

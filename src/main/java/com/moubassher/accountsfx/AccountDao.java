@@ -598,6 +598,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 			ps.setInt(1, userId);
 			int affected = ps.executeUpdate();
+			
 			return affected > 0;
 		} catch (SQLException e) {
             e.printStackTrace();

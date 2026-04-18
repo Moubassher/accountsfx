@@ -1,8 +1,10 @@
 package com.moubassher.accountsfx;
 
+import com.context.our_utilities.DbConfig;
 import com.context.our_utilities.FxmlHelper;
 import com.context.our_utilities.MyNotifications;
 import com.context.our_utilities.ThemeUtils;
+import com.moubassher.accountsfx.expenses.ExpenseDao;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
@@ -17,6 +19,7 @@ import javafx.stage.StageStyle;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -33,10 +36,12 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     private final String appName;
     private AccountDao<F> accountDao;
     private LoginCtrl<F> loginCtrl;
+    private ExpenseDao expenseDao;
     private Supplier<Parent> mainPaneFunc;
 
     private ObjectProperty<String> themeProperty;
 
+    private Account<F> loggedInAccount;
     private boolean isDevelopmentMode;
 
     private Stage mainStage, loginStage, setupPage;
@@ -52,12 +57,17 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         setupPage.initModality(Modality.APPLICATION_MODAL);
         prepareLoginStage();
         accountDao = new AccountDao<>(featureEnum, appName);
+        DbConfig dbConfig = new DbConfig(appName, "Users.db", "jdbc:sqlite:", this.getClass(), false);
+        expenseDao = new ExpenseDao(dbConfig);
+
         loginCtrl = new LoginCtrl<>(accountDao, this);
         this.themeProperty = themeProperty;
     }
 
-    public void onLogin(Supplier<Parent> mainPaneFunc) {
+    private Consumer<Account<F>> loggedInAccountConsumer;
+    public void onLogin(Supplier<Parent> mainPaneFunc, Consumer<Account<F>> loggedInAccountConsumer) {
         this.mainPaneFunc = mainPaneFunc;
+        this.loggedInAccountConsumer = loggedInAccountConsumer;
     }
 
     public void initialize()  {
@@ -138,6 +148,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     }
 
     private void prepareMainWindowInBackground() {
+
         Parent root = mainPaneFunc.get();
 
         Scene scene = new Scene(root);
@@ -225,8 +236,41 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         return loginCtrl.getLoggedInUser();
     }
 
+    public ExpenseDao getExpenseDao() {
+        return expenseDao;
+    }
+
     public void enableDevelopmentMode() {
         isDevelopmentMode = true;
+    }
+
+    public void createFullAdminAccount(String username, String rawPassword) {
+
+        // 1. Get all admin account types (all privileges)
+        List<AccountType<F>> adminTypes = accountDao.readAccountTypes()
+                .stream()
+                .filter(t -> t.getAccountClass() == AccountType.Class.ADMIN)
+                .toList();
+
+        if (adminTypes.isEmpty()) {
+            throw new IllegalStateException("No admin account types defined in system");
+        }
+
+        PasswordValidator passwordValidator = new PasswordValidator();
+        // 2. Hash password using your existing system
+        String hashedPassword = passwordValidator.hashPassword(rawPassword);
+
+        // 3. Create ONE admin account per admin type (full privilege coverage)
+        for (AccountType<F> type : adminTypes) {
+            Account<F> admin = new Account<>(username, hashedPassword, type);
+
+            boolean success = accountDao.requestAccountApproval(admin);
+
+            if (!success) {
+                throw new IllegalStateException(
+                        "Failed to create admin account for type: " + type.getTypeName());
+            }
+        }
     }
 
 }
