@@ -142,6 +142,23 @@ public class AccountTests {
     }
 
     @Test
+    @DisplayName("Can request approval of a new account")
+    void testRequestingAccountApproval() {
+
+        Account<TestFeature> adminAccount = createTestAdminAccount("Location manager");
+
+        boolean accountTypeAdded = accountDao.addAccountType(adminAccount.getAccountType());
+        assertTrue(accountTypeAdded, "Admin account type was not added and is required for inserting admin");
+
+        boolean requested = accountDao.requestAccountApproval(adminAccount);
+        assertTrue(requested, "account approval was not requested properly");
+
+        boolean isAccountPending = accountDao.readPendingAccounts().contains(adminAccount);
+        assertTrue(isAccountPending, "Account was not read among accounts pending approval");
+
+    }
+
+    @Test
     @DisplayName("Can insert an admin user")
     void testAddingAdmin() {
         Account<TestFeature> adminAccount = createTestAdminAccount("Admin");
