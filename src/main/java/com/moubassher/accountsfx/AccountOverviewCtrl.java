@@ -198,7 +198,7 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
             boolean selected = approvedAccountsMap.containsKey(account);
 
             if (!selected) {
-                accountDao.deletePendingUser(account.getUserId());
+                accountDao.deletePendingUser(account.getUserId(), account.getAccountType().getAccountClass());
             }
         }
 

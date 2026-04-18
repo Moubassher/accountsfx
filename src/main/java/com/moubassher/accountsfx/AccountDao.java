@@ -581,7 +581,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		int pendingId = account.getUserId();
 		boolean added = addAccountDetails(account, "users");
 		if (added) {
-			return deletePendingUser(pendingId);
+			return deletePendingUser(pendingId, account.getAccountType().getAccountClass());
 		}
 		return false;
 	}
@@ -590,7 +590,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 		return addAccountDetails(account, "users_pending");
 	}
 
-	public boolean deletePendingUser(int userId)  {
+	public boolean deletePendingUser(int userId, AccountType.Class accountClass)  {
 		String sql = "DELETE FROM users_pending WHERE userId = ?";
 
 		try (Connection connection = dbConfig.openConnection();
@@ -598,7 +598,7 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 			ps.setInt(1, userId);
 			int affected = ps.executeUpdate();
-			if(affected ==0) {
+			if(affected ==0 && !accountClass.equals(AccountType.Class.MAINTAINER)) {
 				throw new IllegalStateException("Account was not pending approval. Request account approval first");
 			}
 			return affected > 0;
