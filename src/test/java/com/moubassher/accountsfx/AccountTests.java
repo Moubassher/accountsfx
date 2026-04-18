@@ -130,6 +130,9 @@ public class AccountTests {
         String hashedPassword = passwordValidator.hashPassword(password);
 
         Account<TestFeature> account = new Account<>("Robert Adams", hashedPassword, accountType);
+
+        boolean requested = accountDao.requestAccountApproval(account);
+        assertTrue(requested, "account approval was not requested properly");
         boolean added = accountDao.approveNewAccount(account);
         assertTrue(added, "test account not added and is required to testing deleting accounts");
 
@@ -146,6 +149,9 @@ public class AccountTests {
         boolean accountTypeAdded = accountDao.addAccountType(adminAccount.getAccountType());
         assertTrue(accountTypeAdded, "Admin account type was not added and is required for inserting admin");
 
+
+        boolean requested = accountDao.requestAccountApproval(adminAccount);
+        assertTrue(requested, "account approval was not requested properly");
         boolean added = accountDao.approveNewAccount(adminAccount);
         assertTrue(added, "Admin account was not added");
 
@@ -163,16 +169,15 @@ public class AccountTests {
         assertTrue(accountTypeAdded, "Account type not added and is required for test reading accounts");
 
 
+        boolean requested = accountDao.requestAccountApproval(account);
+        assertTrue(requested, "account approval was not requested properly");
+
         boolean created = accountDao.approveNewAccount(account);
-        if(created) {
+        assertTrue(created, " account was not created");
+        List<Account<TestFeature>> accounts = accountDao.readAccounts();
+        assertNotNull(accounts, "Users is null");
+        assertFalse(accounts.isEmpty());
 
-            List<Account<TestFeature>> accounts = accountDao.readAccounts();
-            assertNotNull(accounts, "Users is null");
-            assertFalse(accounts.isEmpty());
-        } else {
-            throw new RuntimeException("Account could not have been added and is a requirement for this test");
-
-        }
     }
 
     private Account createTestNonAdminAccount() {
@@ -299,11 +304,17 @@ public class AccountTests {
         assertTrue(adminTypeAdded, "Admin type not added");
 
         Account adminAccount = new Account("David Adam", "hashedPassword123", adminType);
+
+        boolean requested1 = accountDao.requestAccountApproval(adminAccount);
+        assertTrue(requested1, "admin account approval was not requested properly");
         boolean adminAdded = accountDao.approveNewAccount(adminAccount);
         assertTrue(adminAdded, "Admin account not added");
 
 
         //now that an admin has been added, a non-admin account can be added:
+
+        boolean requested2 = accountDao.requestAccountApproval(nonAdminAccount);
+        assertTrue(requested2, "non-admin account approval was not requested properly");
         boolean nonAdminAdded = accountDao.approveNewAccount(nonAdminAccount);
         assertTrue(nonAdminAdded, "Non-admin not added even after an admin has been added");
     }
@@ -347,6 +358,8 @@ public class AccountTests {
                 assertFalse(isUserLoggedIn, "An invalid user was able to log in");
 
                 //now create the account:
+                boolean requested = accountDao.requestAccountApproval(account);
+                assertTrue(requested, "account approval was not requested properly");
                 boolean created = accountDao.approveNewAccount(account);
                 assertTrue(created, "Account was not created and so login test will fail");
 
@@ -373,6 +386,10 @@ public class AccountTests {
             assertFalse(isUserLoggedIn, "An invalid user was able to log in");
 
             //now create the account:
+
+            boolean requested = accountDao.requestAccountApproval(account);
+            assertTrue(requested, "account approval was not requested properly");
+
             boolean created = accountDao.approveNewAccount(account);
             assertTrue(created, "Account was not created and so login test will fail");
 
