@@ -598,7 +598,9 @@ public class  AccountDao <F extends Enum<F> & Feature<F>>{
 
 			ps.setInt(1, userId);
 			int affected = ps.executeUpdate();
-			
+			if(affected ==0) {
+				throw new IllegalStateException("Account was not pending approval. Request account approval first");
+			}
 			return affected > 0;
 		} catch (SQLException e) {
             e.printStackTrace();
