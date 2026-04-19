@@ -8,6 +8,7 @@ import com.moubassher.accountsfx.expenses.ExpenseDao;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
+import javafx.event.EventHandler;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -16,6 +17,7 @@ import javafx.scene.control.ButtonType;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 
 import java.util.List;
 import java.util.Optional;
@@ -74,6 +76,16 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
         accountDao.createMaintainerAccount();
 
+
+        prepareMainWindowInBackground();
+
+        if(isDevelopmentMode) {
+            createTestAdmin("abc123!");
+            showMainWindow();
+        } else {
+            showLoginWindow();
+        }
+
         while(!accountDao.hasNonMaintainerAccountType()) {
             ensureAccountTypesCreated();
         }
@@ -82,15 +94,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
             ensureAdminAccountCreated();
         }
 
-        prepareMainWindowInBackground();
-
-        if(isDevelopmentMode) {
-            showMainWindow();
-        } else {
-            showLoginWindow();
-        }
     }
-
 
     private void ensureAdminAccountCreated() {
         Optional<ButtonType> result = showMissingAdminAlert();
@@ -157,6 +161,14 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
         mainStage.setScene(scene);
         mainStage.setMaximized(true);
+        EventHandler<WindowEvent> closeRequest = mainStage.getOnCloseRequest();
+        mainStage.setOnCloseRequest(close -> {
+            if(isDevelopmentMode) {
+                closeRequest.handle(close);
+            } else {
+                confirmQuitting(closeRequest, close);
+            }
+        });
     }
 
     public Account<F> showLoginWindow(AccountType.Class accountClass) {
@@ -179,8 +191,10 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         loginStage = new Stage(StageStyle.UTILITY);
         loginStage.initModality(Modality.APPLICATION_MODAL);
         loginStage.setResizable(false);
-        loginStage.setOnCloseRequest(x -> {
-            mainStage.getOnCloseRequest().handle(x);
+
+        EventHandler<WindowEvent> closeHandler = mainStage.getOnCloseRequest();
+        loginStage.setOnCloseRequest(close -> {
+            confirmQuitting(closeHandler, close);
         });
     }
 
@@ -244,33 +258,41 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         isDevelopmentMode = true;
     }
 
-    public void createFullAdminAccount(String username, String rawPassword) {
+    private void confirmQuitting(EventHandler<WindowEvent> closeHandler, WindowEvent close) {
 
-        // 1. Get all admin account types (all privileges)
-        List<AccountType<F>> adminTypes = accountDao.readAccountTypes()
-                .stream()
-                .filter(t -> t.getAccountClass() == AccountType.Class.ADMIN)
-                .toList();
+        ButtonType yes = new ButtonType("نعم");
+        ButtonType no = new ButtonType("لا");
 
-        if (adminTypes.isEmpty()) {
-            throw new IllegalStateException("No admin account types defined in system");
-        }
+        Optional<ButtonType> result = MyNotifications.getInstance()
+                .showConfirmAlert(appName, "هل أنت متأكد من أنك تريد إغلاق البرنامج؟"
+                        , List.of(yes, no), NodeOrientation.RIGHT_TO_LEFT);
+
+        result.ifPresent(buttonType -> {
+            if(buttonType == yes) {
+                closeHandler.handle(close);
+            } else {
+                close.consume();
+            }
+        });
+    }
+
+    public void createTestAdmin(String rawPassword) {
+
+        List<F> allPrivileges = List.of(featureEnum.getEnumConstants());
+        AccountType<F> accountType = new AccountType<>("location manager",
+                allPrivileges, AccountType.Class.ADMIN);
+
+        accountDao.addAccountType(accountType);
 
         PasswordValidator passwordValidator = new PasswordValidator();
-        // 2. Hash password using your existing system
+
         String hashedPassword = passwordValidator.hashPassword(rawPassword);
 
-        // 3. Create ONE admin account per admin type (full privilege coverage)
-        for (AccountType<F> type : adminTypes) {
-            Account<F> admin = new Account<>(username, hashedPassword, type);
+        Account<F> admin = new Account<>("Abdallah", hashedPassword, accountType);
 
-            boolean success = accountDao.requestAccountApproval(admin);
+        accountDao.requestAccountApproval(admin);
+        accountDao.approveNewAccount(admin);
 
-            if (!success) {
-                throw new IllegalStateException(
-                        "Failed to create admin account for type: " + type.getTypeName());
-            }
-        }
     }
 
 }
