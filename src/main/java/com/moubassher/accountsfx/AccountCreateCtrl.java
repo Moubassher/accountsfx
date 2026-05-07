@@ -328,7 +328,7 @@ public class AccountCreateCtrl<F extends Enum<F> & Feature<F>> implements Initia
 
 
     void showCreateAdminAccountDialog() {
-        Parent accountCreateRoot = FxmlHelper.loadFxml("create_account.fxml", this).getKey();
+        Parent accountCreateRoot = FxmlHelper.loadFxml("create_account.fxml", this);
 
         Scene scene = new Scene(accountCreateRoot, 540, 440);
         scene.getStylesheets().add(MyThemes.vibrantBlue);

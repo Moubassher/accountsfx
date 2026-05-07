@@ -275,7 +275,7 @@ public class AccountOverviewCtrl<F extends Enum<F> & Feature<F>> implements Init
     }
 
     public Parent load() {
-        Parent pane = FxmlHelper.loadFxml("account_overview.fxml", this).getKey();
+        Parent pane = FxmlHelper.loadFxml("account_overview.fxml", this);
         return pane;
     }
 }
