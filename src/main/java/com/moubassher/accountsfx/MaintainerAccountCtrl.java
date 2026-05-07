@@ -4,9 +4,7 @@ import com.context.our_utilities.FxmlHelper;
 import com.context.our_utilities.MyNotifications;
 import com.jfoenix.controls.JFXTextField;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -19,17 +17,13 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TabPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -143,7 +137,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
 
 
         AccountOverviewCtrl<F> accountOverviewCtrl = new AccountOverviewCtrl<>(accountDao);
-        Parent tabPane = FxmlHelper.loadFxml("account_overview.fxml", accountOverviewCtrl).getKey();
+        Parent tabPane = FxmlHelper.loadFxml("account_overview.fxml", accountOverviewCtrl);
         accountsPane.getChildren().set(0, tabPane);
 
         List<Account<F>> pendingAccounts = accountDao.readPendingAccounts();
@@ -242,6 +236,7 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
     private boolean validateAccountType(AccountType<F> accountType) {
 
         String accountTypeName = accountType.getTypeName();
+        AccountType.Class accountClass = accountType.getAccountClass();
         List<F> selectedPrivileges = accountType.getPrivileges();
 
         if(accountTypeName.isBlank()) {
@@ -252,6 +247,11 @@ public class MaintainerAccountCtrl <F extends Enum<F> & Feature<F>> implements I
         List<String> accountTypeNames = accountDao.readAccountTypes().stream().map(AccountType::getTypeName).toList();
         if(accountTypeNames.contains(accountTypeName)) {
             MyNotifications.getInstance().showErrorAlert("Account type already exists.","Cannot add 2 account types with the same name");
+            return false;
+        }
+
+        if(accountClass == null) {
+            MyNotifications.getInstance().showErrorAlert("Error", "An account type has to have a class");
             return false;
         }
 
