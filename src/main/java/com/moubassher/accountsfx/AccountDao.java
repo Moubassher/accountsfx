@@ -1,6 +1,7 @@
 package com.moubassher.accountsfx;
 
 import com.context.our_utilities.DbConfig;
+import com.moubassher.accountsfx.audit.UserActivity;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,672 +20,766 @@ import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class  AccountDao <F extends Enum<F> & Feature<F>>{
-	
+public class AccountDao<F extends Enum<F> & Feature<F>> {
 
-	DateTimeFormatter localTimeformat =
-			DateTimeFormatter.ofPattern("hh:mm a").localizedBy(Locale.forLanguageTag("AR"));
 
-	private Class<F> featureEnum;
+    DateTimeFormatter localTimeformat =
+            DateTimeFormatter.ofPattern("hh:mm a").localizedBy(Locale.forLanguageTag("AR"));
 
-	private DbConfig dbConfig;
-	public AccountDao(Class<F> featureEnum, String appName) {
-		this.featureEnum = featureEnum;
-		dbConfig = new DbConfig(appName, "Users.db", "jdbc:sqlite:", this.getClass(), false);
-	}
+    private Class<F> featureEnum;
 
+    private DbConfig dbConfig;
 
-	public AccountType<F> getAccountType(int accountTypeId) {
-		return readAccountTypes().stream()
-				.filter(accountType -> accountType.getAccountTypeId() == accountTypeId)
-				.findFirst().orElse(null);
+    public AccountDao(Class<F> featureEnum, String appName) {
+        this.featureEnum = featureEnum;
+        dbConfig = new DbConfig(appName, "Users.db", "jdbc:sqlite:", this.getClass(), false);
+    }
 
-	}
 
-	public Account<F> getAccount(int accountId) {
-		return readAccounts().stream()
-				.filter(account -> account.getUserId() == accountId)
-				.findFirst().get();
-	}
+    public AccountType<F> getAccountType(int accountTypeId) {
+        return readAccountTypes().stream()
+                .filter(accountType -> accountType.getAccountTypeId() == accountTypeId)
+                .findFirst().orElse(null);
 
+    }
 
-	public boolean loginAccount(Account<F> account) {
-		int userId = account.getUserId();
-		String password = account.getHashedPassword();
-		boolean validCredentials = verifyLoginCredentials(userId, password); //$NON-NLS-1$
-		if(validCredentials) {
-			return registerLogin(userId);
-		}
-		return false;
-	}
+    public Account<F> getAccount(int accountId) {
+        return readAccounts().stream()
+                .filter(account -> account.getUserId() == accountId)
+                .findFirst().get();
+    }
 
-	private boolean registerLogin(int userId) {
-		String command = "INSERT INTO user_sessions (userId, loginAt) VALUES (?, ?)"; //$NON-NLS-1$
 
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(command)) {
+    public boolean loginAccount(Account<F> account) {
+        int userId = account.getUserId();
+        String password = account.getHashedPassword();
+        boolean validCredentials = verifyLoginCredentials(userId, password); //$NON-NLS-1$
+        if (validCredentials) {
+            return registerLogin(userId);
+        }
+        return false;
+    }
 
-			var dateTimeFormatter =
-					DateTimeFormatter.ofPattern("E yyyy/M/dd HH:mm a")
-							.localizedBy(Locale.forLanguageTag("ar"));
+    private boolean registerLogin(int userId) {
+        String command = "INSERT INTO user_sessions (userId, loginAt) VALUES (?, ?)"; //$NON-NLS-1$
 
-			LocalDateTime login = LocalDateTime.now();
-			stmt.setInt(1, userId);
-			stmt.setString(2, login.format(dateTimeFormatter));
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(command)) {
 
-			stmt.executeUpdate();
-			return true;
+            var dateTimeFormatter =
+                    DateTimeFormatter.ofPattern("E yyyy/M/dd HH:mm a")
+                            .localizedBy(Locale.forLanguageTag("ar"));
 
-		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage()+ " culprit is: "+ e.getCause()+ "\nlocation: "
-							+ this.getClass().getEnclosingMethod());
-			return false;
-		}
-	}
+            LocalDateTime login = LocalDateTime.now();
+            stmt.setInt(1, userId);
+            stmt.setString(2, login.format(dateTimeFormatter));
 
-	public boolean logoutAccount(Account<F> account) {
-		int userId = account.getUserId();
-		String password = account.getHashedPassword();
-		boolean validCredentials = verifyLoginCredentials(userId, password); //$NON-NLS-1$
-		if(validCredentials) {
-			return registerLogout(userId);
-		}
-		return false;
-	}
+            stmt.executeUpdate();
+            return true;
 
-	private boolean registerLogout(int userId) {
-		String command =
-				"UPDATE user_sessions SET logoutAt = ? WHERE userId = ? AND logoutAt IS NULL"; //$NON-NLS-1$
-
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(command)) {
-
-			var dateTimeFormatter =
-					DateTimeFormatter.ofPattern("E yyyy/M/dd HH:mm a")
-							.localizedBy(Locale.forLanguageTag("ar"));
-
-			LocalDateTime logoutTime = LocalDateTime.now();
-			stmt.setString(1, logoutTime.format(dateTimeFormatter));
-			stmt.setInt(2, userId);
-
-			return stmt.executeUpdate() > 0;
-
-		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage()+ " culprit is: "+ e.getCause()+ "\nlocation: "+ this.getClass().getEnclosingMethod());
-			return false;
-		}
-	}
-
-
-	public List<Session> readSessions() {
-		String query = "SELECT userId, loginAt, logoutAt FROM user_sessions"; //$NON-NLS-1$
-		List<Session> sessions = new ArrayList<>();
-
-		var dateTimeFormatter = DateTimeFormatter.ofPattern("E yyyy/M/dd HH:mm a")
-				.localizedBy(Locale.forLanguageTag("ar"));
-
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(query);
-			 ResultSet rs = stmt.executeQuery()) {
-
-			while (rs.next()) {
-				int userId = rs.getInt("userId");
-
-				String loginStr = rs.getString("loginAt");
-				String logoutStr = rs.getString("logoutAt");
-
-				LocalDateTime login = LocalDateTime.parse(loginStr, dateTimeFormatter);
-				LocalDateTime logout = logoutStr != null ? LocalDateTime.parse(logoutStr, dateTimeFormatter) : null;
-
-				sessions.add(new Session(userId, login, logout));
-			}
-
-		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + " culprit is: " + e.getCause() + "\nlocation: " + this.getClass().getEnclosingMethod());
-		}
-
-		return sessions;
-	}
-
-
-	public List<Account<F>> readPendingAccounts() {
-		return readAccounts("users_pending");
-	}
-
-	public List<Account<F>> readAccounts() {
-		return readAccounts("users");
-	}
-
-
-	private List<Account<F>> readAccounts(String table) {
-
-		List<Account<F>> allAccounts = new ArrayList<>();
-
-		// Load all account types once
-		Map<Integer, AccountType<F>> accountTypeMap = readAccountTypes()
-				.stream()
-				.collect(Collectors.toMap(
-						AccountType::getAccountTypeId,
-						at -> at,
-						(a, b) -> a   // keep the first; or choose which one wins
-				));
-		String sql =
-				"SELECT userId, name, password, accountTypeId, salary, workStart, workFinish " +
-						"FROM " + table + ";";
-
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(sql);
-			 ResultSet rs = stmt.executeQuery()) {
-
-			while (rs.next()) {
-
-				int userId = rs.getInt("userId");
-				String name = rs.getString("name");
-				String password = rs.getString("password");
-				int accountTypeId = rs.getInt("accountTypeId");
-				int salary = rs.getInt("salary");
-
-				// Parse times
-				LocalTime workStart = Optional.ofNullable(rs.getString("workStart"))
-						.map(t -> LocalTime.parse(t, localTimeformat))
-						.orElse(null);
-
-				LocalTime workFinish = Optional.ofNullable(rs.getString("workFinish"))
-						.map(t -> LocalTime.parse(t, localTimeformat))
-						.orElse(null);
-
-				// Fetch AccountType directly from the map
-				AccountType<F> accountType = accountTypeMap.get(accountTypeId);
-
-				Account<F> account = new Account(
-						userId,
-						name,
-						password,
-						accountType,
-						salary,
-						workStart,
-						workFinish
-				);
-
-				allAccounts.add(account);
-			}
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		return allAccounts;
-	}
-
-
-	public  List<AccountType<F>> readArchivedAccountTypes() {
-		List<AccountType<F>> accountTypes = new ArrayList<>();
-
-		String sql = """
-						SELECT a.accountTypeId,
-						       a.accountTypeName,
-						       a.accountClass,
-						       GROUP_CONCAT(p.feature) AS privileges
-						FROM accountTypes a
-						LEFT JOIN privileges p
-						       ON p.accountTypeId = a.accountTypeId
-						GROUP BY a.accountTypeId,
-						         a.accountTypeName,
-						         a.accountClass
-						""";
-
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(sql);
-			 ResultSet rs = stmt.executeQuery()) {
-
-			while (rs.next()) {
-				int accountTypeId = rs.getInt("accountTypeId");
-				String type = rs.getString("accountTypeName");
-
-				String privilegeString = rs.getString("privileges");
-				List<F> privileges;
-				if (privilegeString == null || privilegeString.isEmpty()) {
-					privileges = new ArrayList<>();
-				} else {
-					privileges = Arrays.stream(privilegeString.split(","))
-							.map(s -> Enum.valueOf(featureEnum, s)) // convert String to enum
-							.toList();
-				}
-
-				AccountType.Class accountClass = AccountType.Class.valueOf(rs.getString("accountClass"));
-				AccountType<F> accountType = new AccountType(accountTypeId, type, privileges, accountClass);
-				accountTypes.add(accountType);
-			}
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		return accountTypes;
-	}
-
-	public boolean hasNonMaintainerAccountType() {
-		boolean hasAccountTypes=  ! readAccountTypes().stream().allMatch(accountType -> accountType.getAccountClass().equals(AccountType.Class.MAINTAINER));
-		return hasAccountTypes;
-	}
-
-	public  List<AccountType<F>> readAccountTypes() {
-		List<AccountType<F>> accountTypes = new ArrayList<>();
-
-		String sql =
-				"""
-						SELECT a.accountTypeId,
-						       a.accountTypeName,
-						       a.accountClass,
-						       GROUP_CONCAT(p.feature) AS privileges
-						FROM accountTypes a
-						LEFT JOIN privileges p
-						       ON p.accountTypeId = a.accountTypeId
-						GROUP BY a.accountTypeId,
-						         a.accountTypeName,
-						         a.accountClass
-						""";
-
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(sql);
-			 ResultSet rs = stmt.executeQuery()) {
-
-			while (rs.next()) {
-				int accountTypeId = rs.getInt("accountTypeId");
-				String type = rs.getString("accountTypeName");
-
-				String privilegeString = rs.getString("privileges");
-				List<F> privileges;
-				if (privilegeString == null || privilegeString.isEmpty()) {
-					privileges = new ArrayList<>();
-				} else {
-					privileges = Arrays.stream(privilegeString.split(","))
-							.map(s -> Enum.valueOf(featureEnum, s)) // convert String to enum
-							.toList();
-				}
-
-				AccountType.Class accountClass = AccountType.Class.valueOf(rs.getString("accountClass"));
-				AccountType<F> accountType = new AccountType(accountTypeId, type, privileges, accountClass);
-				accountTypes.add(accountType);
-			}
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		return accountTypes;
-	}
-
-
-	public void createMaintainerAccount() {
-		List<F> privileges = List.of(featureEnum.getEnumConstants());
-		AccountType<F> maintainerAccount = new AccountType<>("Maintainer", privileges, AccountType.Class.MAINTAINER);
-
-		boolean maintainerTypeCreated = addAccountType(maintainerAccount);
-		if(maintainerTypeCreated) {
-			String password = "perseverence123$";
-			String hashedPassword = new PasswordValidator().hashPassword(password);
-			Account<F> maintainer = new Account<>("Moubassher", hashedPassword, maintainerAccount);
-			approveNewAccount(maintainer);
-		}
-
-	}
-
-	public void deleteAllAccounts() {
-		String sql = "DELETE FROM users";
-		try (Connection conn = dbConfig.openConnection()
-			 ;PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.executeUpdate();
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public boolean resetPassword(Account<F> account, String newPassword) {
-		boolean reset = false;
-		String command = "UPDATE users SET password = ? WHERE userId = ?";
-		try (Connection conn = dbConfig.openConnection()) {
-			PreparedStatement stmt = conn.prepareStatement(command);
-			stmt.setString(1, newPassword);
-			stmt.setInt(2, account.getUserId());
-			stmt.executeUpdate();
-			reset = true;
-
-		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
-			System.exit(0);
-		}
-		return reset;
-	}
-
-	public  boolean isAdminRequired() {
-		return readAccounts().stream()
-				.noneMatch(account -> account.isAdmin());
-	}
-
-	public boolean hasPendingAccounts() {
-		return !readPendingAccounts().isEmpty();
-	}
-
-	private boolean verifyLoginCredentials(int userId, String hashedPassword) {
-
-		String command = "SELECT userId, password from users WHERE userId = ? AND password = ?;"; //$NON-NLS-1$
-		boolean validCreds = false;
-
-		try(Connection conn = dbConfig.openConnection()) {
-			PreparedStatement stmt = conn.prepareStatement(command);
-			stmt.setInt(1, userId);
-			stmt.setString(2, hashedPassword);
-
-			ResultSet results = stmt.executeQuery();
-			while(results.next()) {
-				String readHashedPassword = results.getString("password");
-				if(hashedPassword.equals(readHashedPassword)) {
-					return true;
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return validCreds;
-	}
-
-
-	boolean deleteAccounts(List<Account<F>> accounts) {
-		if (accounts == null || accounts.isEmpty()) {
-			return true;
-		}
-
-		String command = "DELETE FROM users WHERE userId = ?;";
-
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(command)) {
-
-			conn.setAutoCommit(false);
-
-			for (Account<F> account : accounts) {
-				stmt.setInt(1, account.getUserId());
-				stmt.addBatch();
-			}
-
-			stmt.executeBatch();
-			conn.commit();
-			return true;
-
-		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(
-					e.getMessage() + " culprit: " + e.getCause() +
-							"\nlocation: " + this.getClass().getEnclosingMethod()
-			);
-			return false;
-		}
-	}
-
-
-	public boolean addAccountType(AccountType<F> accountType) {
-
-		accountType.validate();
-
-		boolean isAccountTypeNew = isAccountTypeNew(accountType);
-		if(!isAccountTypeNew) {
-			return false;
-		}
-
-
-		String sql = "INSERT OR IGNORE INTO accountTypes (accountTypeName, accountClass) VALUES (?, ?)";
-
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-			stmt.setString(1, accountType.getTypeName());
-			stmt.setString(2, accountType.getAccountClass().toString());
-
-			int affected = stmt.executeUpdate();
-
-			if (affected > 0) {
-
-				try (ResultSet rs = stmt.getGeneratedKeys()) {
-					if (rs.next()) {
-						int id = rs.getInt(1);
-						accountType.setId(id); // store generated id back in object
-					}
-				}
-				addPrivileges(accountType);
-
-			}
-
-			return affected > 0;
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	private boolean isAccountTypeNew(AccountType<F> accountType) {
-		String newType = accountType.getTypeName().toLowerCase();
-		return readAccountTypes().stream()
-				.map(type -> type.getTypeName().toLowerCase())
-				.noneMatch(name -> name.equals(newType));
-	}
-
-
-	public boolean updateAccountType(int accountTypeId, AccountType<F> accountType) {
-		String sqlUpdateType = "UPDATE accountTypes SET accountTypeName = ?, accountClass = ? WHERE accountTypeId = ?";
-
-		try (Connection connection = dbConfig.openConnection();
-			 PreparedStatement stmt = connection.prepareStatement(sqlUpdateType)) {
-
-			stmt.setString(1, accountType.getTypeName());
-			stmt.setString(2, accountType.getAccountClass().toString());
-			stmt.setInt(3, accountTypeId);
-			stmt.executeUpdate();
-
-			String sqlDeletePrivileges = "DELETE FROM privileges WHERE accountTypeId = ?";
-			try (PreparedStatement delStmt = connection.prepareStatement(sqlDeletePrivileges)) {
-				delStmt.setInt(1, accountType.getAccountTypeId());
-				delStmt.executeUpdate();
-			}
-
-			addPrivileges(accountType);
-
-			return true; // success
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false; // failure
-		}
-	}
-
-	boolean deleteAccountType(int accountTypeId) {
-		String deletePrivilegesSql = "DELETE FROM privileges WHERE accountTypeId = ?";
-		String deleteAccountTypeSql = "DELETE FROM accountTypes WHERE accountTypeId = ?";
-
-		try (Connection conn = dbConfig.openConnection()) {
-			conn.setAutoCommit(false);
-
-			// Delete related privileges
-			try (PreparedStatement ps = conn.prepareStatement(deletePrivilegesSql)) {
-				ps.setInt(1, accountTypeId);
-				ps.executeUpdate();
-			}
-
-			// Delete the account type
-			try (PreparedStatement ps = conn.prepareStatement(deleteAccountTypeSql)) {
-				ps.setInt(1, accountTypeId);
-				int affectedRows = ps.executeUpdate();
-				if (affectedRows == 0) {
-					conn.rollback();
-					return false;
-				}
-			}
-
-			conn.commit();
-			return true;
-
-		} catch (Exception e) {
-			try { dbConfig.openConnection().rollback(); } catch (Exception ignored) {}
-
-			return false;
-		}
-	}
-
-	public boolean deleteAccountTypes() {
-		String sql = "DELETE FROM accountTypes";
-		try(Connection conn = dbConfig.openConnection();
-		PreparedStatement stmt = conn.prepareStatement(sql)) {
-			int rowsAffected = stmt.executeUpdate();
-			return rowsAffected > 0;
-		} catch (SQLException e) {
-            e.printStackTrace();
-			return false;
+        } catch (SQLException e) {
+            Logger.getLogger("pharmacy-log").severe(e.getMessage() + " culprit is: " + e.getCause() + "\nlocation: "
+                    + this.getClass().getEnclosingMethod());
+            return false;
         }
     }
 
-	public void addPrivileges(AccountType<F> accountType) throws SQLException {
-		String sql = "INSERT OR IGNORE INTO privileges (accountTypeId, feature) VALUES (?, ?)";
+    public boolean logoutAccount(Account<F> account) {
+        int userId = account.getUserId();
+        String password = account.getHashedPassword();
+        boolean validCredentials = verifyLoginCredentials(userId, password); //$NON-NLS-1$
+        if (validCredentials) {
+            return registerLogout(userId);
+        }
+        return false;
+    }
 
-		try (Connection connection = dbConfig.openConnection();
-			 PreparedStatement stmt = connection.prepareStatement(sql)) {
+    private boolean registerLogout(int userId) {
+        String command =
+                "UPDATE user_sessions SET logoutAt = ? WHERE userId = ? AND logoutAt IS NULL"; //$NON-NLS-1$
 
-			int accountTypeId = accountType.getAccountTypeId();
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(command)) {
 
-			for (F privilege : accountType.getPrivileges()) {
-				stmt.setInt(1, accountTypeId);
-				stmt.setString(2, privilege.name());
-				stmt.addBatch();
-			}
+            var dateTimeFormatter =
+                    DateTimeFormatter.ofPattern("E yyyy/M/dd HH:mm a")
+                            .localizedBy(Locale.forLanguageTag("ar"));
 
-			stmt.executeBatch();
-		}
-	}
+            LocalDateTime logoutTime = LocalDateTime.now();
+            stmt.setString(1, logoutTime.format(dateTimeFormatter));
+            stmt.setInt(2, userId);
 
+            return stmt.executeUpdate() > 0;
 
-	 public boolean deleteAllPrivileges() {
-
-		String sql = "DELETE FROM privileges;";
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.execute();
-			return true;
-		} catch(SQLException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-
-	private  boolean isAccountTypeValid(AccountType<F> accountType) {
-		return readAccountTypes().contains(accountType);
-	}
-
-	public boolean approveNewAccount(Account<F> account) {
-		int pendingId = account.getUserId();
-		boolean added = addAccountDetails(account, "users");
-		if (added) {
-			return deletePendingUser(pendingId, account.getAccountType().getAccountClass());
-		}
-		return false;
-	}
-
-	public boolean requestAccountApproval(Account<F> account) {
-		return addAccountDetails(account, "users_pending");
-	}
-
-	public boolean deletePendingUser(int userId, AccountType.Class accountClass)  {
-		String sql = "DELETE FROM users_pending WHERE userId = ?";
-
-		try (Connection connection = dbConfig.openConnection();
-			 PreparedStatement ps = connection.prepareStatement(sql)) {
-
-			ps.setInt(1, userId);
-			int affected = ps.executeUpdate();
-			if(affected ==0 && !accountClass.equals(AccountType.Class.MAINTAINER)) {
-				throw new IllegalStateException("Account was not pending approval. Request account approval first");
-			}
-			return affected > 0;
-		} catch (SQLException e) {
-            e.printStackTrace();
-			return false;
+        } catch (SQLException e) {
+            Logger.getLogger("pharmacy-log").severe(e.getMessage() + " culprit is: " + e.getCause() + "\nlocation: " + this.getClass().getEnclosingMethod());
+            return false;
         }
     }
 
-	private boolean addAccountDetails(Account<F> account, String table) {
-		boolean added = false;
 
-		if (account.getName() == null || account.getName().isBlank()) {
-			throw new IllegalArgumentException("Cannot add a nameless account");
-		}
+    public List<Session> readSessions() {
+        String query = "SELECT userId, loginAt, logoutAt FROM user_sessions"; //$NON-NLS-1$
+        List<Session> sessions = new ArrayList<>();
 
-		AccountType<F> accountType = account.getAccountType();
-		if (accountType == null || !isAccountTypeValid(accountType)) {
-			throw new IllegalArgumentException("Account type is invalid when inserting account");
-		}
+        var dateTimeFormatter = DateTimeFormatter.ofPattern("E yyyy/M/dd HH:mm a")
+                .localizedBy(Locale.forLanguageTag("ar"));
 
-		if (isAdminRequired() && !account.isAdmin() && !(accountType.getAccountClass() == AccountType.Class.MAINTAINER)) {
-			throw new UnsupportedOperationException("Cannot create a non-admin account without an admin account present first");
-		}
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
 
-		String command = "INSERT INTO "+ table +"  (name, password, accountTypeId, salary, workStart, workFinish) "
-				+ "VALUES (?,?,?,?,?,?)";
+            while (rs.next()) {
+                int userId = rs.getInt("userId");
 
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(command, Statement.RETURN_GENERATED_KEYS)) {
+                String loginStr = rs.getString("loginAt");
+                String logoutStr = rs.getString("logoutAt");
 
-			stmt.setString(1, account.getName());
-			stmt.setString(2, account.getHashedPassword());
-			stmt.setInt(3, account.getAccountType().getAccountTypeId());
-			stmt.setInt(4, account.getSalary());
+                LocalDateTime login = LocalDateTime.parse(loginStr, dateTimeFormatter);
+                LocalDateTime logout = logoutStr != null ? LocalDateTime.parse(logoutStr, dateTimeFormatter) : null;
 
-			stmt.setObject(5,
-					account.getShiftStart() != null ? account.getShiftStart().format(localTimeformat) : null);
+                sessions.add(new Session(userId, login, logout));
+            }
 
-			stmt.setObject(6,
-					account.getShiftEnd() != null ? account.getShiftEnd().format(localTimeformat) : null);
+        } catch (SQLException e) {
+            Logger.getLogger("pharmacy-log").severe(e.getMessage() + " culprit is: " + e.getCause() + "\nlocation: " + this.getClass().getEnclosingMethod());
+        }
 
-			int affectedRows = stmt.executeUpdate();
-			added = affectedRows > 0;
-
-			// Retrieve generated ID
-			if (added) {
-				try (ResultSet rs = stmt.getGeneratedKeys()) {
-					if (rs.next()) {
-						int id = rs.getInt(1);
-						account.setUserId(id); // <-- assign new ID back to object
-					}
-				}
-			}
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		return added;
-
-	}
+        return sessions;
+    }
 
 
-	boolean deleteAccount(Account<F> account) {
-		if (account == null) {
-			return false;
-		}
+    public List<Account<F>> readPendingAccounts() {
+        return readAccounts("users_pending");
+    }
 
-		String command = "DELETE FROM users WHERE userId = ?;";
+    public List<Account<F>> readAccounts() {
+        return readAccounts("users");
+    }
 
-		try (Connection conn = dbConfig.openConnection();
-			 PreparedStatement stmt = conn.prepareStatement(command)) {
 
-			stmt.setInt(1, account.getUserId());
+    private List<Account<F>> readAccounts(String table) {
 
-			int affectedRows = stmt.executeUpdate();
-			return affectedRows > 0;
+        List<Account<F>> allAccounts = new ArrayList<>();
 
-		} catch (SQLException e) {
-			Logger.getLogger("pharmacy-log").severe(
-					e.getMessage() + " culprit: " + e.getCause() +
-							"\nlocation: " + this.getClass().getEnclosingMethod()
-			);
-			return false;
-		}
-	}
+        // Load all account types once
+        Map<Integer, AccountType<F>> accountTypeMap = readAccountTypes()
+                .stream()
+                .collect(Collectors.toMap(
+                        AccountType::getAccountTypeId,
+                        at -> at,
+                        (a, b) -> a   // keep the first; or choose which one wins
+                ));
+        String sql =
+                "SELECT userId, name, password, accountTypeId, salary, workStart, workFinish " +
+                        "FROM " + table + ";";
+
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+
+                int userId = rs.getInt("userId");
+                String name = rs.getString("name");
+                String password = rs.getString("password");
+                int accountTypeId = rs.getInt("accountTypeId");
+                int salary = rs.getInt("salary");
+
+                // Parse times
+                LocalTime workStart = Optional.ofNullable(rs.getString("workStart"))
+                        .map(t -> LocalTime.parse(t, localTimeformat))
+                        .orElse(null);
+
+                LocalTime workFinish = Optional.ofNullable(rs.getString("workFinish"))
+                        .map(t -> LocalTime.parse(t, localTimeformat))
+                        .orElse(null);
+
+                // Fetch AccountType directly from the map
+                AccountType<F> accountType = accountTypeMap.get(accountTypeId);
+
+                Account<F> account = new Account(
+                        userId,
+                        name,
+                        password,
+                        accountType,
+                        salary,
+                        workStart,
+                        workFinish
+                );
+
+                allAccounts.add(account);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return allAccounts;
+    }
+
+
+    public List<AccountType<F>> readArchivedAccountTypes() {
+        List<AccountType<F>> accountTypes = new ArrayList<>();
+
+        String sql = """
+                SELECT a.accountTypeId,
+                       a.accountTypeName,
+                       a.accountClass,
+                       GROUP_CONCAT(p.feature) AS privileges
+                FROM accountTypes a
+                LEFT JOIN privileges p
+                       ON p.accountTypeId = a.accountTypeId
+                GROUP BY a.accountTypeId,
+                         a.accountTypeName,
+                         a.accountClass
+                """;
+
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                int accountTypeId = rs.getInt("accountTypeId");
+                String type = rs.getString("accountTypeName");
+
+                String privilegeString = rs.getString("privileges");
+                List<F> privileges;
+                if (privilegeString == null || privilegeString.isEmpty()) {
+                    privileges = new ArrayList<>();
+                } else {
+                    privileges = Arrays.stream(privilegeString.split(","))
+                            .map(s -> Enum.valueOf(featureEnum, s)) // convert String to enum
+                            .toList();
+                }
+
+                AccountType.Class accountClass = AccountType.Class.valueOf(rs.getString("accountClass"));
+                AccountType<F> accountType = new AccountType(accountTypeId, type, privileges, accountClass);
+                accountTypes.add(accountType);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return accountTypes;
+    }
+
+    public boolean hasNonMaintainerAccountType() {
+        boolean hasAccountTypes = !readAccountTypes().stream().allMatch(accountType -> accountType.getAccountClass().equals(AccountType.Class.MAINTAINER));
+        return hasAccountTypes;
+    }
+
+    public List<AccountType<F>> readAccountTypes() {
+        List<AccountType<F>> accountTypes = new ArrayList<>();
+
+        String sql =
+                """
+                        SELECT a.accountTypeId,
+                               a.accountTypeName,
+                               a.accountClass,
+                               GROUP_CONCAT(p.feature) AS privileges
+                        FROM accountTypes a
+                        LEFT JOIN privileges p
+                               ON p.accountTypeId = a.accountTypeId
+                        GROUP BY a.accountTypeId,
+                                 a.accountTypeName,
+                                 a.accountClass
+                        """;
+
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                int accountTypeId = rs.getInt("accountTypeId");
+                String type = rs.getString("accountTypeName");
+
+                String privilegeString = rs.getString("privileges");
+                List<F> privileges;
+                if (privilegeString == null || privilegeString.isEmpty()) {
+                    privileges = new ArrayList<>();
+                } else {
+                    privileges = Arrays.stream(privilegeString.split(","))
+                            .map(s -> Enum.valueOf(featureEnum, s)) // convert String to enum
+                            .toList();
+                }
+
+                AccountType.Class accountClass = AccountType.Class.valueOf(rs.getString("accountClass"));
+                AccountType<F> accountType = new AccountType(accountTypeId, type, privileges, accountClass);
+                accountTypes.add(accountType);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return accountTypes;
+    }
+
+
+    public void createMaintainerAccount() {
+        List<F> privileges = List.of(featureEnum.getEnumConstants());
+        AccountType<F> maintainerAccount = new AccountType<>("Maintainer", privileges, AccountType.Class.MAINTAINER);
+
+        boolean maintainerTypeCreated = addAccountType(maintainerAccount);
+        if (maintainerTypeCreated) {
+            String password = "perseverence123$";
+            String hashedPassword = new PasswordValidator().hashPassword(password);
+            Account<F> maintainer = new Account<>("Moubassher", hashedPassword, maintainerAccount);
+            approveNewAccount(maintainer);
+        }
+
+    }
+
+    public void deleteAllAccounts() {
+        // 1. Tables with NO dependents go first (Leaves)
+        // 2. Tables that ARE referenced go last (Roots)
+        String[] tables = {
+                "user_sessions",
+                "user_activity",
+                "privileges",    // References accountTypes
+                "users_pending", // References accountTypes
+                "users",         // References accountTypes
+                "accountTypes"   // THE ROOT - Must be last
+        };
+
+        try (Connection conn = dbConfig.openConnection()) {
+            // Disable foreign keys temporarily for the wipe, or use strict order
+            try (Statement stmt = conn.createStatement()) {
+                // Option A: Strict Order
+                for (String table : tables) {
+                    stmt.executeUpdate("DELETE FROM " + table);
+                    // Reset IDs so tests start at ID 1
+                    stmt.executeUpdate("DELETE FROM sqlite_sequence WHERE name='" + table + "'");
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Cleanup failed: " + e.getMessage(), e);
+        }
+    }
+
+
+    public boolean resetPassword(Account<F> account, String newPassword) {
+        boolean reset = false;
+        String command = "UPDATE users SET password = ? WHERE userId = ?";
+        try (Connection conn = dbConfig.openConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(command);
+            stmt.setString(1, newPassword);
+            stmt.setInt(2, account.getUserId());
+            stmt.executeUpdate();
+            reset = true;
+
+        } catch (SQLException e) {
+            Logger.getLogger("pharmacy-log").severe(e.getMessage() + "culprit is: " + e.getCause() + "\n" + "location: " + this.getClass().getEnclosingMethod());
+            System.exit(0);
+        }
+        return reset;
+    }
+
+    public boolean isAdminRequired() {
+        return readAccounts().stream()
+                .noneMatch(account -> account.isAdmin());
+    }
+
+    public boolean hasPendingAccounts() {
+        return !readPendingAccounts().isEmpty();
+    }
+
+    private boolean verifyLoginCredentials(int userId, String hashedPassword) {
+
+        String command = "SELECT userId, password from users WHERE userId = ? AND password = ?;"; //$NON-NLS-1$
+        boolean validCreds = false;
+
+        try (Connection conn = dbConfig.openConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(command);
+            stmt.setInt(1, userId);
+            stmt.setString(2, hashedPassword);
+
+            ResultSet results = stmt.executeQuery();
+            while (results.next()) {
+                String readHashedPassword = results.getString("password");
+                if (hashedPassword.equals(readHashedPassword)) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return validCreds;
+    }
+
+
+    boolean deleteAccounts(List<Account<F>> accounts) {
+        if (accounts == null || accounts.isEmpty()) {
+            return true;
+        }
+
+        String command = "DELETE FROM users WHERE userId = ?;";
+
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(command)) {
+
+            conn.setAutoCommit(false);
+
+            for (Account<F> account : accounts) {
+                stmt.setInt(1, account.getUserId());
+                stmt.addBatch();
+            }
+
+            stmt.executeBatch();
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            Logger.getLogger("pharmacy-log").severe(
+                    e.getMessage() + " culprit: " + e.getCause() +
+                            "\nlocation: " + this.getClass().getEnclosingMethod()
+            );
+            return false;
+        }
+    }
+
+
+    public boolean addAccountType(AccountType<F> accountType) {
+
+        accountType.validate();
+
+        boolean isAccountTypeNew = isAccountTypeNew(accountType);
+        if (!isAccountTypeNew) {
+            return false;
+        }
+
+        String sql = "INSERT OR IGNORE INTO accountTypes (accountTypeName, accountClass) VALUES (?, ?)";
+
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            stmt.setString(1, accountType.getTypeName());
+            stmt.setString(2, accountType.getAccountClass().toString());
+
+            int affected = stmt.executeUpdate();
+
+            if (affected > 0) {
+
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int id = rs.getInt(1);
+                        accountType.setId(id); // store generated id back in object
+                    }
+                }
+                addPrivileges(conn, accountType);
+
+            }
+
+            return affected > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean isAccountTypeNew(AccountType<F> accountType) {
+        String newType = accountType.getTypeName().toLowerCase();
+        return readAccountTypes().stream()
+                .map(type -> type.getTypeName().toLowerCase())
+                .noneMatch(name -> name.equals(newType));
+    }
+
+
+    public boolean updateAccountType(AccountType<F> accountType) {
+        if (accountType.getAccountTypeId() <= 0) {
+            throw new IllegalArgumentException("Cannot update an AccountType with an uninitialized ID.");
+        }
+
+        String sqlUpdateType = "UPDATE accountTypes SET accountTypeName = ?, accountClass = ? WHERE accountTypeId = ?";
+        String sqlDeletePrivileges = "DELETE FROM privileges WHERE accountTypeId = ?";
+
+        try (Connection connection = dbConfig.openConnection()) {
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement stmt = connection.prepareStatement(sqlUpdateType)) {
+                stmt.setString(1, accountType.getTypeName());
+                stmt.setString(2, accountType.getAccountClass().toString());
+                stmt.setInt(3, accountType.getAccountTypeId());
+                stmt.executeUpdate();
+            }
+
+            try (PreparedStatement delStmt = connection.prepareStatement(sqlDeletePrivileges)) {
+                delStmt.setInt(1, accountType.getAccountTypeId());
+                delStmt.executeUpdate();
+            }
+
+            addPrivileges(connection, accountType);
+
+            connection.commit();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            // If possible, call connection.rollback() here
+            return false;
+        }
+    }
+
+
+    public boolean deleteAccountType(int accountTypeId) {
+        String deletePrivilegesSql = "DELETE FROM privileges WHERE accountTypeId = ?";
+        String deleteAccountTypeSql = "DELETE FROM accountTypes WHERE accountTypeId = ?";
+
+        try (Connection conn = dbConfig.openConnection()) {
+            conn.setAutoCommit(false);
+
+            // Delete related privileges
+            try (PreparedStatement ps = conn.prepareStatement(deletePrivilegesSql)) {
+                ps.setInt(1, accountTypeId);
+                ps.executeUpdate();
+            }
+
+            // Delete the account type
+            try (PreparedStatement ps = conn.prepareStatement(deleteAccountTypeSql)) {
+                ps.setInt(1, accountTypeId);
+                int affectedRows = ps.executeUpdate();
+                if (affectedRows == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            conn.commit();
+            return true;
+
+        } catch (Exception e) {
+            try {
+                dbConfig.openConnection().rollback();
+            } catch (Exception ignored) {
+            }
+
+            return false;
+        }
+    }
+
+    public boolean deleteAccountTypes() {
+        String sql = "DELETE FROM accountTypes";
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private void addPrivileges(Connection connection, AccountType<F> accountType) throws SQLException {
+        String sql = "INSERT OR IGNORE INTO privileges (accountTypeId, feature) VALUES (?, ?)";
+
+             PreparedStatement stmt = connection.prepareStatement(sql);
+
+            int accountTypeId = accountType.getAccountTypeId();
+
+            for (F privilege : accountType.getPrivileges()) {
+                stmt.setInt(1, accountTypeId);
+                stmt.setString(2, privilege.name());
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
+
+    }
+
+
+    public boolean deleteAllPrivileges() {
+
+        String sql = "DELETE FROM privileges;";
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.execute();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+    private boolean isAccountTypeValid(AccountType<F> accountType) {
+        return readAccountTypes().contains(accountType);
+    }
+
+    public boolean approveNewAccount(Account<F> account) {
+        int pendingId = account.getUserId();
+        if(isAdminRequired() && account.getAccountType().getAccountClass().equals(AccountType.Class.NON_ADMIN)) {
+            throw new UnsupportedOperationException("Have to add an admin account before a non-admin account can be created");
+        }
+        boolean added = addAccountDetails(account, "users");
+        if (added) {
+            return deletePendingUser(pendingId, account.getAccountType().getAccountClass());
+        }
+        return false;
+    }
+
+    public boolean requestAccountApproval(Account<F> account) {
+        return addAccountDetails(account, "users_pending");
+    }
+
+    public boolean deletePendingUser(int userId, AccountType.Class accountClass) {
+        String sql = "DELETE FROM users_pending WHERE userId = ?";
+
+        try (Connection connection = dbConfig.openConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            int affected = ps.executeUpdate();
+            if (affected == 0 && !accountClass.equals(AccountType.Class.MAINTAINER)) {
+                throw new IllegalStateException("Account was not pending approval. Request account approval first");
+            }
+            return affected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean addAccountDetails(Account<F> account, String table) {
+        if (account.getName() == null || account.getName().isBlank()) {
+            throw new IllegalArgumentException("Cannot add a nameless account");
+        }
+
+        AccountType<F> accountType = account.getAccountType();
+        if (accountType == null) {
+            throw new IllegalArgumentException("Account type is invalid when inserting account");
+        }
+
+        String insertSql = "INSERT INTO " + table +
+                " (name, password, accountTypeId, salary, workStart, workFinish) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
+
+        String selectSql = "SELECT userId FROM " + table + " WHERE name = ? AND accountTypeId = ? LIMIT 1";
+
+        try (Connection conn = dbConfig.openConnection()) {
+
+            try (PreparedStatement insertStmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                insertStmt.setString(1, account.getName());
+                insertStmt.setString(2, account.getHashedPassword());
+                insertStmt.setInt(3, account.getAccountType().getAccountTypeId());
+                insertStmt.setInt(4, account.getSalary());
+
+                insertStmt.setObject(5, account.getShiftStart() != null ?
+                        account.getShiftStart().format(localTimeformat) : null);
+
+                insertStmt.setObject(6, account.getShiftEnd() != null ?
+                        account.getShiftEnd().format(localTimeformat) : null);
+
+                int affectedRows = insertStmt.executeUpdate();
+
+                if (affectedRows > 0) {
+                    try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            account.setUserId(generatedKeys.getInt(1));
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+                selectStmt.setString(1, account.getName());
+                selectStmt.setInt(2, account.getAccountType().getAccountTypeId());
+                try (ResultSet rs = selectStmt.executeQuery()) {
+                    if (rs.next()) {
+                        account.setUserId(rs.getInt("userId"));
+                        return true;
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean deleteAccount(Account<F> account) {
+        if (account == null) {
+            return false;
+        }
+
+        String command = "DELETE FROM users WHERE userId = ?;";
+
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(command)) {
+
+            stmt.setInt(1, account.getUserId());
+
+            int affectedRows = stmt.executeUpdate();
+            return affectedRows > 0;
+
+        } catch (SQLException e) {
+            Logger.getLogger("pharmacy-log").severe(
+                    e.getMessage() + " culprit: " + e.getCause() +
+                            "\nlocation: " + this.getClass().getEnclosingMethod()
+            );
+            return false;
+        }
+    }
+
+    public boolean insertUserActivity(UserActivity<F> activity) {
+        String sql = "INSERT INTO user_activity (action, user_name, account_type, account_class, timestamp) VALUES (?, ?, ?, ?, ?)";
+        try (Connection connection = dbConfig.openConnection();
+                PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, activity.getAction().name());
+            pstmt.setString(2, activity.getUserName());
+            pstmt.setString(3, activity.getAccountType());
+            pstmt.setString(4, activity.getAccountClass());
+            pstmt.setString(5, activity.getTimestamp().toString());
+            pstmt.executeUpdate();
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+
+            return false;
+        }
+    }
+
+    public List<UserActivity<F>> getAllUserActivity(Class<F> enumClass) {
+        List<UserActivity<F>> activities = new ArrayList<>();
+        String sql = "SELECT * FROM user_activity";
+        try (Connection connection = dbConfig.openConnection();
+                Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                UserActivity<F> activity = new UserActivity<>(
+                        rs.getInt("activity_id"),
+                        Enum.valueOf(enumClass, rs.getString("action")),
+                        rs.getString("user_name"),
+                        rs.getString("account_type"),
+                        rs.getString("account_class"),
+                        LocalDateTime.parse(rs.getString("timestamp"))
+                );
+                activities.add(activity);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return activities;
+    }
+
+    public boolean deleteUserActivityRecords() {
+        String sql = "DELETE FROM user_activity;";
+
+        try (Connection conn = dbConfig.openConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
 
 }

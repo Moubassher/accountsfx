@@ -1,5 +1,10 @@
-package com.moubassher.accountsfx;
+package com.moubassher.accountsfx.testApp;
 
+import com.moubassher.accountsfx.Account;
+import com.moubassher.accountsfx.AccountDao;
+import com.moubassher.accountsfx.AccountType;
+import com.moubassher.accountsfx.PasswordValidator;
+import com.moubassher.accountsfx.audit.UserActivity;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -7,6 +12,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
@@ -23,10 +29,7 @@ public class AccountTests {
     @BeforeAll
     void setUp() {
         accountDao = new AccountDao<>(TestFeature.class, "AccountsFxTest");
-
         accountDao.deleteAllAccounts();
-        accountDao.deleteAllPrivileges();
-        accountDao.deleteAccountTypes();
 
         passwordValidator = new PasswordValidator();
     }
@@ -35,7 +38,11 @@ public class AccountTests {
     @AfterAll
     void afterAll() {
         accountDao.deleteAllAccounts();
+
+        accountDao.deleteUserActivityRecords();
         accountDao.deleteAllPrivileges();
+
+
         accountDao.deleteAccountTypes();
     }
 
@@ -51,8 +58,8 @@ public class AccountTests {
 
         boolean isAccountTypeRead = accountDao.readAccountTypes().contains(accountType1);
         assertTrue(isAccountTypeRead, "added account type not read successfully");
-    }
 
+    }
 
     @Test
     @DisplayName("Can update an account type's name")
@@ -63,11 +70,12 @@ public class AccountTests {
         boolean added = accountDao.addAccountType(accountType);
         assertTrue(added, "Account type was not added and is required for this update test");
 
-        String updatedName = "Senior accountant";
-        AccountType<TestFeature> updatedAccountType = new AccountType<>(updatedName, privileges, AccountType.Class.NON_ADMIN);
         int accountTypeId = accountType.getAccountTypeId();
 
-        boolean updated = accountDao.updateAccountType(accountTypeId, updatedAccountType);
+        String updatedName = "Senior accountant";
+        AccountType<TestFeature> updatedAccountType = new AccountType<>(accountTypeId, updatedName, privileges, AccountType.Class.NON_ADMIN);
+
+        boolean updated = accountDao.updateAccountType(updatedAccountType);
         assertTrue(updated, "Account type's name was not updated");
 
         String newName = updatedAccountType.getTypeName();
@@ -107,10 +115,10 @@ public class AccountTests {
         List<TestFeature> updatedPrivileges = List.of(TestFeature.FeatureB);
         accountType.setPrivileges(updatedPrivileges);
 
-        int accountTypeId = accountType.getAccountTypeId();
-        boolean updated = accountDao.updateAccountType(accountTypeId, accountType);
+        boolean updated = accountDao.updateAccountType(accountType);
         assertTrue(updated, "Account type's privileges were not updated");
 
+        int accountTypeId = accountType.getAccountTypeId();
         AccountType<TestFeature> readAccountType = accountDao.getAccountType(accountTypeId);
         privileges = readAccountType.getPrivileges();
 
@@ -136,7 +144,6 @@ public class AccountTests {
         boolean added = accountDao.approveNewAccount(account);
         assertTrue(added, "test account not added and is required to testing deleting accounts");
 
-
         boolean deleted = accountDao.deleteAccount(account);
         assertTrue(deleted, "Account deletion failed");
     }
@@ -157,6 +164,9 @@ public class AccountTests {
         assertTrue(isAccountPending, "Account was not read among accounts pending approval");
 
     }
+
+
+
 
     @Test
     @DisplayName("Can insert an admin user")
@@ -197,6 +207,29 @@ public class AccountTests {
 
     }
 
+
+    @Test
+    @DisplayName("Can get account by id")
+    void testGettingAccountById() {
+        Account<TestFeature> account = createTestAdminAccount("some user");
+
+        List<TestFeature> privileges = account.getAccountType().getPrivileges();
+
+        AccountType accountType = account.getAccountType();
+        boolean accountTypeAdded = accountDao.addAccountType(accountType);
+        assertTrue(accountTypeAdded, "Account type not added and is required for test reading accounts");
+
+
+        boolean requested = accountDao.requestAccountApproval(account);
+        assertTrue(requested, "account approval was not requested properly");
+
+        boolean created = accountDao.approveNewAccount(account);
+        assertTrue(created, " account was not created");
+
+        Account<TestFeature> readAccount = accountDao.getAccount(account.getUserId());
+        assertEquals(account, readAccount, "Account was not retrieved through id");
+    }
+
     private Account createTestNonAdminAccount() {
 
         String password = "user123";
@@ -210,7 +243,7 @@ public class AccountTests {
     private Account createTestAdminAccount(String name) {
         String password = "user123$";
         String hashedPassword = passwordValidator.hashPassword(password);
-        List<TestFeature> privileges = List.of(TestFeature.All);
+        List<TestFeature> privileges = List.of(TestFeature.values());
         AccountType<TestFeature> adminAccountType =   new AccountType(name, privileges, AccountType.Class.ADMIN);
         Account<TestFeature> admin = new Account<>("David Adam", hashedPassword, adminAccountType);
 
@@ -232,7 +265,7 @@ public class AccountTests {
 
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);
 
-        AccountType accountType =  new AccountType("مبيعات", privileges, AccountType.Class.NON_ADMIN);
+        AccountType<TestFeature> accountType =  new AccountType<>("مبيعات", privileges, AccountType.Class.NON_ADMIN);
         boolean accountTypeAdded = accountDao.addAccountType(accountType);
         assertTrue(accountTypeAdded, "Account type not added, and is required for this test");
 
@@ -243,6 +276,9 @@ public class AccountTests {
         int userId = 1234567;
         Account<TestFeature> account = new Account<>(userId, "Mohammed Ahmed", hashedPassword,
                 accountType, salary,  workStart, workFinish);
+
+        boolean requested =accountDao.requestAccountApproval(account);
+        assertTrue(requested, "Account's approval could not be requested correctly");
         assertThrows(UnsupportedOperationException.class,
                 () -> accountDao.approveNewAccount(account));
 
@@ -312,6 +348,8 @@ public class AccountTests {
 // Create a non-admin account (using the short constructor)
         Account nonAdminAccount = new Account("John Doe", "hashedPassword123", employeeType);
 
+
+
         assertThrows(UnsupportedOperationException.class,
                 () -> accountDao.approveNewAccount(nonAdminAccount));
 
@@ -353,6 +391,59 @@ public class AccountTests {
         assertThrows(IllegalArgumentException.class, () ->
                 new Account(userId, "Smith Peterson", hashedPassword,
                         userType, salary,  illogicalWorkstart, illogicalWorkfinish));
+    }
+
+    @Test
+    @DisplayName("Can register & read user activity")
+    void testAddingUserActivity() {
+        Account<TestFeature> user = createTestAdminAccount("trusted user");
+
+        AccountType accountType = user.getAccountType();
+        boolean accountTypeAdded = accountDao.addAccountType(accountType);
+        assertTrue(accountTypeAdded, "Account type not added and is required for test reading accounts");
+
+
+        boolean requested = accountDao.requestAccountApproval(user);
+        assertTrue(requested, "user approval was not requested properly");
+
+        boolean created = accountDao.approveNewAccount(user);
+        assertTrue(created, " user was not created");
+
+        Account<TestFeature> readUser = accountDao.getAccount(user.getUserId());
+
+        assertEquals(user, readUser, "User was not read successfully and is required for this test");
+
+        TestFeature action = TestFeature.Login;
+
+        String userName = user.getName();
+        String accountTypeName = user.getAccountType().getTypeName();
+        String accountClass = user.getAccountType().getAccountClass().name();
+
+        LocalDateTime now = LocalDateTime.now();
+
+        UserActivity<TestFeature> activity =
+                new UserActivity<>(action, userName, accountTypeName, accountClass, now);
+
+        // Act
+        boolean inserted = accountDao.insertUserActivity(activity);
+        // Assert insert success
+        assertTrue(inserted, "Insert should return true");
+
+        // Fetch back from DB
+        List<UserActivity<TestFeature>> activities =
+                accountDao.getAllUserActivity(TestFeature.class);
+
+
+
+        // Verify at least one matching record exists
+        boolean found = activities.stream().anyMatch(a ->
+                a.getAction() == action &&
+                        a.getUserName().equals(user.getName()) &&
+                        a.getTimestamp().withNano(0)
+                                .equals(now.withNano(0)) // avoid precision mismatch
+        );
+
+        assertTrue(found, "Inserted activity should be found in database");
     }
 
     @Nested
