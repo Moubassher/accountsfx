@@ -1,10 +1,14 @@
 package com.moubassher.accountsfx.audit;
 
 import com.moubassher.accountsfx.Feature;
+import com.moubassher.search.Searchable;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
-public class UserActivity <F extends Enum<F> & Feature<F>> {
+public class UserActivity <F extends Enum<F> & Feature<F>> implements Searchable<UserActivity<F>> {
 
     private int activityId;
     private F action;
@@ -54,5 +58,24 @@ public class UserActivity <F extends Enum<F> & Feature<F>> {
 
     public LocalDateTime getTimestamp() {
         return timestamp;
+    }
+
+    @Override
+    public Map<String, Function<UserActivity<F>, String>> getSearchableFields() {
+        return Map.of("اسم المستخدم", activity -> activity.getUserName(),
+                "فئة الحساب", activity -> activity.getAccountClass(),
+                "نوع الحساب", activity -> activity.getAccountType(),
+                "الوقت", activity -> activity.getTimestamp().toLocalTime().toString(),
+                "التاريخ", activity -> activity.getTimestamp().toLocalDate().toString());
+    }
+
+    @Override
+    public Map<String, Function<UserActivity<F>, Boolean>> getBooleanFilters() {
+        return Map.of();
+    }
+
+    @Override
+    public Map<String, ToIntFunction<UserActivity<F>>> getRangeFilters() {
+        return Map.of();
     }
 }

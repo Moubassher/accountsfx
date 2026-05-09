@@ -1,2 +1,10 @@
+
+pluginManagement {
+    repositories {
+        mavenLocal()      // your locally published plugin
+        gradlePluginPortal() // fallback
+    }
+}
+
 rootProject.name = 'accountsfx'
 

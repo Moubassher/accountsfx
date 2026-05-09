@@ -2,6 +2,7 @@ package com.moubassher.accountsfx.audit;
 
 import com.moubassher.accountsfx.AccountDao;
 import com.moubassher.accountsfx.Feature;
+import com.moubassher.search.SearchBar;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -15,12 +16,13 @@ import java.util.ResourceBundle;
 
 public class UserActivityReview<F extends Enum<F> & Feature<F>> implements Initializable {
 
-   @FXML
-   private VBox actionContainer;
+    @FXML
+    private VBox actionContainer;
 
-   private AccountDao<F> accountDao;
-
-   private Class<F> featureEnum;
+    @FXML
+    private SearchBar<UserActivity<F>> userActivitySearchbar;
+    private AccountDao<F> accountDao;
+    private Class<F> featureEnum;
     public UserActivityReview(AccountDao<F> accountDao, Class<F> featureEnum) {
         this.accountDao = accountDao;
         this.featureEnum = featureEnum;
@@ -28,17 +30,26 @@ public class UserActivityReview<F extends Enum<F> & Feature<F>> implements Initi
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-       List<UserActivity<F>> userActivity= accountDao.getAllUserActivity(featureEnum);
-       for(int i = 0; i < userActivity.size(); i++) {
-           var activity = userActivity.get(i);
-           HBox actionRow = createActionRow(activity);
-           if(i % 2 ==0) {
-               actionRow.getStyleClass().add("even-row");
-           } else {
-               actionRow.getStyleClass().add("odd-row");
-           }
-           actionContainer.getChildren().add(actionRow);
-       }
+        List<UserActivity<F>> userActivity= accountDao.getAllUserActivity(featureEnum);
+        userActivitySearchbar.initialize(userActivity, results -> {
+            showUserActivity(results);
+        });
+
+        showUserActivity(userActivity);
+    }
+
+    private void showUserActivity(List<UserActivity<F>> userActivity) {
+        actionContainer.getChildren().clear();
+        for(int i = 0; i < userActivity.size(); i++) {
+            var activity = userActivity.get(i);
+            HBox actionRow = createActionRow(activity);
+            if(i % 2 ==0) {
+                actionRow.getStyleClass().add("even-row");
+            } else {
+                actionRow.getStyleClass().add("odd-row");
+            }
+            actionContainer.getChildren().add(actionRow);
+        }
     }
 
 
@@ -60,6 +71,6 @@ public class UserActivityReview<F extends Enum<F> & Feature<F>> implements Initi
                 new Label("يوم: "),
                 new Label(timestamp.toLocalDate().toString()));
 
-    return actionRow;
+        return actionRow;
     }
 }
