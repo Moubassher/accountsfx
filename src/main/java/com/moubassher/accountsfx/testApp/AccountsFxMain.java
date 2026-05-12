@@ -1,7 +1,9 @@
-package com.moubassher.accountsfx;
+package com.moubassher.accountsfx.testApp;
 
 import com.context.our_utilities.FxmlHelper;
 import com.context.our_utilities.ThemeUtils;
+import com.moubassher.accountsfx.AccountDao;
+import com.moubassher.accountsfx.AccountsFX;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.stage.Stage;
@@ -24,27 +26,24 @@ public class AccountsFxMain extends Application {
     @Override
     public void start(Stage primaryStage) {
 
-        TestAppCtrl testAppCtrl = new TestAppCtrl();
-
         primaryStage.setOnCloseRequest(close -> {
             // close.consume();
             //deleteTestData();
         });
 
-        accountsFX = new AccountsFX<>(TestFeature.class,
-                "AccountsFxTest", primaryStage, ThemeUtils.themeProperty);
+        TestAppCtrl testAppCtrl = new TestAppCtrl();
+        Parent mainRoot =  FxmlHelper.loadFxml("testApp.fxml", testAppCtrl);
+        accountsFX = new AccountsFX<>(
+                TestFeature.class,
+                "AccountsFxTest",
+                primaryStage,
+                mainRoot,
+                testAppCtrl,
+                ThemeUtils.themeProperty);
 
         accountsFX.enableDevelopmentMode();
 
-        Parent root = FxmlHelper.loadFxml("testApp/testApp.fxml", testAppCtrl).getKey();
-        accountsFX.onLogin(() -> root, account -> testAppCtrl.onUserLogin(account));
-
-        testAppCtrl.onLogout(() -> {
-            accountsFX.showLoginWindow();
-        });
-
-        accountsFX.initialize();;
-
+        accountsFX.initialize();
     }
 
     public void deleteTestData() {

@@ -4,10 +4,12 @@ import com.context.our_utilities.DbConfig;
 import com.context.our_utilities.FxmlHelper;
 import com.context.our_utilities.MyNotifications;
 import com.context.our_utilities.ThemeUtils;
+import com.moubassher.accountsfx.audit.UserActivity;
 import com.moubassher.accountsfx.expenses.ExpenseDao;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.Parent;
@@ -19,10 +21,9 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * The system starts by checking if there are account types in the database. If there are none,
@@ -39,11 +40,12 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     private AccountDao<F> accountDao;
     private LoginCtrl<F> loginCtrl;
     private ExpenseDao expenseDao;
-    private Supplier<Parent> mainPaneFunc;
+    private Parent mainView;
+    private MainController<F> mainController;
 
     private ObjectProperty<String> themeProperty;
 
-    private Account<F> loggedInAccount;
+    private ObjectProperty<Account<F>> loggedInAccount = new SimpleObjectProperty<>();
     private boolean isDevelopmentMode;
 
     private Stage mainStage, loginStage, setupPage;
@@ -51,50 +53,68 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     private ButtonType createAdmin = new ButtonType("إنشاء حسابات");
     private ButtonType cancel = new ButtonType("إغلاق البرنامج", ButtonBar.ButtonData.CANCEL_CLOSE);
 
-    public AccountsFX(Class<F> featureEnum, String appName, Stage mainStage, ObjectProperty<String> themeProperty) {
+    public AccountsFX(Class<F> featureEnum,
+                      String appName,
+                      Stage mainStage, Parent mainViewRoot,
+                      MainController<F> mainController,
+                      ObjectProperty<String> themeProperty) {
+
         this.featureEnum = featureEnum;
         this.appName = appName;
         this.mainStage = mainStage;
+        this.mainView = mainViewRoot;
+        this.mainController = mainController;
         this.setupPage = new Stage();
         setupPage.initModality(Modality.APPLICATION_MODAL);
         prepareLoginStage();
         accountDao = new AccountDao<>(featureEnum, appName);
+        mainController.setAccountDao(accountDao);
+        mainController.onLogout(() -> {
+            this.showLoginWindow();
+        });
         DbConfig dbConfig = new DbConfig(appName, "Users.db", "jdbc:sqlite:", this.getClass(), false);
         expenseDao = new ExpenseDao(dbConfig);
 
         loginCtrl = new LoginCtrl<>(accountDao, this);
         this.themeProperty = themeProperty;
+
     }
 
-    private Consumer<Account<F>> loggedInAccountConsumer;
-    public void onLogin(Supplier<Parent> mainPaneFunc, Consumer<Account<F>> loggedInAccountConsumer) {
-        this.mainPaneFunc = mainPaneFunc;
-        this.loggedInAccountConsumer = loggedInAccountConsumer;
-    }
 
-    public void initialize()  {
-
+    public void initialize() {
         accountDao.createMaintainerAccount();
 
-
-        prepareMainWindowInBackground();
-
-        if(isDevelopmentMode) {
-            createTestAdmin("abc123!");
-            showMainWindow();
-        } else {
-            showLoginWindow();
+        if (isDevelopmentMode) {
+            Account<F> admin = createTestAdmin("abc123!");
+            loggedInAccount.set(admin);
         }
 
-        while(!accountDao.hasNonMaintainerAccountType()) {
+        while (!accountDao.hasNonMaintainerAccountType()) {
             ensureAccountTypesCreated();
         }
 
-        while(accountDao.isAdminRequired()) {
+        while (accountDao.isAdminRequired()) {
             ensureAdminAccountCreated();
         }
 
+        prepareMainWindowInBackground();
+
+        if (isDevelopmentMode) {
+            mainController.onLogin(loggedInAccount.get());
+
+            showMainWindow();
+        } else {
+            Account<F> user = showLoginWindow();
+            if (user != null) {
+                loggedInAccount.set(user);
+                mainController.onLogin(user);
+                showMainWindow();
+            } else {
+                Platform.exit();
+            }
+        }
     }
+
 
     private void ensureAdminAccountCreated() {
         Optional<ButtonType> result = showMissingAdminAlert();
@@ -140,7 +160,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     }
 
     private void showUserOverviewWindow() {
-        Parent pane = FxmlHelper.loadFxml("account_overview.fxml", new AccountOverviewCtrl<>(accountDao)).getKey();
+        Parent pane = FxmlHelper.loadFxml("account_overview.fxml", new AccountOverviewCtrl<>(accountDao));
         show(pane);
     }
 
@@ -149,18 +169,36 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         loginStage.hide();
         setupPage.hide();
         mainStage.show();
+        registerUserLogin();
+
     }
+
+
+    private void registerUserLogin() {
+        F login = featureEnum.getEnumConstants()[0].login();
+        if(loggedInAccount.get() != null) {
+            Account<F> user = loggedInAccount.get();
+            String userName = user.getName();
+            String accountTypeName = user.getAccountType().getTypeName();
+            String accountClass = user.getAccountType().getAccountClass().name();
+            UserActivity<F> loginActivity = new UserActivity<>(login, userName, accountTypeName, accountClass, LocalDateTime.now());
+            accountDao.insertUserActivity(loginActivity);
+        } else {
+            throw new IllegalArgumentException("Attempting to insert a user activity with no logged in user");
+
+        }
+    }
+
 
     private void prepareMainWindowInBackground() {
 
-        Parent root = mainPaneFunc.get();
-
-        Scene scene = new Scene(root);
+        Scene scene = new Scene(mainView);
         ThemeUtils.applyTheme(scene);
         Application.setUserAgentStylesheet(Application.STYLESHEET_CASPIAN);
 
         mainStage.setScene(scene);
         mainStage.setMaximized(true);
+
         EventHandler<WindowEvent> closeRequest = mainStage.getOnCloseRequest();
         mainStage.setOnCloseRequest(close -> {
             if(isDevelopmentMode) {
@@ -173,7 +211,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     public Account<F> showLoginWindow(AccountType.Class accountClass) {
         mainStage.hide();
-        Parent loginRoot = FxmlHelper.loadFxml("login.fxml", loginCtrl).getKey();
+        Parent loginRoot = FxmlHelper.loadFxml("login.fxml", loginCtrl);
         if(accountClass != null) {
             loginCtrl.enforceAccountClass(accountClass);
         }
@@ -186,6 +224,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
         return loginCtrl.getLoggedInUser();
     }
+
 
     private void prepareLoginStage() {
         loginStage = new Stage(StageStyle.UTILITY);
@@ -206,7 +245,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     private void showMaintainerView()  {
         MaintainerAccountCtrl<F> maintainerAccountCtrl = new MaintainerAccountCtrl<>(accountDao, featureEnum);
-        Parent maintainerViewRoot = FxmlHelper.loadFxml("maintainer_account.fxml", maintainerAccountCtrl).getKey();
+        Parent maintainerViewRoot = FxmlHelper.loadFxml("maintainer_account.fxml", maintainerAccountCtrl);
         show(maintainerViewRoot);
 
     }
@@ -236,7 +275,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
     }
 
 
-    public void showFeatureRestrictedAlert(F feature) {
+    public static <F extends Enum<F> & Feature<F>> void showFeatureRestrictedAlert(F feature) {
         MyNotifications.getInstance()
                 .showConfirmAlert("ليس لديك صلاحية لإجراء هذه العملية " + "(" +feature + ")",
                         "الرجاء تسجيل الدخول بحساب له صلاحية أو مراجعة الإدارة لإضافة الصلاحية إلى حسابك");
@@ -248,6 +287,10 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     public Account<F> getLoggedInUser() {
         return loginCtrl.getLoggedInUser();
+    }
+
+    public void setLoggedInAccount(Account loggedInAccount) {
+        this.loggedInAccount.set(loggedInAccount);
     }
 
     public ExpenseDao getExpenseDao() {
@@ -276,23 +319,23 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         });
     }
 
-    public void createTestAdmin(String rawPassword) {
+    public Account<F> createTestAdmin(String rawPassword) {
 
         List<F> allPrivileges = List.of(featureEnum.getEnumConstants());
         AccountType<F> accountType = new AccountType<>("location manager",
                 allPrivileges, AccountType.Class.ADMIN);
 
-        accountDao.addAccountType(accountType);
+        boolean accountTypeAdded = accountDao.addAccountType(accountType);
 
         PasswordValidator passwordValidator = new PasswordValidator();
-
         String hashedPassword = passwordValidator.hashPassword(rawPassword);
-
         Account<F> admin = new Account<>("Abdallah", hashedPassword, accountType);
 
-        accountDao.requestAccountApproval(admin);
-        accountDao.approveNewAccount(admin);
-
+        if(accountTypeAdded) {
+            accountDao.requestAccountApproval(admin);
+            accountDao.approveNewAccount(admin);
+        }
+        return admin;
     }
 
 }
