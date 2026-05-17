@@ -81,13 +81,11 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
         ExpenseAddCtrl<F> expenseAddCtrl = new ExpenseAddCtrl<>(appName, loggedInUser, expenseDao);
-        Parent expenseAddView = FxmlHelper.loadFxml("expenses_add.fxml", expenseAddCtrl).getKey();
+        Parent expenseAddView = FxmlHelper.loadFxml("expenses_add.fxml", expenseAddCtrl);
         addExpenseTab.setContent(expenseAddView);
 
         Currency currency = Currency.getInstance("SDG");
         String symbol = currency.getSymbol(Locale.forLanguageTag("AR"));
-        System.out.println("symbol: " + symbol);
-
         expenseCol.setCellValueFactory(x -> new SimpleStringProperty(x.getValue().getExpense()));
         noteCol.setCellValueFactory(x -> new SimpleStringProperty(x.getValue().getNote()));
 
@@ -145,9 +143,4 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
         });
     }
 
-    public Parent load() {
-
-        Parent expensesView = FxmlHelper.loadFxml("expenses_view.fxml", this).getKey();
-        return expensesView;
-    }
 }
