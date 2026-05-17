@@ -1,13 +1,16 @@
 package com.moubassher.accountsfx.audit;
 
+import com.context.our_utilities.DateTimeFormats;
 import com.moubassher.accountsfx.AccountDao;
 import com.moubassher.accountsfx.Feature;
 import com.moubassher.search.SearchBar;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.controlsfx.control.MaskerPane;
 
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -21,6 +24,9 @@ public class UserActivityReview<F extends Enum<F> & Feature<F>> implements Initi
 
     @FXML
     private SearchBar<UserActivity<F>> userActivitySearchbar;
+    @FXML
+    private MaskerPane maskerPane;
+
     private AccountDao<F> accountDao;
     private Class<F> featureEnum;
     public UserActivityReview(AccountDao<F> accountDao, Class<F> featureEnum) {
@@ -30,12 +36,31 @@ public class UserActivityReview<F extends Enum<F> & Feature<F>> implements Initi
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        List<UserActivity<F>> userActivity= accountDao.getAllUserActivity(featureEnum);
-        userActivitySearchbar.initialize(userActivity, results -> {
-            showUserActivity(results);
+
+        maskerPane.setMouseTransparent(false);
+
+        Task<List<UserActivity<F>>> activityLoadingTask = new Task<>() {
+            @Override
+            protected List<UserActivity<F>> call() {
+                List<UserActivity<F>> userActivity= accountDao.getAllUserActivity(featureEnum);
+                return userActivity;
+            }
+        };
+
+        //maskerPane.visibleProperty().bind(activityLoadingTask.runningProperty());
+        activityLoadingTask.setOnSucceeded(success -> {
+
+            List<UserActivity<F>> userActivity = activityLoadingTask.getValue();
+          //  maskerPane.visibleProperty().unbind();
+
+            userActivitySearchbar.initialize(userActivity, results -> {
+                showUserActivity(results);
+            });
+            showUserActivity(userActivity);
         });
 
-        showUserActivity(userActivity);
+        new Thread(activityLoadingTask).start();;
+
     }
 
     private void showUserActivity(List<UserActivity<F>> userActivity) {
@@ -67,7 +92,7 @@ public class UserActivityReview<F extends Enum<F> & Feature<F>> implements Initi
                 new Label("من فئة: " + accountClass),
                 new Label( "قام بـ"+ action),
                 new Label("في الساعة: "),
-                new Label(timestamp.toLocalTime().toString()),
+                new Label(timestamp.format(DateTimeFormats.usingTimeFormat())),
                 new Label("يوم: "),
                 new Label(timestamp.toLocalDate().toString()));
 
