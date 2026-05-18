@@ -14,7 +14,9 @@ import org.controlsfx.control.MaskerPane;
 
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class UserActivityReview<F extends Enum<F> & Feature<F>> implements Initializable {
@@ -37,6 +39,8 @@ public class UserActivityReview<F extends Enum<F> & Feature<F>> implements Initi
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
+        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("h:mm a"));
+        
         maskerPane.setMouseTransparent(false);
 
         Task<List<UserActivity<F>>> activityLoadingTask = new Task<>() {
@@ -77,7 +81,8 @@ public class UserActivityReview<F extends Enum<F> & Feature<F>> implements Initi
         }
     }
 
-
+ private DateTimeFormatter amPm = DateTimeFormats.am_pmFormat.localizedBy(Locale.forLanguageTag("AR"));
+    private DateTimeFormatter hourFormat = DateTimeFormatter.ofPattern("h:mm");
     private HBox createActionRow(UserActivity<F> activity) {
         HBox actionRow = new HBox(10);
         String action = activity.getAction().name();
@@ -92,7 +97,8 @@ public class UserActivityReview<F extends Enum<F> & Feature<F>> implements Initi
                 new Label("من فئة: " + accountClass),
                 new Label( "قام بـ"+ action),
                 new Label("في الساعة: "),
-                new Label(timestamp.format(DateTimeFormats.usingTimeFormat())),
+                new Label(timestamp.format(hourFormat)),
+                new Label(timestamp.format(amPm)),
                 new Label("يوم: "),
                 new Label(timestamp.toLocalDate().toString()));
 
