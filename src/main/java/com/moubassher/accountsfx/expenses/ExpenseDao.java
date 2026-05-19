@@ -52,7 +52,7 @@ public class ExpenseDao {
 			ps.setString(index++, expense.getExpense());
 			ps.setString(index++, expense.getNote());
 			ps.setInt(index++, expense.getCost());
-			ps.setString(index++, expense.getDate().toString());
+			ps.setString(index++, expense.getTimestamp().toString());
 			ps.setInt(index++, expense.getMadeByUserId());
 
 			return ps.executeUpdate() > 0;

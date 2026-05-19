@@ -24,7 +24,7 @@
       <TextArea fx:id="noteField" prefHeight="116.0" prefWidth="580.0" />
       <HBox prefHeight="100.0" prefWidth="200.0">
          <children>
-            <Button fx:id="addExpenseBtn" mnemonicParsing="false" text="إضافة منصرف" />
+            <Button fx:id="addExpenseBtn" defaultButton="true" mnemonicParsing="false" text="إضافة منصرف" />
          </children>
       </HBox>
    </children>

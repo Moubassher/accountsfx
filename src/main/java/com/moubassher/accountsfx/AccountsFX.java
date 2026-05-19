@@ -85,6 +85,8 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         accountDao.createMaintainerAccount();
 
         if (isDevelopmentMode) {
+            //let's start the users db with a clean slate
+            accountDao.deleteAllAccounts();
             Account<F> admin = createTestAdmin("abc123!");
             loggedInAccount.set(admin);
         }

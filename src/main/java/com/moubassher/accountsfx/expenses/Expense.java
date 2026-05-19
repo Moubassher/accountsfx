@@ -53,7 +53,7 @@ public final class Expense {
         return cost;
     }
 
-    public LocalDateTime getDate() {
+    public LocalDateTime getTimestamp() {
         return date;
     }
 

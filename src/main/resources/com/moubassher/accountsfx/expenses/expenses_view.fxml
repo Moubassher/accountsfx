@@ -35,13 +35,14 @@
                         <DatePicker fx:id="endDate" />
                      </children>
                   </HBox>
-                  <TableView fx:id="expensesTable" prefHeight="200.0" prefWidth="200.0">
+                  <TableView fx:id="expensesTable" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity">
                     <columns>
-                        <TableColumn fx:id="approveCol" prefWidth="75.0" text="تحديد" />
+                        <TableColumn fx:id="approveCol" maxWidth="50.0" prefWidth="75.0" text="تحديد" />
                       <TableColumn fx:id="expenseCol" prefWidth="75.0" text="المنصرف" />
-                      <TableColumn fx:id="amountCol" prefWidth="75.0" text="المبلغ" />
-                        <TableColumn fx:id="dateCol" prefWidth="75.0" text="التاريخ" />
-                        <TableColumn fx:id="madeByCol" prefWidth="75.0" text="بواسطة" />
+                      <TableColumn fx:id="amountCol" maxWidth="200.0" prefWidth="75.0" text="المبلغ" />
+                        <TableColumn fx:id="dateCol" maxWidth="120.0" prefWidth="75.0" text="التاريخ" />
+                        <TableColumn fx:id="timeCol" maxWidth="120.0" prefWidth="75.0" text="الساعة" />
+                        <TableColumn fx:id="madeByCol" maxWidth="170.0" prefWidth="75.0" text="بواسطة" />
                         <TableColumn fx:id="noteCol" prefWidth="75.0" text="ملاحظة" />
                     </columns>
                      <columnResizePolicy>

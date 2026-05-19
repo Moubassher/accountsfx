@@ -1,10 +1,10 @@
 package com.moubassher.accountsfx.expenses;
 
 import com.context.our_utilities.FxmlHelper;
+import com.context.our_utilities.accounting.AccountingUtils;
 import com.moubassher.accountsfx.Account;
 import com.moubassher.accountsfx.AccountDao;
 import com.moubassher.accountsfx.Feature;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -21,7 +21,10 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 
 import java.net.URL;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.List;
@@ -32,10 +35,13 @@ import java.util.ResourceBundle;
 public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initializable {
 
     @FXML
-    private TableColumn<Expense, Integer> amountCol;
+    private TableColumn<Expense, String> amountCol;
 
     @FXML
-    private TableColumn<Expense, LocalDateTime> dateCol;
+    private TableColumn<Expense, LocalDate> dateCol;
+
+    @FXML
+    private TableColumn<Expense, String>  timeCol;
 
     @FXML
     private TableColumn<Expense, String> expenseCol, noteCol;
@@ -85,12 +91,15 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
         addExpenseTab.setContent(expenseAddView);
 
         Currency currency = Currency.getInstance("SDG");
-        String symbol = currency.getSymbol(Locale.forLanguageTag("AR"));
         expenseCol.setCellValueFactory(x -> new SimpleStringProperty(x.getValue().getExpense()));
         noteCol.setCellValueFactory(x -> new SimpleStringProperty(x.getValue().getNote()));
 
-        amountCol.setCellValueFactory(x -> new SimpleIntegerProperty(x.getValue().getCost()).asObject());
-        dateCol.setCellValueFactory(x -> new SimpleObjectProperty<>(x.getValue().getDate()));
+        amountCol.setCellValueFactory(x ->
+                new SimpleStringProperty(AccountingUtils.format(x.getValue().getCost())));
+        amountCol.setComparator(Comparator.comparing(string -> Integer.valueOf(string.replace(",",""))));
+        dateCol.setCellValueFactory(x -> new SimpleObjectProperty<>(x.getValue().getTimestamp().toLocalDate()));
+        timeCol.setCellValueFactory(x ->
+                new SimpleStringProperty(formatTime(x.getValue().getTimestamp().toLocalTime())));
         madeByCol.setCellValueFactory(x -> new SimpleObjectProperty<>(accountDao.getAccount(x.getValue().getMadeByUserId())));
 
         approveCol.setCellFactory(x -> createApprovalCell());
@@ -131,6 +140,12 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
                 }
             }
         };
+    }
+
+    private String formatTime(LocalTime time) {
+        var clock = DateTimeFormatter.ofPattern("h:mm");
+        var amPm = DateTimeFormatter.ofPattern("a").localizedBy(Locale.forLanguageTag("AR"));
+        return clock.format(time) + amPm.format(time);
     }
 
 

@@ -340,6 +340,7 @@ public class AccountDao<F extends Enum<F> & Feature<F>> {
                 "user_activity",
                 "privileges",    // References accountTypes
                 "users_pending", // References accountTypes
+                "expenses",
                 "users",         // References accountTypes
                 "accountTypes"   // THE ROOT - Must be last
         };

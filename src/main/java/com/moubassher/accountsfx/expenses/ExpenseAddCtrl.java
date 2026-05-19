@@ -80,7 +80,16 @@ public class ExpenseAddCtrl <F extends Enum<F> & Feature<F>> implements Initiali
         }
         boolean added = expenseDao.addExpense(expense);
         if(added) {
+            clearExpenseFields();
             MyNotifications.getInstance().showSimpleToast("تم إضافة المنصرف بنجاح", root);
         }
     }
+
+    private void clearExpenseFields() {
+        expenseField.clear();
+        amountField.clear();
+        noteField.clear();
+    }
 }
+
+
