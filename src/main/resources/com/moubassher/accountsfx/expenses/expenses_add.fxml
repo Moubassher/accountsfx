@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" prefWidth="600.0" spacing="10.0" styleClass="root" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:id="root" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="RIGHT_TO_LEFT" spacing="10.0" styleClass="root" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <Label text="المنصرف:" />
       <TextField fx:id="expenseField" />
@@ -20,6 +20,7 @@
             <Label fx:id="employeeDisplay" text="Label" />
          </children>
       </HBox>
+      <Label text="ملاحظات:" />
       <TextArea fx:id="noteField" prefHeight="116.0" prefWidth="580.0" />
       <HBox prefHeight="100.0" prefWidth="200.0">
          <children>

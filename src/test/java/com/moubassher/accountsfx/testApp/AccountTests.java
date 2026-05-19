@@ -127,6 +127,15 @@ public class AccountTests {
     }
 
     @Test
+    @DisplayName("Can delete all accounts")
+    void testDeletingAllAccounts() {
+        accountDao.deleteAllAccounts();
+        int accountCount = accountDao.readAccounts().size();
+        assertEquals(0, accountCount, "Accounts were not deleted");
+
+    }
+
+    @Test
     @DisplayName("Account CRUD: Delete")
     void testDeletingAccounts() {
         List<TestFeature> privileges = List.of(TestFeature.FeatureA);

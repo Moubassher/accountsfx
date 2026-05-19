@@ -1,6 +1,7 @@
 package com.moubassher.accountsfx.expenses;
 
 import com.context.our_utilities.MyNotifications;
+import com.context.our_utilities.accounting.AccountingUtils;
 import com.moubassher.accountsfx.Account;
 import com.moubassher.accountsfx.Feature;
 import javafx.fxml.FXML;
@@ -51,6 +52,8 @@ public class ExpenseAddCtrl <F extends Enum<F> & Feature<F>> implements Initiali
 
         employeeDisplay.setText(loggedInUser.toString());
 
+        AccountingUtils.applyIntegerFormatting(amountField);
+
         addExpenseBtn.setOnAction(x -> {
             addExpense();
         });
@@ -64,7 +67,7 @@ public class ExpenseAddCtrl <F extends Enum<F> & Feature<F>> implements Initiali
             return;
         }
 
-        int amount = Integer.valueOf(amountField.getText());
+        int amount = Integer.valueOf(amountField.getText().replace(",", ""));
 
         int madeByUserId = loggedInUser.getUserId();
 

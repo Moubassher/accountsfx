@@ -202,6 +202,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         EventHandler<WindowEvent> closeRequest = mainStage.getOnCloseRequest();
         mainStage.setOnCloseRequest(close -> {
             if(isDevelopmentMode) {
+                accountDao.deleteAllAccounts();
                 closeRequest.handle(close);
             } else {
                 confirmQuitting(closeRequest, close);
@@ -245,7 +246,8 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
     private void showMaintainerView()  {
         MaintainerAccountCtrl<F> maintainerAccountCtrl = new MaintainerAccountCtrl<>(accountDao, featureEnum);
-        Parent maintainerViewRoot = FxmlHelper.loadFxml("maintainer_account.fxml", maintainerAccountCtrl);
+        Parent maintainerViewRoot = FxmlHelper
+                .loadFxml("maintainer_account.fxml", maintainerAccountCtrl);
         show(maintainerViewRoot);
 
     }
@@ -335,6 +337,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
             accountDao.requestAccountApproval(admin);
             accountDao.approveNewAccount(admin);
         }
+        System.out.println("admin's id: " + admin.getUserId());
         return admin;
     }
 
