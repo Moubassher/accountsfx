@@ -117,6 +117,23 @@ public class ExpenseDao {
 		}
 	}
 
+	public boolean unapproveExpense(Expense expense) {
+		String sql = "UPDATE expenses SET approved = ? WHERE expenseId = ?";
+
+		try (Connection connection = userDbConfig.openConnection();
+			 PreparedStatement ps = connection.prepareStatement(sql)) {
+
+			ps.setBoolean(1, false);
+			ps.setInt(2, expense.getExpenseId());
+
+			return ps.executeUpdate() > 0;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
 
 	public boolean deleteExpense(Expense expense) {
 

@@ -58,7 +58,7 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
     private ToggleButton unapprovedExpensesViewBtn, approvedExpensesViewBtn, allExpensesViewBtn;
 
     @FXML
-    private Button approveBtn, deleteExpenseBtn, selectAllBtn, unselectAll;
+    private Button approveBtn, unapproveBtn, deleteExpenseBtn, selectAllBtn, unselectAll;
 
     @FXML
     private DatePicker startDate, endDate;
@@ -82,7 +82,7 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
     private AccountDao<F> accountDao;
     private Account<F> loggedInUser;
 
-    private Map<Expense, Boolean> approvedExpensesMap = new HashMap<>();
+    private Map<Expense, Boolean> selectedExpensesMap = new HashMap<>();
 
     public ExpenseViewCtrl(String appName, AccountDao<F> accountDao, Account<F> loggedInUser, ExpenseDao expenseDao) {
         this.appName = appName;
@@ -122,10 +122,16 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
             approveExpenses();
         });
 
+        unapproveBtn.setOnAction(x -> {
+            unapproveExpenses();
+        });
+
         unapprovedExpensesViewBtn.selectedProperty().addListener((a, b, c) -> {
             if(c) {
                 List<Expense> expenses = expenseDao.readUnapprovedExpenses();
                 expensesTable.setItems(FXCollections.observableArrayList(expenses));
+                approveBtn.setDisable(false);
+                unapproveBtn.setDisable(true);
             }
         });
 
@@ -133,6 +139,8 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
             if(c) {
                 List<Expense> approvedExpenses = expenseDao.readApprovedExpenses();
                 expensesTable.setItems(FXCollections.observableArrayList(approvedExpenses));
+                unapproveBtn.setDisable(false);
+                approveBtn.setDisable(true);
             }
         });
 
@@ -143,9 +151,26 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
             }
         });
 
+        selectAllBtn.setOnAction(x -> {
+            selectAllExpenses();
+        });
+
+        unselectAll.setOnAction(x -> {
+            selectedExpensesMap.clear();
+            expensesTable.refresh();
+        });
+
 
         refreshTableOnTabSelection();
 
+    }
+
+    private void selectAllExpenses() {
+        for (Expense expense : expensesTable.getItems()) {
+            selectedExpensesMap.put(expense, true);
+        }
+
+        expensesTable.refresh();
     }
 
     private TableCell<Expense, Boolean> createApprovalCell() {
@@ -158,9 +183,9 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
                     Expense expense = getTableView().getItems().get(getIndex());
 
                     if (checkBox.isSelected()) {
-                        approvedExpensesMap.put(expense, true);
+                        selectedExpensesMap.put(expense, true);
                     } else {
-                        approvedExpensesMap.remove(expense); // cleaner than storing false
+                        selectedExpensesMap.remove(expense); // cleaner than storing false
                     }
                 });
             }
@@ -173,7 +198,7 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
                     setGraphic(null);
                 } else {
                     var expense = getTableView().getItems().get(getIndex());
-                    checkBox.setSelected(approvedExpensesMap.containsKey(expense));
+                    checkBox.setSelected(selectedExpensesMap.containsKey(expense));
                     setGraphic(checkBox);
                 }
             }
@@ -181,12 +206,21 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
     }
 
     private void approveExpenses() {
-        for (Expense expense : approvedExpensesMap.keySet()) {
+        for (Expense expense : selectedExpensesMap.keySet()) {
             expenseDao.approveExpense(expense);
         }
-        approvedExpensesMap.clear();
+        selectedExpensesMap.clear();
         expensesTable.setItems(FXCollections.observableArrayList(expenseDao.readUnapprovedExpenses()));
 
+    }
+
+    private void unapproveExpenses() {
+        for(Expense expense : selectedExpensesMap.keySet()) {
+            expenseDao.unapproveExpense(expense);
+        }
+        selectedExpensesMap.clear();
+
+        expensesTable.setItems(FXCollections.observableArrayList(expenseDao.readApprovedExpenses()));
     }
 
 

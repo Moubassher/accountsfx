@@ -68,6 +68,7 @@
                   <HBox prefHeight="89.0" prefWidth="381.0" spacing="10.0">
                      <children>
                         <Button fx:id="approveBtn" defaultButton="true" mnemonicParsing="false" styleClass="primary-btn" text="تصديق" />
+                        <Button fx:id="unapproveBtn" mnemonicParsing="false" text="إلغاء التصديق" />
                         <Button fx:id="selectAllBtn" mnemonicParsing="false" text="تحديد الكل" />
                         <Button fx:id="unselectAll" mnemonicParsing="false" text="إلغاء الكل" />
                         <Button fx:id="deleteExpenseBtn" contentDisplay="RIGHT" mnemonicParsing="false" styleClass="cancel-btn" text="حذف">
@@ -84,7 +85,7 @@
             </VBox>
          </content>
          <graphic>
-            <Label fx:id="unapprovedExpensesCounter" text="1">
+            <Label fx:id="unapprovedExpensesCounter" alignment="TOP_LEFT" text="1">
                <styleClass>
                   <String fx:value="notification-label" />
                   <String fx:value="small-font" />
@@ -94,11 +95,6 @@
                </font>
             </Label>
          </graphic>
-      </Tab>
-      <Tab fx:id="viewApprovedExpensesTab" text="أرشيف المنصرفات">
-         <content>
-            <VBox prefHeight="200.0" prefWidth="100.0" />
-         </content>
       </Tab>
   </tabs>
 </TabPane>
