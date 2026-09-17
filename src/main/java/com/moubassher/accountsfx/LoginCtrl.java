@@ -1,7 +1,7 @@
 package com.moubassher.accountsfx;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
-import com.context.our_utilities.MyNotifications;
+import com.context.my_javafx_utilities.MyNotifications;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -199,6 +199,7 @@ public class LoginCtrl<F extends Enum<F> & Feature<F>>  implements Initializable
 			masker.visibleProperty().unbind();
 			if (success) {
 				loggedInUser = account;
+				accountsFX.setLoggedInAccount(loggedInUser);
 				accountsFX.showMainWindow();
 			} else {
 				MyNotifications.getInstance().showErrorAlert("كلمة السر غير صحيحة", "حاول مرة أخرى أو أرسل طلب تغيير كلمة السر من أحد مستخدمي الحسابات الإدارية");

@@ -1,7 +1,7 @@
 package com.moubassher.accountsfx;
 
-import com.context.our_utilities.FxmlHelper;
-import com.context.our_utilities.MyNotifications;
+import com.context.my_javafx_utilities.FxmlHelper;
+import com.context.my_javafx_utilities.MyNotifications;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;

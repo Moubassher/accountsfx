@@ -2,8 +2,6 @@ plugins {
     id 'java'
     id 'maven-publish'
     id 'application'
-
-
 }
 
 group = 'com.moubassher'
@@ -12,7 +10,6 @@ version = '1.0.0'
 repositories {
     mavenCentral()
     mavenLocal()
-
 }
 
 application {
@@ -46,7 +43,8 @@ dependencies {
     implementation "at.favre.lib:bcrypt:0.10.2"
     implementation 'com.jfoenix:jfoenix:9.0.1'
 
-    implementation 'com.context:our-utilities:2.1.0'
+    implementation 'com.context:my-javafx-utilities:2.1.0'
+    implementation 'com.context:my_utilities:1.0.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'

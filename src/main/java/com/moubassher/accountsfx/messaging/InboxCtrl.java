@@ -1,11 +1,10 @@
 package com.moubassher.accountsfx.messaging;
 
-import com.context.our_utilities.MyNotifications;
-
+import com.context.my_javafx_utilities.MyNotifications;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
@@ -17,7 +16,7 @@ import java.util.ResourceBundle;
 public class InboxCtrl implements Initializable {
 
     @FXML
-    private Button inboxBtn, sentMessagesBtn;
+    private ToggleButton inboxBtn, sentMessagesBtn;
 
     @FXML
     private VBox conversationsPane;

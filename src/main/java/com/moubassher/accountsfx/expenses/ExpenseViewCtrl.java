@@ -1,7 +1,7 @@
 package com.moubassher.accountsfx.expenses;
 
-import com.context.our_utilities.FxmlHelper;
-import com.context.our_utilities.accounting.AccountingUtils;
+import com.context.my_javafx_utilities.FxmlHelper;
+import com.context.my_javafx_utilities.accounting.AccountingUtils;
 import com.moubassher.accountsfx.Account;
 import com.moubassher.accountsfx.AccountDao;
 import com.moubassher.accountsfx.Feature;
@@ -15,10 +15,12 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.ToggleButton;
 
 import java.net.URL;
 import java.time.LocalDate;
@@ -53,6 +55,9 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
     private TableColumn<Expense, Boolean>approveCol;
 
     @FXML
+    private ToggleButton unapprovedExpensesViewBtn, approvedExpensesViewBtn, allExpensesViewBtn;
+
+    @FXML
     private Button approveBtn, deleteExpenseBtn, selectAllBtn, unselectAll;
 
     @FXML
@@ -66,6 +71,9 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
 
     @FXML
     private Tab addExpenseTab, viewExpensesTab;
+
+    @FXML
+    private Label unapprovedExpensesCounter;
 
     private ExpenseDao expenseDao;
 
@@ -104,7 +112,37 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
 
         approveCol.setCellFactory(x -> createApprovalCell());
 
-        expensesTable.setItems(FXCollections.observableArrayList(expenseDao.readExpenses()));
+        List<Expense> unapproved = expenseDao.readUnapprovedExpenses();
+        int unapprovedCount = unapproved.size();
+        unapprovedExpensesCounter.setText(unapprovedCount+"");
+
+        expensesTable.setItems(FXCollections.observableArrayList(unapproved));
+
+        approveBtn.setOnAction(x -> {
+            approveExpenses();
+        });
+
+        unapprovedExpensesViewBtn.selectedProperty().addListener((a, b, c) -> {
+            if(c) {
+                List<Expense> expenses = expenseDao.readUnapprovedExpenses();
+                expensesTable.setItems(FXCollections.observableArrayList(expenses));
+            }
+        });
+
+        approvedExpensesViewBtn.selectedProperty().addListener((a, b, c) -> {
+            if(c) {
+                List<Expense> approvedExpenses = expenseDao.readApprovedExpenses();
+                expensesTable.setItems(FXCollections.observableArrayList(approvedExpenses));
+            }
+        });
+
+        allExpensesViewBtn.selectedProperty().addListener((a, b, c) ->{
+            if(c) {
+                List<Expense> allExpenses = expenseDao.readAllExpenses();
+                expensesTable.setItems(FXCollections.observableArrayList(allExpenses));
+            }
+        });
+
 
         refreshTableOnTabSelection();
 
@@ -142,6 +180,16 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
         };
     }
 
+    private void approveExpenses() {
+        for (Expense expense : approvedExpensesMap.keySet()) {
+            expenseDao.approveExpense(expense);
+        }
+        approvedExpensesMap.clear();
+        expensesTable.setItems(FXCollections.observableArrayList(expenseDao.readUnapprovedExpenses()));
+
+    }
+
+
     private String formatTime(LocalTime time) {
         var clock = DateTimeFormatter.ofPattern("h:mm");
         var amPm = DateTimeFormatter.ofPattern("a").localizedBy(Locale.forLanguageTag("AR"));
@@ -152,7 +200,7 @@ public class ExpenseViewCtrl <F extends Enum<F> & Feature<F>> implements Initial
     private void refreshTableOnTabSelection() {
         viewExpensesTab.selectedProperty().addListener((a, b, selected) -> {
             if(selected) {
-                List<Expense> expenses = expenseDao.readExpenses();
+                List<Expense> expenses = expenseDao.readUnapprovedExpenses();
                 expensesTable.setItems(FXCollections.observableArrayList(expenses));
             }
         });

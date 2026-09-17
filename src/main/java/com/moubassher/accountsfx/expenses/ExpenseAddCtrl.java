@@ -1,7 +1,7 @@
 package com.moubassher.accountsfx.expenses;
 
-import com.context.our_utilities.MyNotifications;
-import com.context.our_utilities.accounting.AccountingUtils;
+import com.context.my_javafx_utilities.MyNotifications;
+import com.context.my_javafx_utilities.accounting.AccountingUtils;
 import com.moubassher.accountsfx.Account;
 import com.moubassher.accountsfx.Feature;
 import javafx.fxml.FXML;

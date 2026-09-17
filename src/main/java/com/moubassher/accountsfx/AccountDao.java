@@ -1,6 +1,6 @@
 package com.moubassher.accountsfx;
 
-import com.context.our_utilities.DbConfig;
+import com.context.my_javafx_utilities.DbConfig;
 import com.moubassher.accountsfx.audit.UserActivity;
 
 import java.sql.Connection;

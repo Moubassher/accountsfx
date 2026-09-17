@@ -1,9 +1,9 @@
 package com.moubassher.accountsfx;
 
-import com.context.our_utilities.DbConfig;
-import com.context.our_utilities.FxmlHelper;
-import com.context.our_utilities.MyNotifications;
-import com.context.our_utilities.ThemeUtils;
+import com.context.my_javafx_utilities.DbConfig;
+import com.context.my_javafx_utilities.FxmlHelper;
+import com.context.my_javafx_utilities.MyNotifications;
+import com.context.my_javafx_utilities.ThemeUtils;
 import com.moubassher.accountsfx.audit.UserActivity;
 import com.moubassher.accountsfx.expenses.ExpenseDao;
 import javafx.application.Application;
@@ -339,7 +339,6 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
             accountDao.requestAccountApproval(admin);
             accountDao.approveNewAccount(admin);
         }
-        System.out.println("admin's id: " + admin.getUserId());
         return admin;
     }
 

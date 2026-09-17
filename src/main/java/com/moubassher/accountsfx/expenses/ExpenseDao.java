@@ -1,6 +1,6 @@
 package com.moubassher.accountsfx.expenses;
 
-import com.context.our_utilities.DbConfig;
+import com.context.my_javafx_utilities.DbConfig;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,8 +17,44 @@ public class ExpenseDao {
 		this.userDbConfig = userDbConfig;
 	}
 
-	public List<Expense> readExpenses() {
-		String sql = "SELECT expenseId, expenseTitle, cost, date, madeByUserId, note FROM expenses";
+	public List<Expense> readUnapprovedExpenses() {
+		return readExpensesByApprovalStatus(false);
+	}
+
+	public List<Expense> readApprovedExpenses() {
+		return readExpensesByApprovalStatus(true);
+	}
+
+	private List<Expense> readExpensesByApprovalStatus(boolean approvedStatus) {
+		String sql = "SELECT expenseId, expenseTitle, cost, date, madeByUserId, note, approved FROM expenses WHERE approved = ?";
+		List<Expense> expenses = new ArrayList<>();
+
+		try (Connection connection = userDbConfig.openConnection();
+			 PreparedStatement ps = connection.prepareStatement(sql)) {
+
+			ps.setBoolean(1, approvedStatus);
+
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					int expenseId = rs.getInt("expenseId");
+					String expenseTitle = rs.getString("expenseTitle");
+					int cost = rs.getInt("cost");
+					LocalDateTime date = LocalDateTime.parse(rs.getString("date"));
+					int madeByUserId = rs.getInt("madeByUserId");
+					String note = rs.getString("note");
+					boolean approved = rs.getBoolean("approved");
+					expenses.add(new Expense(expenseId, expenseTitle, cost, date, madeByUserId, note, approved));
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return expenses;
+	}
+
+	public List<Expense> readAllExpenses() {
+		String sql = "SELECT expenseId, expenseTitle, cost, date, madeByUserId, note, approved FROM expenses";
 		List<Expense> expenses = new ArrayList<>();
 
 		try (Connection connection = userDbConfig.openConnection();
@@ -32,8 +68,8 @@ public class ExpenseDao {
 				LocalDateTime date = LocalDateTime.parse(rs.getString("date"));
 				int madeByUserId = rs.getInt("madeByUserId");
 				String note = rs.getString("note");
-				Expense expense = new Expense(expenseId, expenseTitle, cost, date, madeByUserId, note);
-				expenses.add(expense);
+				boolean approved = rs.getBoolean("approved");
+				expenses.add(new Expense(expenseId, expenseTitle, cost, date, madeByUserId, note, approved));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -44,7 +80,8 @@ public class ExpenseDao {
 
 
 	public boolean addExpense(Expense expense) {
-		String sql = "INSERT INTO expenses (expenseTitle, note, cost, date, madeByUserId) VALUES (?, ?, ?, ?, ?)";
+		String sql = "INSERT INTO expenses (expenseTitle, note, cost, date, madeByUserId," +
+				"approved) VALUES (?, ?, ?, ?, ?,?)";
 
 		try (Connection connection = userDbConfig.openConnection();
 			 PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -54,6 +91,23 @@ public class ExpenseDao {
 			ps.setInt(index++, expense.getCost());
 			ps.setString(index++, expense.getTimestamp().toString());
 			ps.setInt(index++, expense.getMadeByUserId());
+			ps.setBoolean(index++, false);
+			return ps.executeUpdate() > 0;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean approveExpense(Expense expense) {
+		String sql = "UPDATE expenses SET approved = ? WHERE expenseId = ?";
+
+		try (Connection connection = userDbConfig.openConnection();
+			 PreparedStatement ps = connection.prepareStatement(sql)) {
+
+			ps.setBoolean(1, true);
+			ps.setInt(2, expense.getExpenseId());
 
 			return ps.executeUpdate() > 0;
 
@@ -79,6 +133,8 @@ public class ExpenseDao {
 			return false;
 		}
 	}
+
+
 
 
 }

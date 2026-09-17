@@ -16,6 +16,11 @@
               <MenuItem fx:id="logOut" mnemonicParsing="false" text="Log out" />
             </items>
           </Menu>
+            <Menu mnemonicParsing="false" text="Activity Review">
+              <items>
+                <MenuItem fx:id="showUserActivity" mnemonicParsing="false" text="Review user activity" />
+              </items>
+            </Menu>
         </menus>
       </MenuBar>
       <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" VBox.vgrow="ALWAYS">
