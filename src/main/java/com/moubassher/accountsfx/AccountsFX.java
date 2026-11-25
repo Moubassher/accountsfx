@@ -2,6 +2,7 @@ package com.moubassher.accountsfx;
 
 import com.context.my_javafx_utilities.DbConfig;
 import com.context.my_javafx_utilities.FxmlHelper;
+import com.context.my_javafx_utilities.KeyboardShortcuts;
 import com.context.my_javafx_utilities.MyNotifications;
 import com.context.my_javafx_utilities.ThemeUtils;
 import com.moubassher.accountsfx.audit.UserActivity;
@@ -193,6 +194,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
 
         Scene scene = new Scene(mainView);
         ThemeUtils.applyTheme(scene);
+        KeyboardShortcuts.getInstance().setScene(scene, mainView);
         Application.setUserAgentStylesheet(Application.STYLESHEET_CASPIAN);
 
         mainStage.setScene(scene);
@@ -255,6 +257,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         mainStage.hide();
         Scene scene = new Scene(root);
         ThemeUtils.applyTheme(scene);
+        KeyboardShortcuts.getInstance().setScene(scene, root);
         setupPage.setScene(scene);
         setupPage.setMaximized(true);
         setupPage.showAndWait();
