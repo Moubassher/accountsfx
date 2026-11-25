@@ -180,10 +180,7 @@ public class AccountsFX <F extends Enum<F> & Feature<F>>{
         F login = featureEnum.getEnumConstants()[0].login();
         if(loggedInAccount.get() != null) {
             Account<F> user = loggedInAccount.get();
-            String userName = user.getName();
-            String accountTypeName = user.getAccountType().getTypeName();
-            String accountClass = user.getAccountType().getAccountClass().name();
-            UserActivity<F> loginActivity = new UserActivity<>(login, userName, accountTypeName, accountClass, LocalDateTime.now());
+            UserActivity<F> loginActivity = new UserActivity<>(login, user, LocalDateTime.now());
             accountDao.insertUserActivity(loginActivity);
         } else {
             throw new IllegalArgumentException("Attempting to insert a user activity with no logged in user");

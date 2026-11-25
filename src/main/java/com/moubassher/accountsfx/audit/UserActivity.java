@@ -1,5 +1,6 @@
 package com.moubassher.accountsfx.audit;
 
+import com.moubassher.accountsfx.Account;
 import com.moubassher.accountsfx.Feature;
 import com.moubassher.search.Searchable;
 
@@ -20,6 +21,14 @@ public class UserActivity <F extends Enum<F> & Feature<F>> implements Searchable
         this.userName = userName;
         this.accountType = accountType;
         this.accountClass = accountClass;
+        this.timestamp = timestamp;
+    }
+
+    public UserActivity(F action, Account<F> user, LocalDateTime timestamp) {
+        this.action = action;
+        this.userName = user.getName();
+        this.accountType = user.getAccountType().getTypeName();
+        this.accountClass = user.getAccountType().getAccountClass().name();
         this.timestamp = timestamp;
     }
 
