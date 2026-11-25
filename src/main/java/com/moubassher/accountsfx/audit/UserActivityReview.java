@@ -1,9 +1,9 @@
 package com.moubassher.accountsfx.audit;
 
 import com.context.my_javafx_utilities.DateTimeFormats;
+import com.context.my_javafx_utilities.search.SearchBar;
 import com.moubassher.accountsfx.AccountDao;
 import com.moubassher.accountsfx.Feature;
-import com.moubassher.search.SearchBar;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -69,6 +69,11 @@ public class UserActivityReview<F extends Enum<F> & Feature<F>> implements Initi
 
     private void showUserActivity(List<UserActivity<F>> userActivity) {
         actionContainer.getChildren().clear();
+        if(userActivity.isEmpty()) {
+            maskerPane.setText("لا يوجد نشاط للمستخدمين. \nستظهر العلميات التي يقوم بها المستخدمون هنا بعد أن تتم");
+            maskerPane.setProgressVisible(false);
+            return;
+        }
         for(int i = 0; i < userActivity.size(); i++) {
             var activity = userActivity.get(i);
             HBox actionRow = createActionRow(activity);
