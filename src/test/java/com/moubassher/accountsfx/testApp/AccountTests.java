@@ -42,7 +42,6 @@ public class AccountTests {
         accountDao.deleteUserActivityRecords();
         accountDao.deleteAllPrivileges();
 
-
         accountDao.deleteAccountTypes();
     }
 
@@ -173,9 +172,6 @@ public class AccountTests {
         assertTrue(isAccountPending, "Account was not read among accounts pending approval");
 
     }
-
-
-
 
     @Test
     @DisplayName("Can insert an admin user")

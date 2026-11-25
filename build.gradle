@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.moubassher'
-version = '1.0.0'
+version = '2.0.0'
 
 repositories {
     mavenCentral()
@@ -14,18 +14,20 @@ repositories {
 
 application {
     mainClass = 'com.moubassher.accountsfx.Launcher'
-
 }
 
 
 def javafxVersion = '23.0.1'
+
+java.sourceCompatibility = JavaVersion.VERSION_17
+
 
 
 dependencies {
 
     implementation 'com.context.themes:my-vibrant-blue-theme:1.0.0'
 
-    implementation 'com.moubassher:searcher:4.1.0'
+    implementation 'com.moubassher:searcher:5.0.0'
 
     implementation 'io.github.mkpaz:atlantafx-base:2.1.0'
     implementation "org.openjfx:javafx-base:${javafxVersion}:win"
@@ -43,8 +45,11 @@ dependencies {
     implementation "at.favre.lib:bcrypt:0.10.2"
     implementation 'com.jfoenix:jfoenix:9.0.1'
 
-    implementation 'com.context:my-javafx-utilities:2.1.0'
+    implementation 'com.context:my-javafx-utilities:3.0.0'
+
     implementation 'com.context:my_utilities:1.0.0'
+
+    implementation 'de.jensd:fontawesomefx-fontawesome:4.7.0-9.1.2'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
